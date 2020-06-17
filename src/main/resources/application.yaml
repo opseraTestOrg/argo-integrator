@@ -1,8 +1,8 @@
-#logging:
-#  file: argoIntegrator
-#  path: /apps/OpsERA/logs/components/argo-integrator
+logging:
+  file: argoIntegrator
+  path: /apps/OpsERA/logs/components/argo-integrator
 server:
-  port: 9092
+  port: 9096
 
 ---
 
@@ -13,11 +13,10 @@ spring:
     description: API for integrating with Argo Tool
 pipeline:
   config:
-#    baseurl: http://microservices-dev.opsera.io:9091/api/pipeline
-     baseurl: http://localhost:8071
+    baseurl: http://microservices-dev.opsera.io:9091/api/pipeline
 vault:
   config:
-    baseurl: http://microservices-dev.opsera.io:9091/api/vault/
+    baseurl: http://microservices-dev.opsera.io:9091/api/vault
 eureka:
   instance:
     leaseRenewalIntervalInSeconds: 1
@@ -36,6 +35,9 @@ spring:
 pipeline:
   config:
     baseurl: http://10.0.3.253:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://10.0.3.253:9091/api/vault
 eureka:
   instance:
     leaseRenewalIntervalInSeconds: 1
@@ -54,6 +56,9 @@ spring:
 pipeline:
   config:
     baseurl: http://10.0.2.4:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://10.0.2.4:9091/api/vault
 eureka:
   instance:
     leaseRenewalIntervalInSeconds: 1

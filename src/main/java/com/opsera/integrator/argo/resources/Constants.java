@@ -15,6 +15,4 @@ public class Constants {
     public static final String HTTP_EMPTY_BODY = "{}";
     public static final String HTTP_HEADER_ACCEPT = "Accept";
     public static final String QUERY_PARM_TOOLID = "toolId";
-    public static final String GET_PIPELINE_LOGS_URL = "%s/pipelines/%s";
-    public static final String EMPTY_RESPONSE = "Empty response from spinnaker";
 }
