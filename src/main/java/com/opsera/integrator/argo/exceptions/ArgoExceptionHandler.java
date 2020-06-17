@@ -1,7 +1,5 @@
 package com.opsera.integrator.argo.exceptions;
 
-import com.google.gson.Gson;
-import com.opsera.integrator.argo.config.IServiceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +7,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import com.google.gson.Gson;
+import com.opsera.integrator.argo.config.IServiceFactory;
 
 /**
  * Exception Handler
@@ -62,4 +63,3 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(sonarQubeErrorResponse, ex.getStatusCode());
     }
 }
-

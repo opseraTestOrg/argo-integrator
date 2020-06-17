@@ -8,8 +8,13 @@ import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 @EnableEurekaClient
 public class ArgoIntegratorApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ArgoIntegratorApplication.class, args);
-	}
+    /**
+     * Spring boot application
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        SpringApplication.run(ArgoIntegratorApplication.class, args);
+    }
 
 }

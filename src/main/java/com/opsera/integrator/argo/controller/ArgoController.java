@@ -1,13 +1,22 @@
 package com.opsera.integrator.argo.controller;
 
-import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.resources.*;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.resources.ArgoApplicationItem;
+import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
+import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
+import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 /**
  * Controller
@@ -23,6 +32,7 @@ public class ArgoController {
 
     /**
      * To check the service status
+     * 
      * @return
      */
     @GetMapping("/status")
@@ -33,6 +43,7 @@ public class ArgoController {
 
     /**
      * To get all the argo applications for the given argo domain
+     * 
      * @param argoToolId
      * @return
      */
@@ -50,6 +61,7 @@ public class ArgoController {
 
     /**
      * To get detailed information about an argo application
+     * 
      * @param argoToolId
      * @return
      */
@@ -67,6 +79,7 @@ public class ArgoController {
 
     /**
      * To sync the argo application configured in Opsera pipeline
+     * 
      * @param pipelineMetadata
      * @return
      */

@@ -1,12 +1,25 @@
 package com.opsera.integrator.argo.services;
 
-import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.resources.*;
+import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_URL;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
+import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import static com.opsera.integrator.argo.resources.Constants.*;
+import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.resources.ArgoApplicationItem;
+import com.opsera.integrator.argo.resources.ArgoApplicationsList;
+import com.opsera.integrator.argo.resources.ArgoSessionRequest;
+import com.opsera.integrator.argo.resources.ArgoSessionToken;
 
 /**
  * Class handles all the interaction with argo server
@@ -19,12 +32,13 @@ public class ArgoHelper {
 
     /**
      * get argo application details
+     * 
      * @param applicationName
      * @param username
      * @param password
      * @return
      */
-    public ArgoApplicationItem getArgoApplication(String applicationName, String username, String password){
+    public ArgoApplicationItem getArgoApplication(String applicationName, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(username, password);
         String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, applicationName);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -33,11 +47,12 @@ public class ArgoHelper {
 
     /**
      * get all argo applications
+     * 
      * @param username
      * @param password
      * @return
      */
-    public ArgoApplicationsList getAllArgoApplications(String username, String password){
+    public ArgoApplicationsList getAllArgoApplications(String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(username, password);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(ARGO_APPLICATION_URL, HttpMethod.GET, requestEntity, String.class);
         return serviceFactory.getResponseParser().extractArgoApplicationsList(response.getBody());
@@ -45,12 +60,13 @@ public class ArgoHelper {
 
     /**
      * sync an argo application
+     * 
      * @param applicationName
      * @param username
      * @param password
      * @return
      */
-    public ArgoApplicationItem syncApplication(String applicationName, String username, String password){
+    public ArgoApplicationItem syncApplication(String applicationName, String username, String password) {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, username, password);
         String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, applicationName);
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationItem.class);

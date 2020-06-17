@@ -1,19 +1,18 @@
 package com.opsera.integrator.argo.config;
 
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ServiceLocatorFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
+
+import lombok.Getter;
 
 /**
  * All app config reside here
  */
 @Configuration
-@Component
 @Getter
 public class AppConfig {
 
@@ -24,7 +23,8 @@ public class AppConfig {
     private String vaultBaseUrl;
 
     /**
-     * Factory Bean
+     * Factory Bean Creation
+     * 
      * @return
      */
     @Bean
@@ -36,6 +36,7 @@ public class AppConfig {
 
     /**
      * Stopwatch Bean Creation
+     * 
      * @return
      */
     @Bean
@@ -45,11 +46,11 @@ public class AppConfig {
 
     /**
      * Rest Template Bean Creation
+     * 
      * @return
      */
     @Bean
     public RestTemplate getRestTemplate() {
-
         return new RestTemplate();
     }
 }

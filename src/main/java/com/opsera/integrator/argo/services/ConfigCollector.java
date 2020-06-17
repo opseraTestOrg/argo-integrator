@@ -1,10 +1,9 @@
 package com.opsera.integrator.argo.services;
 
-import com.opsera.integrator.argo.config.AppConfig;
-import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.resources.ArgoToolConfig;
-import com.opsera.integrator.argo.resources.ArgoToolDetails;
-import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import static com.opsera.integrator.argo.resources.Constants.PIPELINE_TABLE_ENDPOINT;
+import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_TOOLID;
+import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPOINT;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import static com.opsera.integrator.argo.resources.Constants.*;
+import com.opsera.integrator.argo.config.AppConfig;
+import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.resources.ArgoToolConfig;
+import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 
 /**
  * Class to interact and fetch the configurations
@@ -30,6 +33,7 @@ public class ConfigCollector {
 
     /**
      * Get the argo config defined for the given pipeline/step
+     * 
      * @param opseraPipelineMetadata
      * @return
      */
@@ -42,14 +46,13 @@ public class ConfigCollector {
 
     /**
      * Get the argo config
+     * 
      * @param argoToolId
      * @return
      */
     public ArgoToolDetails getArgoDetails(String argoToolId) {
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder
-                .fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT)
-                .queryParam(QUERY_PARM_TOOLID, argoToolId);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, argoToolId);
         String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
         return serviceFactory.getResponseParser().extractArgoToolDetails(response);
     }

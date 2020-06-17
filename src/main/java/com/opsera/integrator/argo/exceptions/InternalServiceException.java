@@ -3,7 +3,7 @@ package com.opsera.integrator.argo.exceptions;
 /**
  * Thrown result of any internal error
  */
-public class InternalServiceException extends RuntimeException{
+public class InternalServiceException extends RuntimeException {
     /**
      *
      */
@@ -16,4 +16,3 @@ public class InternalServiceException extends RuntimeException{
         super(message);
     }
 }
-
