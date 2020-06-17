@@ -1,0 +1,6 @@
+#build dev image
+
+docker build -t opsera-argo-integrator .
+docker run -p 9096:9096 --name argo-integrator --env DOCKER_ENV=dev -v /apps/OpsERA/logs/components/argo-integrator:/apps/OpsERA/logs/components/argo-integrator --restart=always -d opsera-argo-integrator
+docker stop argo-integrator
+docker rm argo-integrator

@@ -1,0 +1,58 @@
+logging:
+  file: argoIntegrator
+  path: /apps/OpsERA/logs/components/argo-integrator
+server:
+  port: 9096
+spring:
+ application:
+    name: argo-integrator
+    description: API for integrating with Argo Tool
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+
+---
+
+spring:
+  profiles: dev
+pipeline:
+  config:
+    baseurl: http://microservices-dev.opsera.io:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://microservices-dev.opsera.io:9091/api/vault
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://microservices-dev.opsera.io:8761/eureka/
+
+---
+
+spring:
+  profiles: test
+pipeline:
+  config:
+    baseurl: http://10.0.3.253:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://10.0.3.253:9091/api/vault
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://10.0.3.253:8761/eureka/
+
+---
+
+spring:
+  profiles: prod
+pipeline:
+  config:
+    baseurl: http://10.0.2.4:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://10.0.2.4:9091/api/vault
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://10.0.2.4:8761/eureka/
