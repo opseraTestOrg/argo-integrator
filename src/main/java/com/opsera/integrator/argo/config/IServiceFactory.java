@@ -1,29 +1,36 @@
 package com.opsera.integrator.argo.config;
 
-import com.google.gson.Gson;
-import com.opsera.integrator.argo.services.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
 
+import com.google.gson.Gson;
+import com.opsera.integrator.argo.services.ArgoHelper;
+import com.opsera.integrator.argo.services.ArgoOrchestrator;
+import com.opsera.integrator.argo.services.ConfigCollector;
+import com.opsera.integrator.argo.services.ObjectTranslator;
+import com.opsera.integrator.argo.services.ResponseParser;
+import com.opsera.integrator.argo.services.VaultHelper;
+
 @Component
 public interface IServiceFactory {
 
-    ArgoHelper getArgoHelper();
+    public ArgoHelper getArgoHelper();
 
-    ArgoOrchestrator getArgoOrchestrator();
+    public ArgoOrchestrator getArgoOrchestrator();
 
-    ResponseParser getResponseParser();
+    public ResponseParser getResponseParser();
 
-    ConfigCollector getConfigCollector();
+    public ConfigCollector getConfigCollector();
 
-    ObjectTranslator getObjectTranslator();
+    public ObjectTranslator getObjectTranslator();
 
-    VaultHelper getVaultHelper();
+    public VaultHelper getVaultHelper();
 
-    Gson gson();
+    public Gson gson();
 
-    StopWatch stopWatch();
+    public StopWatch stopWatch();
 
-    RestTemplate getRestTemplate();
+    public RestTemplate getRestTemplate();
+
 }

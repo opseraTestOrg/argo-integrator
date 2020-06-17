@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Constants {
+    
     public static final String PIPELINE_TABLE_ENDPOINT = "/tools/configuration";
     public static final String ARGO_SESSION_TOKEN_URL = "https://aws-argocd.opsera.io/api/v1/session";
     public static final String ALL_ARGO_APPLICATION_URL_TEMPLATE = "https://aws-argocd.opsera.io/api/v1/applications/%s";
@@ -15,4 +16,5 @@ public class Constants {
     public static final String HTTP_EMPTY_BODY = "{}";
     public static final String HTTP_HEADER_ACCEPT = "Accept";
     public static final String QUERY_PARM_TOOLID = "toolId";
+    
 }

@@ -14,7 +14,9 @@ public class ArgoIntegratorApplication {
      * @param args
      */
     public static void main(String[] args) {
+
         SpringApplication.run(ArgoIntegratorApplication.class, args);
+
     }
 
 }

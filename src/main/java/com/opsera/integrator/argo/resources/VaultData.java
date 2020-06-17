@@ -1,12 +1,12 @@
 package com.opsera.integrator.argo.resources;
 
-import lombok.Data;
-
 import java.util.Map;
+
+import lombok.Data;
 
 @Data
 public class VaultData {
 
-    Map<String, String> data;
+    private Map<String, String> data;
 
 }

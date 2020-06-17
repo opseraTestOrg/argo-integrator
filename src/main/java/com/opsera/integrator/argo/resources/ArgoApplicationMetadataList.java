@@ -1,16 +1,17 @@
 package com.opsera.integrator.argo.resources;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 @AllArgsConstructor
 public class ArgoApplicationMetadataList {
 
-    List<ArgoApplicationMetadata> applicationList;
+    private List<ArgoApplicationMetadata> applicationList;
 
 }

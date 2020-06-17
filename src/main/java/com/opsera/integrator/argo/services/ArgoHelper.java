@@ -73,11 +73,27 @@ public class ArgoHelper {
         return response.getBody();
     }
 
+    /**
+     * 
+     * Returns argo session token
+     * 
+     * @param username
+     * @param password
+     * @return
+     */
     private ArgoSessionToken getSessionToken(String username, String password) {
         ArgoSessionRequest request = new ArgoSessionRequest(username, password);
         return serviceFactory.getRestTemplate().postForObject(ARGO_SESSION_TOKEN_URL, request, ArgoSessionToken.class);
     }
 
+    /**
+     * 
+     * Returns HTTP request headers
+     * 
+     * @param username
+     * @param password
+     * @return
+     */
     private HttpEntity<HttpHeaders> getRequestEntity(String username, String password) {
         ArgoSessionToken sessionToken = getSessionToken(username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
@@ -86,6 +102,15 @@ public class ArgoHelper {
         return new HttpEntity<>(requestHeaders);
     }
 
+    /**
+     * 
+     * Returns header with body
+     * 
+     * @param requestBody
+     * @param username
+     * @param password
+     * @return
+     */
     private HttpEntity<String> getRequestEntityWithBody(String requestBody, String username, String password) {
         ArgoSessionToken sessionToken = getSessionToken(username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
