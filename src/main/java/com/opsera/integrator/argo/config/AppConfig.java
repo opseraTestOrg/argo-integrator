@@ -19,6 +19,9 @@ public class AppConfig {
     @Value("${pipeline.config.baseurl}")
     private String pipelineConfigBaseUrl;
 
+    @Value("${argo.defaultUrl}")
+    private String argoDefaultUrl;
+
     @Value("${vault.config.baseurl}")
     private String vaultBaseUrl;
 
