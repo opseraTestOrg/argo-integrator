@@ -22,6 +22,8 @@ pipeline:
 vault:
   config:
     baseurl: http://microservices-dev.opsera.io:9091/api/vault
+argo:
+  defaultUrl: https://ivt-argo.opsera.io/
 eureka:
   client:
     serviceUrl:
@@ -37,6 +39,8 @@ pipeline:
 vault:
   config:
     baseurl: http://10.0.3.253:9091/api/vault
+argo:
+  defaultUrl: https://ivt-argo.opsera.io/
 eureka:
   client:
     serviceUrl:
@@ -52,6 +56,8 @@ pipeline:
 vault:
   config:
     baseurl: http://10.0.2.4:9091/api/vault
+argo:
+  defaultUrl: https://ivt-argo.opsera.io/
 eureka:
   client:
     serviceUrl:
