@@ -1,7 +1,7 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_APPLICATION_URL_TEMPLATE;
-import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_URL;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
@@ -38,9 +38,9 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationItem getArgoApplication(String applicationName, String username, String password) {
-        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(username, password);
-        String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, applicationName);
+    public ArgoApplicationItem getArgoApplication(String applicationName, String baseUrl, String username, String password){
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
         return serviceFactory.getResponseParser().extractArgoApplicationItem(response.getBody());
     }
@@ -52,9 +52,10 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationsList getAllArgoApplications(String username, String password) {
-        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(username, password);
-        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(ARGO_APPLICATION_URL, HttpMethod.GET, requestEntity, String.class);
+    public ArgoApplicationsList getAllArgoApplications(String baseUrl, String username, String password){
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ARGO_APPLICATION_URL_TEMPLATE, baseUrl);
+        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
         return serviceFactory.getResponseParser().extractArgoApplicationsList(response.getBody());
     }
 
@@ -66,9 +67,9 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationItem syncApplication(String applicationName, String username, String password) {
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, username, password);
-        String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, applicationName);
+    public ArgoApplicationItem syncApplication(String applicationName, String baseUrl, String username, String password){
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
+        String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationItem.class);
         return response.getBody();
     }
@@ -81,9 +82,10 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    private ArgoSessionToken getSessionToken(String username, String password) {
+    private ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
         ArgoSessionRequest request = new ArgoSessionRequest(username, password);
-        return serviceFactory.getRestTemplate().postForObject(ARGO_SESSION_TOKEN_URL, request, ArgoSessionToken.class);
+        String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
+        return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
     }
 
     /**
@@ -94,8 +96,8 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    private HttpEntity<HttpHeaders> getRequestEntity(String username, String password) {
-        ArgoSessionToken sessionToken = getSessionToken(username, password);
+    private HttpEntity<HttpHeaders> getRequestEntity(String baseUrl, String username, String password) {
+        ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         requestHeaders.setBearerAuth(sessionToken.getToken());
@@ -111,8 +113,8 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    private HttpEntity<String> getRequestEntityWithBody(String requestBody, String username, String password) {
-        ArgoSessionToken sessionToken = getSessionToken(username, password);
+    private HttpEntity<String> getRequestEntityWithBody(String requestBody, String baseUrl, String username, String password) {
+        ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         requestHeaders.setBearerAuth(sessionToken.getToken());
