@@ -2,6 +2,7 @@ package com.opsera.integrator.argo.services;
 
 import java.lang.reflect.Type;
 
+import com.opsera.integrator.argo.resources.ArgoClusterList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -65,6 +66,18 @@ public class ResponseParser {
      */
     public ArgoApplicationsList extractArgoApplicationsList(String response) {
         Type type = new TypeToken<ArgoApplicationsList>() {
+        }.getType();
+        return serviceFactory.gson().fromJson(response, type);
+    }
+
+    /**
+     * extractArgoClustersList
+     *
+     * @param response
+     * @return
+     */
+    public ArgoClusterList extractArgoClustersList(String response) {
+        Type type = new TypeToken<ArgoClusterList>() {
         }.getType();
         return serviceFactory.gson().fromJson(response, type);
     }
