@@ -1,5 +1,6 @@
 package com.opsera.integrator.argo.config;
 
+import com.opsera.integrator.argo.services.RequestBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
@@ -32,5 +33,7 @@ public interface IServiceFactory {
     public StopWatch stopWatch();
 
     public RestTemplate getRestTemplate();
+
+    public RequestBuilder getRequestBuilder();
 
 }

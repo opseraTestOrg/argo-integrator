@@ -9,7 +9,10 @@ public class Constants {
     public static final String ARGO_SESSION_TOKEN_URL = "%s/api/v1/session";
     public static final String ALL_ARGO_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications/%s";
     public static final String ARGO_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
+    public static final String ARGO_ALL_CLUSTER_URL_TEMPLATE = "%s/api/v1/clusters";
+    public static final String ARGO_ALL_PROJECT_URL_TEMPLATE = "%s/api/v1/projects";
     public static final String ARGO_SYNC_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications/%s/sync";
+    public static final String ARGO_CREATE_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
     public static final String TOOL_REGISTRY_ENDPOINT = "/registry/tool";
     public static final String VAULT_READ_ENDPOINT = "/read";

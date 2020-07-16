@@ -9,4 +9,8 @@ public class ArgoApplicationSpec {
 
     private String project;
 
+    private ArgoApplicationSource source;
+
+    private ArgoApplicationDestination destination;
+
 }
