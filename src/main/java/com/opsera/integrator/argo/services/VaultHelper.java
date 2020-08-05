@@ -45,7 +45,6 @@ public class VaultHelper {
         VaultRequest request = VaultRequest.builder().customerId(customerId).componentKeys(Collections.singletonList(vaultKey)).build();
 
         VaultData response = restTemplate.postForObject(readURL, request, VaultData.class);
-        LOGGER.info("Response from Vault: {}, for request: {}", response, request);
 
         Optional<VaultData> vaultData = Optional.ofNullable(response);
         if (vaultData.isPresent()) {
