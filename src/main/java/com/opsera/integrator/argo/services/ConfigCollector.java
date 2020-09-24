@@ -1,6 +1,7 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.PIPELINE_TABLE_ENDPOINT;
+import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_CUSTOMERID;
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_TOOLID;
 import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPOINT;
 
@@ -42,9 +43,6 @@ public class ConfigCollector {
         String toolsConfigURL = appConfig.getPipelineConfigBaseUrl() + PIPELINE_TABLE_ENDPOINT;
         String response = restTemplate.postForObject(toolsConfigURL, opseraPipelineMetadata, String.class);
         ArgoToolConfig argoToolConfig = serviceFactory.getResponseParser().extractArgoToolConfig(response);
-        if (argoToolConfig.getToolURL() == null) {
-            argoToolConfig.setToolURL(appConfig.getArgoDefaultUrl());
-        }
         return  argoToolConfig;
     }
 
@@ -54,14 +52,12 @@ public class ConfigCollector {
      * @param argoToolId
      * @return
      */
-    public ArgoToolDetails getArgoDetails(String argoToolId) {
+    public ArgoToolDetails getArgoDetails(String argoToolId, String customerId) {
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, argoToolId);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT)
+                .queryParam(QUERY_PARM_TOOLID, argoToolId).queryParam(QUERY_PARM_CUSTOMERID, customerId);
         String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
         ArgoToolDetails argoToolDetails = serviceFactory.getResponseParser().extractArgoToolDetails(response);
-        if (argoToolDetails.getConfiguration().getToolURL() == null) {
-            argoToolDetails.getConfiguration().setToolURL(appConfig.getArgoDefaultUrl());
-        }
         return  argoToolDetails;
     }
 }

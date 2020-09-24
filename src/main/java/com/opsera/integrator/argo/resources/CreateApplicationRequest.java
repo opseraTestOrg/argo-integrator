@@ -7,6 +7,8 @@ public class CreateApplicationRequest {
 
     private String toolId;
 
+    private String customerId;
+
     private String applicationName;
 
     private String projectName;

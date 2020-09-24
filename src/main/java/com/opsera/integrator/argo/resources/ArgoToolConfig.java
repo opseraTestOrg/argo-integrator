@@ -13,6 +13,6 @@ public class ArgoToolConfig {
 
     private String applicationName;
 
-    private String vaultSecretKey;
+    private AccountPassword accountPassword;
 
 }

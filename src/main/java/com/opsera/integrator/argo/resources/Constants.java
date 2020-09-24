@@ -14,10 +14,11 @@ public class Constants {
     public static final String ARGO_SYNC_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications/%s/sync";
     public static final String ARGO_CREATE_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
-    public static final String TOOL_REGISTRY_ENDPOINT = "/registry/tool";
+    public static final String TOOL_REGISTRY_ENDPOINT = "/v2/registry/tool";
     public static final String VAULT_READ_ENDPOINT = "/read";
     public static final String HTTP_EMPTY_BODY = "{}";
     public static final String HTTP_HEADER_ACCEPT = "Accept";
     public static final String QUERY_PARM_TOOLID = "toolId";
+    public static final String QUERY_PARM_CUSTOMERID = "customerId";
     
 }
