@@ -50,11 +50,12 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/applications")
     @ApiOperation("To get all the argo applications for the given argo domain")
-    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId) {
+    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId,
+                                                              @RequestParam String customerId) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getAllArgoApplications for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllApplications(argoToolId);
+            return serviceFactory.getArgoOrchestrator().getAllApplications(argoToolId, customerId);
         } finally {
             LOGGER.info("Completed getAllArgoApplications, time taken to execute {} secs", System.currentTimeMillis() - startTime);
         }
@@ -68,11 +69,13 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/application")
     @ApiOperation("To get detailed information about an argo application")
-    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId, @RequestParam String applicationName) {
+    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId,
+                                                  @RequestParam String customerId,
+                                                  @RequestParam String applicationName) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
-            return serviceFactory.getArgoOrchestrator().getApplication(argoToolId, applicationName);
+            return serviceFactory.getArgoOrchestrator().getApplication(argoToolId, customerId, applicationName);
         } finally {
             LOGGER.info("Completed getArgoApplication, time taken to execute {} secs", System.currentTimeMillis() - startTime);
         }
@@ -104,11 +107,12 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To get all the argo applications for the given argo domain")
-    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId) {
+    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId,
+                                              @RequestParam String customerId) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getAllArgoClusters for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllClusters(argoToolId);
+            return serviceFactory.getArgoOrchestrator().getAllClusters(argoToolId, customerId);
         } finally {
             LOGGER.info("Completed getAllArgoClusters, time taken to execute {} secs", System.currentTimeMillis() - startTime);
         }
@@ -122,11 +126,12 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/projects")
     @ApiOperation("To get all the argo projects for the given argo domain")
-    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId) {
+    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId,
+                                                          @RequestParam String customerId) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getAllArgoProjects for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllProjects(argoToolId);
+            return serviceFactory.getArgoOrchestrator().getAllProjects(argoToolId, customerId);
         } finally {
             LOGGER.info("Completed getAllArgoProjects, time taken to execute {} secs", System.currentTimeMillis() - startTime);
         }

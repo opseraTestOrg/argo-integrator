@@ -1,6 +1,7 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.PIPELINE_TABLE_ENDPOINT;
+import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_CUSTOMERID;
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_TOOLID;
 import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPOINT;
 
@@ -51,9 +52,10 @@ public class ConfigCollector {
      * @param argoToolId
      * @return
      */
-    public ArgoToolDetails getArgoDetails(String argoToolId) {
+    public ArgoToolDetails getArgoDetails(String argoToolId, String customerId) {
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, argoToolId);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT)
+                .queryParam(QUERY_PARM_TOOLID, argoToolId).queryParam(QUERY_PARM_CUSTOMERID, customerId);
         String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
         ArgoToolDetails argoToolDetails = serviceFactory.getResponseParser().extractArgoToolDetails(response);
         return  argoToolDetails;
