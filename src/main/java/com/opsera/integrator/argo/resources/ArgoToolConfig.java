@@ -9,6 +9,8 @@ public class ArgoToolConfig {
 
     private String toolURL;
 
+    private String toolConfigId;
+
     private String userName;
 
     private String applicationName;

@@ -89,10 +89,11 @@ public class ArgoOrchestrator {
      */
     public ArgoApplicationOperation syncApplication(OpseraPipelineMetadata pipelineMetadata) {
         ArgoToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
-        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(pipelineMetadata.getCustomerId(), argoToolConfig.getAccountPassword().getVaultKey());
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(pipelineMetadata.getCustomerId(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         ArgoApplicationItem applicationItem = serviceFactory.getArgoHelper().syncApplication(
-                argoToolConfig.getApplicationName(), argoToolConfig.getToolURL(),
-                argoToolConfig.getUserName(), argoPassword);
+                argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration().getToolURL(),
+                argoToolDetails.getConfiguration().getUserName(), argoPassword);
         return applicationItem.getOperation();
     }
 
