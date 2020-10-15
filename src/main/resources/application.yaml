@@ -1,6 +1,6 @@
-logging:
-  file: argoIntegrator
-  path: /apps/OpsERA/logs/components/argo-integrator
+#logging:
+#  file: argoIntegrator
+#  path: /apps/OpsERA/logs/components/argo-integrator
 server:
   port: 9096
 spring:
