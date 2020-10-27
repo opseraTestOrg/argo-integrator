@@ -1,8 +1,5 @@
 package com.opsera.integrator.argo.exceptions;
 
-import com.opsera.integrator.argo.controller.ArgoController;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +16,6 @@ import com.opsera.integrator.argo.config.IServiceFactory;
  */
 public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(ArgoExceptionHandler.class);
-
     @Autowired
     private IServiceFactory factory;
 
@@ -32,7 +27,7 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(InternalServiceException.class)
     protected ResponseEntity<Object> handleRecordNotFound(InternalServiceException ex) {
-        LOGGER.error("InternalServiceException", ex);
+        logger.error("InternalServiceException", ex);
         ArgoErrorResponse sonarQubeErrorResponse = new ArgoErrorResponse();
         sonarQubeErrorResponse.setMessage(ex.getMessage());
         sonarQubeErrorResponse.setStatus(HttpStatus.NOT_FOUND.name());
@@ -48,7 +43,7 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(HttpServerErrorException.class)
     protected ResponseEntity<Object> handleHttpServerErrorException(HttpServerErrorException ex) {
-        LOGGER.error("HttpServerErrorException", ex);
+        logger.error("HttpServerErrorException", ex);
         String response = ex.getResponseBodyAsString();
         Gson gson = factory.gson();
         ArgoErrorResponse sonarQubeErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);
@@ -64,7 +59,7 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(HttpClientErrorException.class)
     protected ResponseEntity<Object> handleHttpClientErrorException(HttpClientErrorException ex) {
-        LOGGER.error("HttpClientErrorException", ex);
+        logger.error("HttpClientErrorException", ex);
         String response = ex.getResponseBodyAsString();
         Gson gson = factory.gson();
         ArgoErrorResponse sonarQubeErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);

@@ -1,5 +1,9 @@
 package com.opsera.integrator.argo.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
@@ -10,11 +14,6 @@ import com.opsera.integrator.argo.resources.ArgoToolConfig;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-
-import static com.opsera.integrator.argo.resources.Constants.ARGO_VAULT_KEY_TEMPLATE;
 
 /**
  * Class that orchestrates different classes within the service to provide the
