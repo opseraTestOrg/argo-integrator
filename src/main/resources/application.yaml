@@ -1,6 +1,6 @@
-#logging:
-#  file: argoIntegrator
-#  path: /apps/OpsERA/logs/components/argo-integrator
+logging:
+  file: argoIntegrator
+  path: /apps/OpsERA/logs/components/argo-integrator
 server:
   port: 9096
 spring:
@@ -62,3 +62,21 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://10.0.2.4:8761/eureka/
+      
+---
+
+spring:
+  profiles: freetrial
+pipeline:
+  config:
+    baseurl: http://10.0.2.164:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://10.0.2.164:9091/api/vault
+argo:
+  defaultUrl: https://ivt-argo.opsera.io/
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://10.0.2.164:8761/eureka/
+
