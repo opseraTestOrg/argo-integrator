@@ -23,6 +23,7 @@ public class RequestBuilder {
         ArgoApplicationDestination destination = new ArgoApplicationDestination();
         source.setRepoURL(request.getGitUrl());
         source.setPath(request.getGitPath());
+        source.setTargetRevision(request.getBranchName());
         destination.setNamespace(request.getNamespace());
         destination.setServer(request.getCluster());
         spec.setSource(source);

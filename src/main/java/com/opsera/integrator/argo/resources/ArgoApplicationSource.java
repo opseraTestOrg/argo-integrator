@@ -7,6 +7,8 @@ public class ArgoApplicationSource {
 
     private String repoURL;
 
+    private String targetRevision;
+
     private String path;
 
 }

@@ -13,6 +13,8 @@ public class ArgoToolConfig {
 
     private String userName;
 
+    private String owner;
+
     private String applicationName;
 
     private AccountPassword accountPassword;
