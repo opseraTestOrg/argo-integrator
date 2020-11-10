@@ -15,6 +15,8 @@ public class CreateApplicationRequest {
 
     private String cluster;
 
+    private String branchName;
+
     private String namespace;
 
     private String gitUrl;

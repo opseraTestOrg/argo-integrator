@@ -2,7 +2,7 @@
 
 <configuration>
 
-<!--    <springProperty name="LOG_PATH" source="logging.path" defaultValue="/apps/OpsERA/logs/components/argo-integrator" />-->
+    <springProperty name="LOG_PATH" source="logging.path" defaultValue="/apps/OpsERA/logs/components/argo-integrator" />
     <springProperty name="LOG_FILE" source="logging.file" defaultValue="argoIntegrator" />
 
 
