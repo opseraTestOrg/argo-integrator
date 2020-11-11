@@ -44,7 +44,7 @@ argo:
 eureka:
   client:
     serviceUrl:
-      defaultZone: https://microservice.internal.opsera.io:8761/eureka/
+      defaultZone: http://microservice.internal.opsera.io:8761/eureka/
 
 ---
 
@@ -61,7 +61,7 @@ argo:
 eureka:
   client:
     serviceUrl:
-      defaultZone: https://microservice.internal.opsera.io:8761/eureka/
+      defaultZone: http://microservice.internal.opsera.io:8761/eureka/
       
 ---
 
@@ -78,5 +78,5 @@ argo:
 eureka:
   client:
     serviceUrl:
-      defaultZone: https://freetrial-microservice.opsera.io:8761/eureka/
+      defaultZone: http://freetrial-microservice.opsera.io:8761/eureka/
 
