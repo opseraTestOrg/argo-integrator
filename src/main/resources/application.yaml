@@ -35,16 +35,16 @@ spring:
   profiles: test
 pipeline:
   config:
-    baseurl: http://10.0.3.253:9091/api/pipeline
+    baseurl: https://microservice.internal.opsera.io/api/pipeline
 vault:
   config:
-    baseurl: http://10.0.3.253:9091/api/vault
+    baseurl: https://microservice.internal.opsera.io/api/vault
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://10.0.3.253:8761/eureka/
+      defaultZone: http://microservice.internal.opsera.io:8761/eureka/
 
 ---
 
@@ -52,16 +52,16 @@ spring:
   profiles: prod
 pipeline:
   config:
-    baseurl: http://10.0.2.4:9091/api/pipeline
+    baseurl: https://microservice.internal.opsera.io/api/pipeline
 vault:
   config:
-    baseurl: http://10.0.2.4:9091/api/vault
+    baseurl: https://microservice.internal.opsera.io/api/vault
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://10.0.2.4:8761/eureka/
+      defaultZone: http://microservice.internal.opsera.io:8761/eureka/
       
 ---
 
@@ -69,14 +69,14 @@ spring:
   profiles: freetrial
 pipeline:
   config:
-    baseurl: http://10.0.2.164:9091/api/pipeline
+    baseurl: https://freetrial-microservice.opsera.io/api/pipeline
 vault:
   config:
-    baseurl: http://10.0.2.164:9091/api/vault
+    baseurl: https://freetrial-microservice.opsera.io/api/vault
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://10.0.2.164:8761/eureka/
+      defaultZone: http://freetrial-microservice.opsera.io:8761/eureka/
 
