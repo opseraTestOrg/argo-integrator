@@ -110,4 +110,19 @@ public class ArgoOrchestrator {
                 argoApplication, argoToolDetails.getConfiguration().getToolURL(),
                 argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
+
+    /**
+     * get all argo applications
+     * 
+     * @param argoToolId
+     * @return
+     */
+    public void validate(String customerId, String argoToolId) {
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoApplications(argoToolDetails.getConfiguration().getToolURL(),
+                argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        serviceFactory.getObjectTranslator().translateToArgoApplicationMetadataList(argoApplicationsList);
+    }
+
 }

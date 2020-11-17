@@ -1,5 +1,22 @@
 package com.opsera.integrator.argo.controller;
 
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
+
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
@@ -7,17 +24,10 @@ import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.ValidationResponse;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controller
@@ -50,8 +60,7 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/applications")
     @ApiOperation("To get all the argo applications for the given argo domain")
-    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId,
-                                                              @RequestParam String customerId) {
+    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId, @RequestParam String customerId) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getAllArgoApplications for argoId: {}", argoToolId);
@@ -69,9 +78,7 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/application")
     @ApiOperation("To get detailed information about an argo application")
-    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId,
-                                                  @RequestParam String customerId,
-                                                  @RequestParam String applicationName) {
+    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
@@ -107,8 +114,7 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To get all the argo applications for the given argo domain")
-    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId,
-                                              @RequestParam String customerId) {
+    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId, @RequestParam String customerId) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getAllArgoClusters for argoId: {}", argoToolId);
@@ -126,8 +132,7 @@ public class ArgoController {
      */
     @GetMapping(path = "v1.0/argo/projects")
     @ApiOperation("To get all the argo projects for the given argo domain")
-    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId,
-                                                          @RequestParam String customerId) {
+    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId, @RequestParam String customerId) {
         Long startTime = System.currentTimeMillis();
         try {
             LOGGER.info("Received getAllArgoProjects for argoId: {}", argoToolId);
@@ -152,6 +157,49 @@ public class ArgoController {
             return serviceFactory.getArgoOrchestrator().createApplication(request);
         } finally {
             LOGGER.info("Completed createArgoApplication, time taken to execute {} secs", System.currentTimeMillis() - startTime);
+        }
+    }
+
+    /**
+     * To validate the tools input
+     * 
+     * @param customerId
+     * @param toolId
+     * @return
+     * @throws IOException
+     * @throws Exception
+     */
+    @GetMapping("/validate")
+    @ApiOperation("To Validate the user given details")
+    public ResponseEntity<ValidationResponse> validate(@RequestParam(value = "customerId") String customerId, @RequestParam(value = "toolId") String toolId) {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Starting to validate user details customerId {} and toolId {}", customerId, toolId);
+            serviceFactory.getArgoOrchestrator().validate(customerId, toolId);
+            LOGGER.info("Ending to validate user details customerId {} and toolId {}", customerId, toolId);
+            return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.OK.toString()).message("Connection was successful").build(), HttpStatus.OK);
+        } catch (HttpServerErrorException | HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                String message = "Given UserName/Password is invalid";
+                return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.UNAUTHORIZED.toString()).message(message).build(), HttpStatus.UNAUTHORIZED);
+            }
+            return new ResponseEntity<>(ValidationResponse.builder().status(e.getStatusCode().toString()).message(e.getStatusText()).build(), e.getStatusCode());
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("URI is not absolute")) {
+                String message = "Given Url is invalid";
+                return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.BAD_REQUEST.toString()).message(message).build(), HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.BAD_REQUEST.toString()).message(e.getMessage()).build(), HttpStatus.BAD_REQUEST);
+        } catch (RestClientException e) {
+            if (e.getCause().toString().contains("java.net.UnknownHostException:")) {
+                String message = "Given domain " + e.getCause().toString().substring("java.net.UnknownHostException: ".length(), e.getCause().toString().length()) + " is invalid";
+                return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.BAD_REQUEST.toString()).message(message).build(), HttpStatus.BAD_REQUEST);
+            }
+            return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.BAD_REQUEST.toString()).message(e.getCause().toString()).build(), HttpStatus.BAD_REQUEST);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed to validate the tool connection in {} secs time to execute", stopwatch.getTotalTimeSeconds());
         }
     }
 
