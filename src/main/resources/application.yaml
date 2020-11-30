@@ -80,3 +80,19 @@ eureka:
     serviceUrl:
       defaultZone: https://freetrial-microservice.opsera.io:8761/eureka/
 
+---
+
+spring:
+  profiles: kubernetes
+pipeline:
+  config:
+    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/pipeline
+vault:
+  config:
+    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/vault
+argo:
+  defaultUrl: https://ivt-argo.opsera.io/
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://opsera-service-discovery.microservices.svc.cluster.local:8761/eureka/
