@@ -34,8 +34,8 @@ public class ArgoOrchestrator {
     public ArgoApplicationMetadataList getAllApplications(String argoToolId, String customerId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoApplications(
-                argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoApplications(argoToolDetails.getConfiguration().getToolURL(),
+                argoToolDetails.getConfiguration().getUserName(), argoPassword);
         return serviceFactory.getObjectTranslator().translateToArgoApplicationMetadataList(argoApplicationsList);
     }
 
@@ -48,8 +48,7 @@ public class ArgoOrchestrator {
     public ArgoClusterList getAllClusters(String argoToolId, String customerId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        return serviceFactory.getArgoHelper().getAllArgoClusters(
-                argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        return serviceFactory.getArgoHelper().getAllArgoClusters(argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
     /**
@@ -61,8 +60,8 @@ public class ArgoOrchestrator {
     public ArgoApplicationMetadataList getAllProjects(String argoToolId, String customerId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoProjects(
-                argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoProjects(argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(),
+                argoPassword);
         return serviceFactory.getObjectTranslator().translateToArgoApplicationMetadataList(argoApplicationsList);
     }
 
@@ -76,8 +75,7 @@ public class ArgoOrchestrator {
     public ArgoApplicationItem getApplication(String argoToolId, String customerId, String applicationName) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        return serviceFactory.getArgoHelper().getArgoApplication(applicationName,
-                argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        return serviceFactory.getArgoHelper().getArgoApplication(applicationName, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
     /**
@@ -90,8 +88,7 @@ public class ArgoOrchestrator {
         ArgoToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        ArgoApplicationItem applicationItem = serviceFactory.getArgoHelper().syncApplication(
-                argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration().getToolURL(),
+        ArgoApplicationItem applicationItem = serviceFactory.getArgoHelper().syncApplication(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration().getToolURL(),
                 argoToolDetails.getConfiguration().getUserName(), argoPassword);
         return applicationItem.getOperation();
     }
@@ -106,9 +103,7 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         ArgoApplicationItem argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
-        return serviceFactory.getArgoHelper().createApplication(
-                argoApplication, argoToolDetails.getConfiguration().getToolURL(),
-                argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        return serviceFactory.getArgoHelper().createApplication(argoApplication, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
     /**
@@ -120,9 +115,7 @@ public class ArgoOrchestrator {
     public void validate(String customerId, String argoToolId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoApplications(argoToolDetails.getConfiguration().getToolURL(),
-                argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        serviceFactory.getObjectTranslator().translateToArgoApplicationMetadataList(argoApplicationsList);
+        serviceFactory.getArgoHelper().getAllArgoApplications(argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
 }
