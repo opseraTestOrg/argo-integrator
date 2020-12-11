@@ -10,7 +10,7 @@ docker run --rm \
 
 date_tag=`date +%-d-%m-%Y-%T | sed 's/:/-/g'`
 docker tag opsera-argo-integrator:kube-dev 440953937617.dkr.ecr.us-east-2.amazonaws.com/argo-integrator:kube-dev
-docker tag opsera-argo-integrator:kube-dev 440953937617.dkr.ecr.us-east-2.amazonaws.com/argo-integrator:kube-dev-${date_tag}
+docker tag opsera-argo-integratorr:kube-dev 440953937617.dkr.ecr.us-east-2.amazonaws.com/argo-integrator:kube-dev-${date_tag}
 
 docker push 440953937617.dkr.ecr.us-east-2.amazonaws.com/argo-integrator:kube-dev
 docker push 440953937617.dkr.ecr.us-east-2.amazonaws.com/argo-integrator:kube-dev-${date_tag}
