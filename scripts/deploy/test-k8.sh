@@ -21,12 +21,12 @@ docker run --rm --network host \
         440953937617.dkr.ecr.us-east-2.amazonaws.com/kubectl \
         aws --profile opsera-test eks update-kubeconfig --name ${clusername}
 
-docker run --rm --name kubectl \
+docker run --rm   \
         -v ${PWD}/.tmp/kube-vol:/root/.kube \
         440953937617.dkr.ecr.us-east-2.amazonaws.com/kubectl:latest \
         kubectl delete pods -n microservices -l app.kubernetes.io/name=${servicename}
 
-docker run --rm --name kubectl \
+docker run --rm   \
         -v ${PWD}/.tmp/kube-vol:/root/.kube \
         440953937617.dkr.ecr.us-east-2.amazonaws.com/kubectl:latest \
         kubectl get pod -n microservices -l app.kubernetes.io/name=${servicename}
