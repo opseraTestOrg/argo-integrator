@@ -16,7 +16,6 @@ public class RequestBuilder {
 
         ArgoApplicationMetadata metadata = new ArgoApplicationMetadata();
         metadata.setName(request.getApplicationName());
-        metadata.setNamespace(request.getNamespace());
 
         ArgoApplicationSpec spec = new ArgoApplicationSpec();
         ArgoApplicationSource source = new ArgoApplicationSource();
