@@ -216,13 +216,13 @@ public class ArgoController {
      * @throws ResourcesNotAvailable
      */
     @GetMapping(path = "v1.0/generateNewToken")
-    @ApiOperation("Gets anchore password ")
+    @ApiOperation("Gets argocd password ")
     public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
-            LOGGER.info("Starting the generateNewToken a Jenkins");
-            LOGGER.info("Received generateNewToken a Anchore request customerId {} and url {}", customerId, toolId);
+            LOGGER.info("Starting the generateNewToken a argocd");
+            LOGGER.info("Received generateNewToken a argocd request customerId {} and url {}", customerId, toolId);
             String token = serviceFactory.getArgoOrchestrator().generateNewToken(customerId, toolId);
             LOGGER.info("Successfully generate new token for customerId {} and toolId {}", customerId, toolId);
             return new ResponseEntity<>(token, HttpStatus.OK);
