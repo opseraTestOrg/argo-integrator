@@ -52,8 +52,7 @@ public class ConfigCollector {
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
         String toolsConfigURL = appConfig.getPipelineConfigBaseUrl() + PIPELINE_TABLE_ENDPOINT;
         String response = restTemplate.postForObject(toolsConfigURL, opseraPipelineMetadata, String.class);
-        ArgoToolConfig argoToolConfig = serviceFactory.getResponseParser().extractArgoToolConfig(response);
-        return argoToolConfig;
+        return serviceFactory.getResponseParser().extractArgoToolConfig(response);
     }
 
     /**
@@ -67,8 +66,7 @@ public class ConfigCollector {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, argoToolId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
         String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
-        ArgoToolDetails argoToolDetails = serviceFactory.getResponseParser().extractArgoToolDetails(response);
-        return argoToolDetails;
+        return serviceFactory.getResponseParser().extractArgoToolDetails(response);
     }
 
     /**
