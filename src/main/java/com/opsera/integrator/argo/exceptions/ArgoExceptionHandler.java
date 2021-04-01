@@ -65,4 +65,20 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
         ArgoErrorResponse sonarQubeErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);
         return new ResponseEntity<>(sonarQubeErrorResponse, ex.getStatusCode());
     }
+
+    /**
+     * 
+     * Custom exception handler for record not found
+     * 
+     * @param ex
+     * @return
+     */
+    @ExceptionHandler(ResourcesNotAvailable.class)
+    protected ResponseEntity<Object> handleRecordNotFound(ResourcesNotAvailable ex) {
+        logger.error("resource not found  is ", ex);
+        ArgoErrorResponse argoErrorResponse = new ArgoErrorResponse();
+        argoErrorResponse.setMessage(ex.getMessage());
+        argoErrorResponse.setStatus(HttpStatus.NOT_FOUND.name());
+        return new ResponseEntity<>(argoErrorResponse, HttpStatus.NOT_FOUND);
+    }
 }
