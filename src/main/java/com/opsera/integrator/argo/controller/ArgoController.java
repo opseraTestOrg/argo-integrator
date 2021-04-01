@@ -1,6 +1,7 @@
 package com.opsera.integrator.argo.controller;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
@@ -201,6 +203,34 @@ public class ArgoController {
             stopwatch.stop();
             LOGGER.info("Completed to validate the tool connection in {} secs time to execute", stopwatch.getTotalTimeSeconds());
         }
+    }
+
+    /**
+     * Endpoint for generate new token
+     * 
+     * 
+     * @param request
+     * @return
+     * @throws IOException
+     * @throws URISyntaxException
+     * @throws ResourcesNotAvailable
+     */
+    @GetMapping(path = "v1.0/generateNewToken")
+    @ApiOperation("Gets anchore password ")
+    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Starting the generateNewToken a Jenkins");
+            LOGGER.info("Received generateNewToken a Anchore request customerId {} and url {}", customerId, toolId);
+            String token = serviceFactory.getArgoOrchestrator().generateNewToken(customerId, toolId);
+            LOGGER.info("Successfully generate new token for customerId {} and toolId {}", customerId, toolId);
+            return new ResponseEntity<>(token, HttpStatus.OK);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Generate the tokens {} secs time to execute", stopwatch.getTotalTimeSeconds());
+        }
+
     }
 
 }
