@@ -20,5 +20,6 @@ public class Constants {
     public static final String HTTP_HEADER_ACCEPT = "Accept";
     public static final String QUERY_PARM_TOOLID = "toolId";
     public static final String QUERY_PARM_CUSTOMERID = "customerId";
+    public static final String GET_TOOL_DETAILS = "/tooldetails/%s/%s";
     
 }

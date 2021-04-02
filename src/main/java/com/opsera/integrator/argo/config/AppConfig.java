@@ -25,6 +25,9 @@ public class AppConfig {
     @Value("${vault.config.baseurl}")
     private String vaultBaseUrl;
 
+    @Value("${customer.config.baseurl}")
+    private String customerBaseUrl;
+
     /**
      * Factory Bean Creation
      * 

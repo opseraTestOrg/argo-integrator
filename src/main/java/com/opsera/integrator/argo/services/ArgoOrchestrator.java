@@ -1,10 +1,13 @@
 package com.opsera.integrator.argo.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
@@ -14,6 +17,7 @@ import com.opsera.integrator.argo.resources.ArgoToolConfig;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.ToolDetails;
 
 /**
  * Class that orchestrates different classes within the service to provide the
@@ -21,6 +25,8 @@ import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
  */
 @Component
 public class ArgoOrchestrator {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(ArgoOrchestrator.class);
 
     @Autowired
     private IServiceFactory serviceFactory;
@@ -116,6 +122,20 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         serviceFactory.getArgoHelper().getAllArgoApplications(argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+    }
+
+    /**
+     * Method used to generate the token
+     * 
+     * @param customerId
+     * @param toolId
+     * @return
+     * @throws ResourcesNotAvailable
+     */
+    public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable {
+        LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
+        ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
+        return details.getPassword();
     }
 
 }
