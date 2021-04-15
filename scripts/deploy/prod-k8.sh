@@ -24,7 +24,7 @@ docker run --rm --network host \
 docker run --rm   \
         -v ${PWD}/.tmp/kube-vol:/root/.kube \
         440953937617.dkr.ecr.us-east-2.amazonaws.com/kubectl:latest \
-        kubectl delete pods -n microservices -l app.kubernetes.io/name=${servicename}
+        kubectl -n microservices rollout restart deployment ${servicename}
 
 docker run --rm   \
         -v ${PWD}/.tmp/kube-vol:/root/.kube \
