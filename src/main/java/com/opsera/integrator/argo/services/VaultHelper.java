@@ -39,10 +39,13 @@ public class VaultHelper {
      * @param vaultKey
      * @return
      */
-    public String getArgoPassword(String customerId, String vaultKey) {
+    public String getArgoPassword(String customerId, String vaultKey, String vaultId) {
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
         String readURL = appConfig.getVaultBaseUrl() + VAULT_READ_ENDPOINT;
-        VaultRequest request = VaultRequest.builder().customerId(customerId).componentKeys(Collections.singletonList(vaultKey)).build();
+        VaultRequest request = VaultRequest.builder()
+                .customerId(customerId)
+                .vaultId(vaultId)
+                .componentKeys(Collections.singletonList(vaultKey)).build();
 
         VaultData response = restTemplate.postForObject(readURL, request, VaultData.class);
 

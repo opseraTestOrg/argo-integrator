@@ -15,6 +15,8 @@ public class ArgoToolDetails {
 
     private String owner;
 
+    private String vault;
+
     private String[] type;
 
     private String[] tags;
