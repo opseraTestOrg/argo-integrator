@@ -1,12 +1,13 @@
 package com.opsera.integrator.argo.services;
 
+import org.springframework.stereotype.Service;
+
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
-import org.springframework.stereotype.Service;
 
 @Service
 public class RequestBuilder {
@@ -18,6 +19,7 @@ public class RequestBuilder {
         metadata.setName(request.getApplicationName());
 
         ArgoApplicationSpec spec = new ArgoApplicationSpec();
+        spec.setProject(request.getProjectName());
         ArgoApplicationSource source = new ArgoApplicationSource();
         ArgoApplicationDestination destination = new ArgoApplicationDestination();
         source.setRepoURL(request.getGitUrl());
