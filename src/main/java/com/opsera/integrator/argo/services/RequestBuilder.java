@@ -1,17 +1,18 @@
 package com.opsera.integrator.argo.services;
 
+import org.springframework.stereotype.Service;
+
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
-import org.springframework.stereotype.Service;
 
 @Service
 public class RequestBuilder {
 
-    public ArgoApplicationItem createApplicationRequest(CreateApplicationRequest request){
+    public ArgoApplicationItem createApplicationRequest(CreateApplicationRequest request) {
         ArgoApplicationItem argoApplication = new ArgoApplicationItem();
 
         ArgoApplicationMetadata metadata = new ArgoApplicationMetadata();
