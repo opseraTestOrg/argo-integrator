@@ -106,10 +106,18 @@ public class ArgoOrchestrator {
      * @return
      */
     public ResponseEntity<String> createApplication(CreateApplicationRequest request) {
+        LOGGER.debug("To Starting to create/update the application {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         ArgoApplicationItem argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
-        return serviceFactory.getArgoHelper().createApplication(argoApplication, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        ArgoApplicationItem applicationItem = getApplication(request.getToolId(), request.getCustomerId(), request.getApplicationName());
+        if (null == applicationItem) {
+            return serviceFactory.getArgoHelper().createApplication(argoApplication, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        } else {
+            return serviceFactory.getArgoHelper().updateApplication(argoApplication, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword,
+                    request.getApplicationName());
+
+        }
     }
 
     /**
@@ -136,6 +144,21 @@ public class ArgoOrchestrator {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
         ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
         return details.getPassword();
+    }
+
+    /**
+     * delete the argocd application
+     * 
+     * @param argoToolId
+     * @param applicationName
+     * @return
+     */
+    public void deleteApplication(String argoToolId, String customerId, String applicationName) {
+        LOGGER.debug("To Starting to delete the application {} and customerId {} and toolId {}", applicationName, customerId, argoToolId);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        serviceFactory.getArgoHelper().deleteArgoApplication(applicationName, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        LOGGER.debug("To Completed to delete the application {} and customerId {} and toolId {}", applicationName, customerId, argoToolId);
     }
 
 }
