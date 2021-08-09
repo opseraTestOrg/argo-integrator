@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -231,6 +232,29 @@ public class ArgoController {
             LOGGER.info("Generate the tokens {} secs time to execute", stopwatch.getTotalTimeSeconds());
         }
 
+    }
+
+    /**
+     * To delete the argo application
+     * 
+     * @param argoToolId
+     * @param customerId
+     * @param applicationName
+     * @return
+     */
+    @DeleteMapping(path = "v1.0/argo/application")
+    @ApiOperation("To delete application")
+    public ResponseEntity<String> deleteArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
+            serviceFactory.getArgoOrchestrator().deleteApplication(argoToolId, customerId, applicationName);
+            return new ResponseEntity<>("", HttpStatus.OK);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("To deleted the application and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
+        }
     }
 
 }

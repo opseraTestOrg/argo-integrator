@@ -1,19 +1,5 @@
 package com.opsera.integrator.argo.services;
 
-import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.resources.ArgoApplicationItem;
-import com.opsera.integrator.argo.resources.ArgoApplicationsList;
-import com.opsera.integrator.argo.resources.ArgoClusterList;
-import com.opsera.integrator.argo.resources.ArgoSessionRequest;
-import com.opsera.integrator.argo.resources.ArgoSessionToken;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-
 import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
@@ -24,11 +10,30 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATI
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+
+import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.resources.ArgoApplicationItem;
+import com.opsera.integrator.argo.resources.ArgoApplicationsList;
+import com.opsera.integrator.argo.resources.ArgoClusterList;
+import com.opsera.integrator.argo.resources.ArgoSessionRequest;
+import com.opsera.integrator.argo.resources.ArgoSessionToken;
+
 /**
  * Class handles all the interaction with argo server
  */
 @Component
 public class ArgoHelper {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(ArgoHelper.class);
 
     @Autowired
     private IServiceFactory serviceFactory;
@@ -41,7 +46,7 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationItem getArgoApplication(String applicationName, String baseUrl, String username, String password){
+    public ArgoApplicationItem getArgoApplication(String applicationName, String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -55,7 +60,7 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationsList getAllArgoApplications(String baseUrl, String username, String password){
+    public ArgoApplicationsList getAllArgoApplications(String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ARGO_APPLICATION_URL_TEMPLATE, baseUrl);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -69,7 +74,7 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoClusterList getAllArgoClusters(String baseUrl, String username, String password){
+    public ArgoClusterList getAllArgoClusters(String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ARGO_ALL_CLUSTER_URL_TEMPLATE, baseUrl);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -83,7 +88,7 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationsList getAllArgoProjects(String baseUrl, String username, String password){
+    public ArgoApplicationsList getAllArgoProjects(String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, baseUrl);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -98,7 +103,7 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ArgoApplicationItem syncApplication(String applicationName, String baseUrl, String username, String password){
+    public ArgoApplicationItem syncApplication(String applicationName, String baseUrl, String username, String password) {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
         String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationItem.class);
@@ -113,10 +118,41 @@ public class ArgoHelper {
      * @param password
      * @return
      */
-    public ResponseEntity<String> createApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password){
+    public ResponseEntity<String> createApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password) {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
         String url = String.format(ARGO_CREATE_APPLICATION_URL_TEMPLATE, baseUrl);
         return serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, String.class);
+    }
+
+    /**
+     * update an argo application
+     *
+     * @param argoApplication
+     * @param username
+     * @param password
+     * @return
+     */
+    public ResponseEntity<String> updateApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password, String applicationName) {
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
+        String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
+        return serviceFactory.getRestTemplate().exchange(url, HttpMethod.PUT, requestEntity, String.class);
+    }
+
+    /**
+     * delete the application details
+     * 
+     * @param applicationName
+     * @param
+     * @param username
+     * @param password
+     * @return
+     */
+    public void deleteArgoApplication(String applicationName, String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to delete the application {} and url {} ", applicationName, baseUrl);
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
+        serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, Void.class);
+        LOGGER.debug("To Completed to delete the application {} and url {} ", applicationName, baseUrl);
     }
 
     /**
