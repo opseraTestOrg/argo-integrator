@@ -4,7 +4,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class Constants {
-    
+
     public static final String PIPELINE_TABLE_ENDPOINT = "/tools/configuration";
     public static final String ARGO_SESSION_TOKEN_URL = "%s/api/v1/session";
     public static final String ALL_ARGO_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications/%s";
@@ -21,5 +21,8 @@ public class Constants {
     public static final String QUERY_PARM_TOOLID = "toolId";
     public static final String QUERY_PARM_CUSTOMERID = "customerId";
     public static final String GET_TOOL_DETAILS = "/tooldetails/%s/%s";
-    
+    public static final String ARGO_REPOSITORY_URL_TEMPLATE = "%s/api/v1/repositories/%s";
+    public static final String ALL_ARGO_REPOSITORY_URL_TEMPLATE = "%s/api/v1/repositories";
+    public static final String VAULT_READ = "/read";
+    public static final String FAILED = "Failed";
 }

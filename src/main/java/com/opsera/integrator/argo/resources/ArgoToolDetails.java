@@ -25,6 +25,6 @@ public class ArgoToolDetails {
 
     private String toolIdentifier;
 
-    private ArgoToolConfig configuration;
+    private ToolConfig configuration;
 
 }

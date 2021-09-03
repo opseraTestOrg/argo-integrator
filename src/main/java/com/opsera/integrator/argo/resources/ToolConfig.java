@@ -1,11 +1,12 @@
 package com.opsera.integrator.argo.resources;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import lombok.Data;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
-public class ArgoToolConfig {
+public class ToolConfig {
 
     private String toolURL;
 
@@ -17,6 +18,12 @@ public class ArgoToolConfig {
 
     private String applicationName;
 
+    private String accountUsername;
+
     private AccountPassword accountPassword;
+
+    private boolean twoFactorAuthentication;
+
+    private VaultSecretDetails secretPrivateKey;
 
 }

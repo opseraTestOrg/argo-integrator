@@ -29,4 +29,10 @@ public class ToolDetails implements Serializable {
     private String password;
 
     private String applicationName;
+
+    private ToolConfig configuration;
+
+    private String owner;
+
+    private String vault;
 }

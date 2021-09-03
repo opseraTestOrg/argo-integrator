@@ -1,7 +1,6 @@
 package com.opsera.integrator.argo.controller;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,9 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
+import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ValidationResponse;
 
@@ -33,21 +34,23 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
 /**
- * Controller
+ * Controller.
  */
 @RestController
 @Api("Opsera API for the integration with Argo CD")
 public class ArgoController {
 
+    /** The Constant LOGGER. */
     public static final Logger LOGGER = LoggerFactory.getLogger(ArgoController.class);
 
+    /** The service factory. */
     @Autowired
     private IServiceFactory serviceFactory;
 
     /**
-     * To check the service status
-     * 
-     * @return
+     * To check the service status.
+     *
+     * @return the string
      */
     @GetMapping("/status")
     @ApiOperation("To check the service status")
@@ -56,10 +59,11 @@ public class ArgoController {
     }
 
     /**
-     * To get all the argo applications for the given argo domain
-     * 
-     * @param argoToolId
-     * @return
+     * To get all the argo applications for the given argo domain.
+     *
+     * @param argoToolId the argo tool id
+     * @param customerId the customer id
+     * @return the all argo applications
      */
     @GetMapping(path = "v1.0/argo/applications")
     @ApiOperation("To get all the argo applications for the given argo domain")
@@ -74,10 +78,12 @@ public class ArgoController {
     }
 
     /**
-     * To get detailed information about an argo application
-     * 
-     * @param argoToolId
-     * @return
+     * To get detailed information about an argo application.
+     *
+     * @param argoToolId      the argo tool id
+     * @param customerId      the customer id
+     * @param applicationName the application name
+     * @return the argo application
      */
     @GetMapping(path = "v1.0/argo/application")
     @ApiOperation("To get detailed information about an argo application")
@@ -92,10 +98,10 @@ public class ArgoController {
     }
 
     /**
-     * To sync the argo application configured in Opsera pipeline
-     * 
-     * @param pipelineMetadata
-     * @return
+     * To sync the argo application configured in Opsera pipeline.
+     *
+     * @param pipelineMetadata the pipeline metadata
+     * @return the argo application operation
      */
     @PostMapping(path = "v1.0/argo/application/sync")
     @ApiOperation("To sync the argo application configured in Opsera pipeline")
@@ -110,10 +116,11 @@ public class ArgoController {
     }
 
     /**
-     * To get all the argo clusters for the given argo domain
+     * To get all the argo clusters for the given argo domain.
      *
-     * @param argoToolId
-     * @return
+     * @param argoToolId the argo tool id
+     * @param customerId the customer id
+     * @return the all argo clusters
      */
     @GetMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To get all the argo applications for the given argo domain")
@@ -128,10 +135,11 @@ public class ArgoController {
     }
 
     /**
-     * To get all the argo projects for the given argo domain
+     * To get all the argo projects for the given argo domain.
      *
-     * @param argoToolId
-     * @return
+     * @param argoToolId the argo tool id
+     * @param customerId the customer id
+     * @return the all argo projects
      */
     @GetMapping(path = "v1.0/argo/projects")
     @ApiOperation("To get all the argo projects for the given argo domain")
@@ -146,10 +154,10 @@ public class ArgoController {
     }
 
     /**
-     * To create argo application
+     * To create argo application.
      *
-     * @param request
-     * @return
+     * @param request the request
+     * @return the response entity
      */
     @PostMapping(path = "v1.0/argo/application/create")
     @ApiOperation("To create an argo application")
@@ -164,13 +172,11 @@ public class ArgoController {
     }
 
     /**
-     * To validate the tools input
-     * 
-     * @param customerId
-     * @param toolId
-     * @return
-     * @throws IOException
-     * @throws Exception
+     * To validate the tools input.
+     *
+     * @param customerId the customer id
+     * @param toolId     the tool id
+     * @return the response entity
      */
     @GetMapping("/validate")
     @ApiOperation("To Validate the user given details")
@@ -207,14 +213,12 @@ public class ArgoController {
     }
 
     /**
-     * Endpoint for generate new token
-     * 
-     * 
-     * @param request
-     * @return
-     * @throws IOException
-     * @throws URISyntaxException
-     * @throws ResourcesNotAvailable
+     * Endpoint for generate new token.
+     *
+     * @param customerId the customer id
+     * @param toolId     the tool id
+     * @return the response entity
+     * @throws ResourcesNotAvailable the resources not available
      */
     @GetMapping(path = "v1.0/generateNewToken")
     @ApiOperation("Gets argocd password ")
@@ -235,12 +239,12 @@ public class ArgoController {
     }
 
     /**
-     * To delete the argo application
-     * 
-     * @param argoToolId
-     * @param customerId
-     * @param applicationName
-     * @return
+     * To delete the argo application.
+     *
+     * @param argoToolId      the argo tool id
+     * @param customerId      the customer id
+     * @param applicationName the application name
+     * @return the response entity
      */
     @DeleteMapping(path = "v1.0/argo/application")
     @ApiOperation("To delete application")
@@ -257,4 +261,70 @@ public class ArgoController {
         }
     }
 
+    /**
+     * Creates the argo repository.
+     *
+     * @param request the request
+     * @return the response entity
+     * @throws ResourcesNotAvailable the resources not available
+     * @throws UnsupportedEncodingException 
+     */
+    @PostMapping(path = "v1.0/argo/repository/create")
+    @ApiOperation("To create an argo repository")
+    public ResponseEntity<String> createArgoRepository(@RequestBody CreateRepositoryRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received createArgoRepository for : {}", request);
+            return serviceFactory.getArgoOrchestrator().createRepository(request);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed createArgoRepository, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+
+    /**
+     * Gets the all argo repositories.
+     *
+     * @param argoToolId the argo tool id
+     * @param customerId the customer id
+     * @return the all argo repositories
+     */
+    @GetMapping(path = "v1.0/argo/repositories")
+    @ApiOperation("To get all the argo repositories for the given argo domain")
+    public ArgoRepositoriesList getAllArgoRepositories(@RequestParam String argoToolId, @RequestParam String customerId) {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received getAllArgoRepositories for argoId: {}", argoToolId);
+            return serviceFactory.getArgoOrchestrator().getAllArgoRepositories(argoToolId, customerId);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed getAllArgoRepositories, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+
+    /**
+     * Delete argo repository.
+     *
+     * @param argoToolId      the argo tool id
+     * @param customerId      the customer id
+     * @param applicationName the application name
+     * @return the response entity
+     * @throws UnsupportedEncodingException 
+     */
+    @DeleteMapping(path = "v1.0/argo/repository")
+    @ApiOperation("To delete application")
+    public ResponseEntity<String> deleteArgoRepository(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String repositoryUrl) throws UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received getArgoApplication for argoId: {}, repositoryUrl: {}", argoToolId, repositoryUrl);
+            serviceFactory.getArgoOrchestrator().deleteRepository(argoToolId, customerId, repositoryUrl);
+            return new ResponseEntity<>("", HttpStatus.OK);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("To deleted the application and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
+        }
+    }
 }
