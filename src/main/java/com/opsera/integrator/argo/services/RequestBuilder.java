@@ -1,5 +1,7 @@
 package com.opsera.integrator.argo.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
@@ -18,6 +20,9 @@ import com.opsera.integrator.argo.resources.ToolConfig;
 @Service
 public class RequestBuilder {
 
+    /** The Constant LOGGER. */
+    public static final Logger LOGGER = LoggerFactory.getLogger(RequestBuilder.class);
+
     /**
      * Creates the application request.
      *
@@ -25,6 +30,7 @@ public class RequestBuilder {
      * @return the argo application item
      */
     public ArgoApplicationItem createApplicationRequest(CreateApplicationRequest request) {
+        LOGGER.debug("Starting to create Argo Application Request {}", request);
         ArgoApplicationItem argoApplication = new ArgoApplicationItem();
 
         ArgoApplicationMetadata metadata = new ArgoApplicationMetadata();
@@ -55,6 +61,7 @@ public class RequestBuilder {
      * @return the argo repository item
      */
     public ArgoRepositoryItem createRepositoryRequest(CreateRepositoryRequest request, ToolConfig toolConfig, String secret) {
+        LOGGER.debug("Starting to create Argo Repository Request {}", request);
         ArgoRepositoryItem argoRepositoryItem = new ArgoRepositoryItem();
         argoRepositoryItem.setName(request.getRepositoryName());
         argoRepositoryItem.setType(request.getRepositoryType());

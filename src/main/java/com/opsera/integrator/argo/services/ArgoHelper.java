@@ -58,6 +58,7 @@ public class ArgoHelper {
      * @return the argo application
      */
     public ArgoApplicationItem getArgoApplication(String applicationName, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to fetch Argo Application for applicationName {}", applicationName);
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -73,6 +74,7 @@ public class ArgoHelper {
      * @return the all argo applications
      */
     public ArgoApplicationsList getAllArgoApplications(String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to get All Argo Applications for baseUrl {}", baseUrl);
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ARGO_APPLICATION_URL_TEMPLATE, baseUrl);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -88,6 +90,7 @@ public class ArgoHelper {
      * @return the all argo clusters
      */
     public ArgoClusterList getAllArgoClusters(String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to get All Argo Clusters for baseUrl {}", baseUrl);
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ARGO_ALL_CLUSTER_URL_TEMPLATE, baseUrl);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -103,6 +106,7 @@ public class ArgoHelper {
      * @return the all argo projects
      */
     public ArgoApplicationsList getAllArgoProjects(String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to get All Argo Projects for baseUrl {}", baseUrl);
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, baseUrl);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
@@ -119,6 +123,7 @@ public class ArgoHelper {
      * @return the argo application item
      */
     public ArgoApplicationItem syncApplication(String applicationName, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to Sync Argo Application for applicationName {}", applicationName);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
         String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationItem.class);
@@ -135,6 +140,7 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> createApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to Create Argo Application for request {}", argoApplication);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
         String url = String.format(ARGO_CREATE_APPLICATION_URL_TEMPLATE, baseUrl);
         return serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, String.class);
@@ -151,6 +157,7 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> updateApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password, String applicationName) {
+        LOGGER.debug("Starting to Update Argo Application for request {}", argoApplication);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
         String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, baseUrl, applicationName);
         return serviceFactory.getRestTemplate().exchange(url, HttpMethod.PUT, requestEntity, String.class);
@@ -181,6 +188,7 @@ public class ArgoHelper {
      * @return the session token
      */
     private ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to get session token with baseUrl {}", baseUrl);
         ArgoSessionRequest request = new ArgoSessionRequest(username, password);
         String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
         return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
@@ -195,6 +203,7 @@ public class ArgoHelper {
      * @return the request entity
      */
     private HttpEntity<HttpHeaders> getRequestEntity(String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to get Request Entity for baseUrl {}", baseUrl);
         ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
@@ -212,6 +221,7 @@ public class ArgoHelper {
      * @return the request entity with body
      */
     private HttpEntity<String> getRequestEntityWithBody(String requestBody, String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to get Request Entity with Body {}", requestBody);
         ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
@@ -314,6 +324,7 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     private String encodeURL(String repositoryUrl) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to encoding the repository url {} ", repositoryUrl);
         repositoryUrl = URLEncoder.encode(repositoryUrl, StandardCharsets.UTF_8.toString());
         return repositoryUrl;
     }

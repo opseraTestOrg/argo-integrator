@@ -52,6 +52,7 @@ public class ConfigCollector {
      * @return the argo details
      */
     public ToolConfig getArgoDetails(OpseraPipelineMetadata opseraPipelineMetadata) {
+        LOGGER.debug("Starting to get Tool Config Details for request {}", opseraPipelineMetadata);
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
         String toolsConfigURL = appConfig.getPipelineConfigBaseUrl() + PIPELINE_TABLE_ENDPOINT;
         String response = restTemplate.postForObject(toolsConfigURL, opseraPipelineMetadata, String.class);
@@ -66,6 +67,7 @@ public class ConfigCollector {
      * @return the argo details
      */
     public ArgoToolDetails getArgoDetails(String argoToolId, String customerId) {
+        LOGGER.debug("Starting to get Argo Tool Details for toolId {} and customerId {}", argoToolId, customerId);
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, argoToolId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
@@ -82,6 +84,7 @@ public class ConfigCollector {
      * @throws ResourcesNotAvailable the resources not available
      */
     public ToolDetails getToolsDetails(String customerId, String toolId) throws ResourcesNotAvailable {
+        LOGGER.debug("Starting to fetch Tool Details for toolId {} and customerId {}", toolId, customerId);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getCustomerBaseUrl()).path(String.format(GET_TOOL_DETAILS, customerId, toolId));
         try {
             ResponseEntity<ToolDetails> responseEntity = serviceFactory.getRestTemplate().exchange(uriBuilder.toUriString(), HttpMethod.GET, getRequestEntity(null), ToolDetails.class);
@@ -118,6 +121,7 @@ public class ConfigCollector {
      * @return the tool details
      */
     public ToolDetails getToolDetails(String toolConfigId, String customerId) {
+        LOGGER.debug("Starting to get Tool Details for toolId {} and customerId {}", toolConfigId, customerId);
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, toolConfigId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
