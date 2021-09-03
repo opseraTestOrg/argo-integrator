@@ -1,14 +1,20 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_URL;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,27 +30,32 @@ import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
+import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
+import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoSessionRequest;
 import com.opsera.integrator.argo.resources.ArgoSessionToken;
 
 /**
- * Class handles all the interaction with argo server
+ * Class handles all the interaction with argo server.
  */
 @Component
 public class ArgoHelper {
 
+    /** The Constant LOGGER. */
     public static final Logger LOGGER = LoggerFactory.getLogger(ArgoHelper.class);
 
+    /** The service factory. */
     @Autowired
     private IServiceFactory serviceFactory;
 
     /**
-     * get argo application details
-     * 
-     * @param applicationName
-     * @param username
-     * @param password
-     * @return
+     * get argo application details.
+     *
+     * @param applicationName the application name
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @return the argo application
      */
     public ArgoApplicationItem getArgoApplication(String applicationName, String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
@@ -54,11 +65,12 @@ public class ArgoHelper {
     }
 
     /**
-     * get all argo applications
-     * 
-     * @param username
-     * @param password
-     * @return
+     * get all argo applications.
+     *
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the all argo applications
      */
     public ArgoApplicationsList getAllArgoApplications(String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
@@ -68,11 +80,12 @@ public class ArgoHelper {
     }
 
     /**
-     * get all argo clusters
+     * get all argo clusters.
      *
-     * @param username
-     * @param password
-     * @return
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the all argo clusters
      */
     public ArgoClusterList getAllArgoClusters(String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
@@ -82,11 +95,12 @@ public class ArgoHelper {
     }
 
     /**
-     * get all argo projects
+     * get all argo projects.
      *
-     * @param username
-     * @param password
-     * @return
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the all argo projects
      */
     public ArgoApplicationsList getAllArgoProjects(String baseUrl, String username, String password) {
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
@@ -96,12 +110,13 @@ public class ArgoHelper {
     }
 
     /**
-     * sync an argo application
-     * 
-     * @param applicationName
-     * @param username
-     * @param password
-     * @return
+     * sync an argo application.
+     *
+     * @param applicationName the application name
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @return the argo application item
      */
     public ArgoApplicationItem syncApplication(String applicationName, String baseUrl, String username, String password) {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
@@ -111,12 +126,13 @@ public class ArgoHelper {
     }
 
     /**
-     * creates an argo application
+     * creates an argo application.
      *
-     * @param argoApplication
-     * @param username
-     * @param password
-     * @return
+     * @param argoApplication the argo application
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @return the response entity
      */
     public ResponseEntity<String> createApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password) {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
@@ -125,12 +141,14 @@ public class ArgoHelper {
     }
 
     /**
-     * update an argo application
+     * update an argo application.
      *
-     * @param argoApplication
-     * @param username
-     * @param password
-     * @return
+     * @param argoApplication the argo application
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @param applicationName the application name
+     * @return the response entity
      */
     public ResponseEntity<String> updateApplication(ArgoApplicationItem argoApplication, String baseUrl, String username, String password, String applicationName) {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
@@ -139,13 +157,12 @@ public class ArgoHelper {
     }
 
     /**
-     * delete the application details
-     * 
-     * @param applicationName
-     * @param
-     * @param username
-     * @param password
-     * @return
+     * delete the application details.
+     *
+     * @param applicationName the application name
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
      */
     public void deleteArgoApplication(String applicationName, String baseUrl, String username, String password) {
         LOGGER.debug("To Starting to delete the application {} and url {} ", applicationName, baseUrl);
@@ -156,12 +173,12 @@ public class ArgoHelper {
     }
 
     /**
-     * 
-     * Returns argo session token
-     * 
-     * @param username
-     * @param password
-     * @return
+     * Returns argo session token.
+     *
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the session token
      */
     private ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
         ArgoSessionRequest request = new ArgoSessionRequest(username, password);
@@ -170,12 +187,12 @@ public class ArgoHelper {
     }
 
     /**
-     * 
-     * Returns HTTP request headers
-     * 
-     * @param username
-     * @param password
-     * @return
+     * Returns HTTP request headers.
+     *
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the request entity
      */
     private HttpEntity<HttpHeaders> getRequestEntity(String baseUrl, String username, String password) {
         ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
@@ -186,13 +203,13 @@ public class ArgoHelper {
     }
 
     /**
-     * 
-     * Returns header with body
-     * 
-     * @param requestBody
-     * @param username
-     * @param password
-     * @return
+     * Returns header with body.
+     *
+     * @param requestBody the request body
+     * @param baseUrl     the base url
+     * @param username    the username
+     * @param password    the password
+     * @return the request entity with body
      */
     private HttpEntity<String> getRequestEntityWithBody(String requestBody, String baseUrl, String username, String password) {
         ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
@@ -200,5 +217,104 @@ public class ArgoHelper {
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         requestHeaders.setBearerAuth(sessionToken.getToken());
         return new HttpEntity<>(requestBody, requestHeaders);
+    }
+
+    /**
+     * Gets the argo repository.
+     *
+     * @param repositoryUrl the repository url
+     * @param baseUrl       the base url
+     * @param username      the username
+     * @param password      the password
+     * @return the argo repository
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    public ArgoRepositoryItem getArgoRepository(String repositoryUrl, String baseUrl, String username, String password) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to get the repository {} and url {} ", repositoryUrl, baseUrl);
+        repositoryUrl = encodeURL(repositoryUrl);
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, baseUrl, repositoryUrl);
+        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
+        return serviceFactory.getResponseParser().extractArgoRepositoryItem(response.getBody());
+    }
+
+    /**
+     * Gets the argo repositories list.
+     *
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the argo repositories list
+     */
+    public ArgoRepositoriesList getArgoRepositoriesList(String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to get all the repositories {} ", baseUrl);
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, baseUrl);
+        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
+        return serviceFactory.getResponseParser().extractArgoRepositoriesList(response.getBody());
+    }
+
+    /**
+     * Creates the repository.
+     *
+     * @param argoApplication the argo application
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @return the response entity
+     */
+    public ResponseEntity<String> createRepository(ArgoRepositoryItem argoApplication, String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to create the repository {} and url {} ", argoApplication.getRepo(), baseUrl);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
+        String url = String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, baseUrl);
+        return serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, String.class);
+    }
+
+    /**
+     * Update repository.
+     *
+     * @param argoApplication the argo application
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @return the response entity
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    public ResponseEntity<String> updateRepository(ArgoRepositoryItem argoApplication, String baseUrl, String username, String password) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to update the repository {} and url {} ", argoApplication.getRepo(), baseUrl);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), baseUrl, username, password);
+        String repositoryUrl = encodeURL(argoApplication.getRepo());
+        String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, baseUrl, repositoryUrl);
+        return serviceFactory.getRestTemplate().exchange(url, HttpMethod.PUT, requestEntity, String.class);
+    }
+
+    /**
+     * Delete argo repository.
+     *
+     * @param repositoryUrl the repository url
+     * @param baseUrl       the base url
+     * @param username      the username
+     * @param password      the password
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    public void deleteArgoRepository(String repositoryUrl, String baseUrl, String username, String password) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to delete the repository {} and url {} ", repositoryUrl, baseUrl);
+        repositoryUrl = encodeURL(repositoryUrl);
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, baseUrl, repositoryUrl);
+        serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, Void.class);
+        LOGGER.debug("To Completed to delete the repository {} and url {} ", repositoryUrl, baseUrl);
+    }
+
+    /**
+     * Encode URL.
+     *
+     * @param repositoryUrl the repository url
+     * @return the string
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    private String encodeURL(String repositoryUrl) throws UnsupportedEncodingException {
+        repositoryUrl = URLEncoder.encode(repositoryUrl, StandardCharsets.UTF_8.toString());
+        return repositoryUrl;
     }
 }

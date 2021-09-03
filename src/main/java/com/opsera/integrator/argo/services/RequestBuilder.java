@@ -7,11 +7,23 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
+import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
+import com.opsera.integrator.argo.resources.ToolConfig;
 
+/**
+ * The Class RequestBuilder.
+ */
 @Service
 public class RequestBuilder {
 
+    /**
+     * Creates the application request.
+     *
+     * @param request the request
+     * @return the argo application item
+     */
     public ArgoApplicationItem createApplicationRequest(CreateApplicationRequest request) {
         ArgoApplicationItem argoApplication = new ArgoApplicationItem();
 
@@ -32,5 +44,28 @@ public class RequestBuilder {
         argoApplication.setMetadata(metadata);
         argoApplication.setSpec(spec);
         return argoApplication;
+    }
+
+    /**
+     * Creates the repository request.
+     *
+     * @param request    the request
+     * @param toolConfig the tool config
+     * @param secret     the secret
+     * @return the argo repository item
+     */
+    public ArgoRepositoryItem createRepositoryRequest(CreateRepositoryRequest request, ToolConfig toolConfig, String secret) {
+        ArgoRepositoryItem argoRepositoryItem = new ArgoRepositoryItem();
+        argoRepositoryItem.setName(request.getRepositoryName());
+        argoRepositoryItem.setType(request.getRepositoryType());
+        if (toolConfig.isTwoFactorAuthentication()) {
+            argoRepositoryItem.setRepo(request.getSshUrl());
+            argoRepositoryItem.setSshPrivateKey(secret);
+        } else {
+            argoRepositoryItem.setRepo(request.getHttpsUrl());
+            argoRepositoryItem.setUsername(toolConfig.getAccountUsername());
+            argoRepositoryItem.setPassword(secret);
+        }
+        return argoRepositoryItem;
     }
 }
