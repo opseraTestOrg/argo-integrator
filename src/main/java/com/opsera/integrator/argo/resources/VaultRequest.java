@@ -11,6 +11,8 @@ public class VaultRequest {
 
     private String customerId;
 
-    private List<String > componentKeys;
+    private List<String> componentKeys;
+
+    private String vaultId;
 
 }

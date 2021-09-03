@@ -14,8 +14,6 @@ eureka:
 
 ---
 
----
-
 spring:
   profiles: freetrial
 pipeline:

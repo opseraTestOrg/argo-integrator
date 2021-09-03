@@ -1,6 +1,7 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.VAULT_READ_ENDPOINT;
+import static com.opsera.integrator.argo.resources.Constants.VAULT_READ;
 
 import java.util.Base64;
 import java.util.Collections;
@@ -19,25 +20,28 @@ import com.opsera.integrator.argo.resources.VaultData;
 import com.opsera.integrator.argo.resources.VaultRequest;
 
 /**
- * Class to handle interactions with vault server
+ * Class to handle interactions with vault server.
  */
 @Component
 public class VaultHelper {
 
+    /** The Constant LOGGER. */
     public static final Logger LOGGER = LoggerFactory.getLogger(VaultHelper.class);
 
+    /** The service factory. */
     @Autowired
     private IServiceFactory serviceFactory;
 
+    /** The app config. */
     @Autowired
     private AppConfig appConfig;
 
     /**
-     * This method used to get the argo credentials from vault
+     * This method used to get the argo credentials from vault.
      *
-     * @param customerId
-     * @param vaultKey
-     * @return
+     * @param customerId the customer id
+     * @param vaultKey   the vault key
+     * @return the argo password
      */
     public String getArgoPassword(String customerId, String vaultKey) {
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
@@ -52,6 +56,29 @@ public class VaultHelper {
         } else {
             LOGGER.info("Empty response from vault for request: {}", request);
             throw new InternalServiceException(String.format("SonarAuthToken Not found in Vault for CustomerID: %s", customerId));
+        }
+    }
+
+    /**
+     * Gets the secret.
+     *
+     * @param customerId the customer id
+     * @param secretKey  the secret key
+     * @param vaultId    the vault id
+     * @return the secret
+     */
+    public String getSecret(String customerId, String secretKey, String vaultId) {
+        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        String readURL = appConfig.getVaultBaseUrl() + VAULT_READ;
+        VaultRequest request = VaultRequest.builder().customerId(customerId).vaultId(vaultId).componentKeys(Collections.singletonList(secretKey)).build();
+        LOGGER.info("Request to Vault: {}", request);
+        VaultData response = restTemplate.postForObject(readURL, request, VaultData.class);
+        LOGGER.info("Response from Vault: {}", response);
+        Optional<VaultData> vaultData = Optional.ofNullable(response);
+        if (vaultData.isPresent()) {
+            return new String(Base64.getDecoder().decode(response.getData().get(secretKey).getBytes()));
+        } else {
+            throw new InternalServiceException(String.format("GitCredential Not found in Vault for CustomerID: %s", customerId));
         }
     }
 }
