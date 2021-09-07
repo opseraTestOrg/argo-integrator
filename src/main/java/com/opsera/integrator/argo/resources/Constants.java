@@ -11,6 +11,7 @@ public class Constants {
     public static final String ARGO_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
     public static final String ARGO_ALL_CLUSTER_URL_TEMPLATE = "%s/api/v1/clusters";
     public static final String ARGO_ALL_PROJECT_URL_TEMPLATE = "%s/api/v1/projects";
+    public static final String ARGO_PROJECT_URL_TEMPLATE = "%s/api/v1/projects/%s";
     public static final String ARGO_SYNC_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications/%s/sync";
     public static final String ARGO_CREATE_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";

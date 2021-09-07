@@ -2,10 +2,6 @@ package com.opsera.integrator.argo.services;
 
 import java.lang.reflect.Type;
 
-import com.opsera.integrator.argo.resources.ArgoClusterList;
-import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
-import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +9,11 @@ import com.google.gson.reflect.TypeToken;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
-import com.opsera.integrator.argo.resources.ToolConfig;
+import com.opsera.integrator.argo.resources.ArgoClusterList;
+import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
+import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.ToolConfig;
 
 /**
  * Class to deserialize all the json responses from rest endpoints.

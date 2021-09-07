@@ -14,5 +14,7 @@ public class ArgoApplicationMetadata {
     private String creationTimestamp;
 
     private String uid;
+    
+    private String resourceVersion;
 
 }

@@ -9,9 +9,12 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
+import com.opsera.integrator.argo.resources.ArgoProjectMetadata;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
+import com.opsera.integrator.argo.resources.Project;
 import com.opsera.integrator.argo.resources.ToolConfig;
 
 /**
@@ -75,4 +78,25 @@ public class RequestBuilder {
         }
         return argoRepositoryItem;
     }
+
+    /**
+     * Update project request.
+     *
+     * @param projectItem the project item
+     * @param request     the request
+     * @return the creates the project request
+     */
+    public CreateProjectRequest updateProjectRequest(ArgoApplicationItem projectItem, CreateProjectRequest request) {
+        LOGGER.debug("Starting to update Argo Project Request {}", request);
+        CreateProjectRequest createProjectRequest = new CreateProjectRequest();
+        Project project = new Project();
+        ArgoProjectMetadata metaData = new ArgoProjectMetadata();
+        metaData.setName(projectItem.getMetadata().getName());
+        metaData.setResourceVersion(projectItem.getMetadata().getResourceVersion());
+        project.setMetadata(metaData);
+        project.setSpec(request.getProject().getSpec());
+        createProjectRequest.setProject(project);
+        return createProjectRequest;
+    }
+
 }

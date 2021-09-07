@@ -6,6 +6,7 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_UR
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_URL;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
@@ -34,6 +35,7 @@ import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoSessionRequest;
 import com.opsera.integrator.argo.resources.ArgoSessionToken;
+import com.opsera.integrator.argo.resources.CreateProjectRequest;
 
 /**
  * Class handles all the interaction with argo server.
@@ -327,5 +329,75 @@ public class ArgoHelper {
         LOGGER.debug("To Starting to encoding the repository url {} ", repositoryUrl);
         repositoryUrl = URLEncoder.encode(repositoryUrl, StandardCharsets.UTF_8.toString());
         return repositoryUrl;
+    }
+
+    /**
+     * Gets the argo project.
+     *
+     * @param name     the name
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the argo project
+     */
+    public ArgoApplicationItem getArgoProject(String name, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to get Argo Project for projectname {}", name);
+        ResponseEntity<String> response = null;
+        try {
+            HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+            String url = String.format(ARGO_PROJECT_URL_TEMPLATE, baseUrl, name);
+            response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
+            return serviceFactory.getResponseParser().extractArgoApplicationItem(response.getBody());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Creates the project.
+     *
+     * @param request  the request
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the response entity
+     */
+    public ResponseEntity<String> createProject(CreateProjectRequest request, String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to create the project {} and url {} ", request.getProject().getMetadata().getName(), baseUrl);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), baseUrl, username, password);
+        String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, baseUrl);
+        return serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, String.class);
+    }
+
+    /**
+     * Delete argo project.
+     *
+     * @param projectName the project name
+     * @param baseUrl     the base url
+     * @param username    the username
+     * @param password    the password
+     */
+    public void deleteArgoProject(String projectName, String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to delete the project {} and url {} ", projectName, baseUrl);
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ARGO_PROJECT_URL_TEMPLATE, baseUrl, projectName);
+        serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, Void.class);
+        LOGGER.debug("To Completed to delete the project {} and url {} ", projectName, baseUrl);
+    }
+
+    /**
+     * Update project.
+     *
+     * @param request  the request
+     * @param baseUrl  the base url
+     * @param username the username
+     * @param password the password
+     * @return the response entity
+     */
+    public ResponseEntity<String> updateProject(CreateProjectRequest request, String baseUrl, String username, String password) {
+        LOGGER.debug("To Starting to create the project {} and url {} ", request.getProject().getMetadata().getName(), baseUrl);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), baseUrl, username, password);
+        String url = String.format(ARGO_PROJECT_URL_TEMPLATE, baseUrl, request.getProject().getMetadata().getName());
+        return serviceFactory.getRestTemplate().exchange(url, HttpMethod.PUT, requestEntity, String.class);
     }
 }
