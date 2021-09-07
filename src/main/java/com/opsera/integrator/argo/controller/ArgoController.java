@@ -26,6 +26,7 @@ import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ValidationResponse;
@@ -266,8 +267,8 @@ public class ArgoController {
      *
      * @param request the request
      * @return the response entity
-     * @throws ResourcesNotAvailable the resources not available
-     * @throws UnsupportedEncodingException 
+     * @throws ResourcesNotAvailable        the resources not available
+     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @PostMapping(path = "v1.0/argo/repository/create")
     @ApiOperation("To create an argo repository")
@@ -307,11 +308,11 @@ public class ArgoController {
     /**
      * Delete argo repository.
      *
-     * @param argoToolId      the argo tool id
-     * @param customerId      the customer id
-     * @param applicationName the application name
+     * @param argoToolId    the argo tool id
+     * @param customerId    the customer id
+     * @param repositoryUrl the repository url
      * @return the response entity
-     * @throws UnsupportedEncodingException 
+     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @DeleteMapping(path = "v1.0/argo/repository")
     @ApiOperation("To delete application")
@@ -327,4 +328,51 @@ public class ArgoController {
             LOGGER.info("To deleted the application and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
         }
     }
+
+    /**
+     * Creates the argo project.
+     *
+     * @param request the request
+     * @return the response entity
+     * @throws ResourcesNotAvailable        the resources not available
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    @PostMapping(path = "v1.0/argo/project/create")
+    @ApiOperation("To create an argo project")
+    public ResponseEntity<String> createArgoProject(@RequestBody CreateProjectRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received createArgoProject for : {}", request);
+            return serviceFactory.getArgoOrchestrator().createProject(request);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed createArgoProject, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+
+    /**
+     * Delete argo project.
+     *
+     * @param argoToolId  the argo tool id
+     * @param customerId  the customer id
+     * @param projectName the project name
+     * @return the response entity
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    @DeleteMapping(path = "v1.0/argo/project")
+    @ApiOperation("To delete application")
+    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) throws UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received deleteArgoProject for argoId: {}, peojectName: {}", argoToolId, projectName);
+            serviceFactory.getArgoOrchestrator().deleteProject(argoToolId, customerId, projectName);
+            return new ResponseEntity<>("", HttpStatus.OK);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("To deleted the project and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+
 }

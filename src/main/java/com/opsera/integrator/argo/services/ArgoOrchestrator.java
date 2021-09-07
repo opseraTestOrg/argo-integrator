@@ -21,6 +21,7 @@ import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ToolConfig;
@@ -185,8 +186,8 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @return the response entity
-     * @throws ResourcesNotAvailable the resources not available
-     * @throws UnsupportedEncodingException 
+     * @throws ResourcesNotAvailable        the resources not available
+     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public ResponseEntity<String> createRepository(CreateRepositoryRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
         LOGGER.debug("To Starting to create/update the repository {} ", request);
@@ -225,10 +226,10 @@ public class ArgoOrchestrator {
      * @param toolId          the tool id
      * @param customerId      the customer id
      * @param repositoryUrl   the repository url
-     * @param argoToolDetails the argo tool details     
+     * @param argoToolDetails the argo tool details
      * @param argoPassword    the argo password
      * @return the repository
-     * @throws UnsupportedEncodingException 
+     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     private ArgoRepositoryItem getRepository(String toolId, String customerId, String repositoryUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws UnsupportedEncodingException {
         LOGGER.debug("Starting to fetch Argo Repository {} ", repositoryUrl);
@@ -255,7 +256,7 @@ public class ArgoOrchestrator {
      * @param argoToolId the argo tool id
      * @param customerId the customer id
      * @param repoUrl    the repo url
-     * @throws UnsupportedEncodingException 
+     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public void deleteRepository(String argoToolId, String customerId, String repoUrl) throws UnsupportedEncodingException {
         LOGGER.debug("To Starting to delete the repository {} and customerId {} and toolId {}", repoUrl, customerId, argoToolId);
@@ -264,4 +265,52 @@ public class ArgoOrchestrator {
         serviceFactory.getArgoHelper().deleteArgoRepository(repoUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
         LOGGER.debug("To Completed to delete the repository {} and customerId {} and toolId {}", repoUrl, customerId, argoToolId);
     }
+
+    /**
+     * Creates the project.
+     *
+     * @param request the request
+     * @return the response entity
+     */
+    public ResponseEntity<String> createProject(CreateProjectRequest request) {
+        LOGGER.debug("To Starting to create/update the project {} ", request);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        ArgoApplicationItem projectItem = getArgoProject(argoToolDetails, request.getProject().getMetadata().getName(), argoPassword);
+        if (null == projectItem) {
+            return serviceFactory.getArgoHelper().createProject(request, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        } else {
+            CreateProjectRequest updateProjectRequest = serviceFactory.getRequestBuilder().updateProjectRequest(projectItem, request);
+            return serviceFactory.getArgoHelper().updateProject(updateProjectRequest, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        }
+    }
+
+    /**
+     * Gets the argo project.
+     *
+     * @param argoToolDetails the argo tool details
+     * @param name            the name
+     * @param argoPassword    the argo password
+     * @return the argo project
+     */
+    private ArgoApplicationItem getArgoProject(ArgoToolDetails argoToolDetails, String name, String argoPassword) {
+        LOGGER.debug("Starting to fetch Argo Projet {} ", name);
+        return serviceFactory.getArgoHelper().getArgoProject(name, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+    }
+
+    /**
+     * Delete project.
+     *
+     * @param argoToolId  the argo tool id
+     * @param customerId  the customer id
+     * @param projectName the project name
+     */
+    public void deleteProject(String argoToolId, String customerId, String projectName) {
+        LOGGER.debug("To Starting to delete the projectName {} and customerId {} and toolId {}", projectName, customerId, argoToolId);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        serviceFactory.getArgoHelper().deleteArgoProject(projectName, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        LOGGER.debug("To Completed to delete the projectName {} and customerId {} and toolId {}", projectName, customerId, argoToolId);
+    }
+
 }
