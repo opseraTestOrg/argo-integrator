@@ -308,24 +308,22 @@ public class ArgoController {
     /**
      * Delete argo repository.
      *
-     * @param argoToolId    the argo tool id
-     * @param customerId    the customer id
-     * @param repositoryUrl the repository url
+     * @param request the request
      * @return the response entity
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    @DeleteMapping(path = "v1.0/argo/repository")
-    @ApiOperation("To delete application")
-    public ResponseEntity<String> deleteArgoRepository(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String repositoryUrl) throws UnsupportedEncodingException {
+    @PostMapping(path = "v1.0/argo/repository/delete")
+    @ApiOperation("To delete the repository")
+    public ResponseEntity<String> deleteArgoRepository(@RequestBody CreateRepositoryRequest request) throws UnsupportedEncodingException {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
-            LOGGER.info("Received getArgoApplication for argoId: {}, repositoryUrl: {}", argoToolId, repositoryUrl);
-            serviceFactory.getArgoOrchestrator().deleteRepository(argoToolId, customerId, repositoryUrl);
+            LOGGER.info("Received deleteArgoRepository request {}", request);
+            serviceFactory.getArgoOrchestrator().deleteRepository(request);
             return new ResponseEntity<>("", HttpStatus.OK);
         } finally {
             stopwatch.stop();
-            LOGGER.info("To deleted the application and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
+            LOGGER.info("Completed deleteArgoRepository took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
         }
     }
 
@@ -361,7 +359,7 @@ public class ArgoController {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @DeleteMapping(path = "v1.0/argo/project")
-    @ApiOperation("To delete application")
+    @ApiOperation("To delete project")
     public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) throws UnsupportedEncodingException {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
