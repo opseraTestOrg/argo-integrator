@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
@@ -258,12 +259,22 @@ public class ArgoOrchestrator {
      * @param repoUrl    the repo url
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void deleteRepository(String argoToolId, String customerId, String repoUrl) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to delete the repository {} and customerId {} and toolId {}", repoUrl, customerId, argoToolId);
-        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
+    public void deleteRepository(CreateRepositoryRequest request) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to delete the repository request {}", request);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        serviceFactory.getArgoHelper().deleteArgoRepository(repoUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        LOGGER.debug("To Completed to delete the repository {} and customerId {} and toolId {}", repoUrl, customerId, argoToolId);
+        ToolDetails credentialToolDetails = serviceFactory.getConfigCollector().getToolDetails(request.getGitToolId(), request.getCustomerId());
+        String repositoryUrl = "";
+        if (null != credentialToolDetails) {
+            ToolConfig toolConfig = credentialToolDetails.getConfiguration();
+            if (toolConfig.isTwoFactorAuthentication()) {
+                repositoryUrl = request.getSshUrl();
+            } else {
+                repositoryUrl = request.getHttpsUrl();
+            }
+        }
+        serviceFactory.getArgoHelper().deleteArgoRepository(repositoryUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        LOGGER.debug("To Completed to delete the repository request {}", request);
     }
 
     /**
