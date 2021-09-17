@@ -263,14 +263,17 @@ public class ArgoOrchestrator {
         LOGGER.debug("To Starting to delete the repository request {}", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        if (null != request && !StringUtils.isEmpty(request.getHttpsUrl())) {
-            LOGGER.debug("To Starting to delete the httpsrepository {}", request.getHttpsUrl());
-            serviceFactory.getArgoHelper().deleteArgoRepository(request.getHttpsUrl(), argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        ToolDetails credentialToolDetails = serviceFactory.getConfigCollector().getToolDetails(request.getGitToolId(), request.getCustomerId());
+        String repositoryUrl = "";
+        if (null != credentialToolDetails) {
+            ToolConfig toolConfig = credentialToolDetails.getConfiguration();
+            if (toolConfig.isTwoFactorAuthentication()) {
+                repositoryUrl = request.getSshUrl();
+            } else {
+                repositoryUrl = request.getHttpsUrl();
+            }
         }
-        if (null != request && !StringUtils.isEmpty(request.getSshUrl())) {
-            LOGGER.debug("To Starting to delete the sshrepository {}", request.getSshUrl());
-            serviceFactory.getArgoHelper().deleteArgoRepository(request.getSshUrl(), argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        }
+        serviceFactory.getArgoHelper().deleteArgoRepository(repositoryUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
         LOGGER.debug("To Completed to delete the repository request {}", request);
     }
 
