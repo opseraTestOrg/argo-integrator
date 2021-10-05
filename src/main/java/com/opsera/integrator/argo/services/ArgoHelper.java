@@ -342,15 +342,10 @@ public class ArgoHelper {
      */
     public ArgoApplicationItem getArgoProject(String name, String baseUrl, String username, String password) {
         LOGGER.debug("Starting to get Argo Project for projectname {}", name);
-        ResponseEntity<String> response = null;
-        try {
-            HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
-            String url = String.format(ARGO_PROJECT_URL_TEMPLATE, baseUrl, name);
-            response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
-            return serviceFactory.getResponseParser().extractArgoApplicationItem(response.getBody());
-        } catch (Exception e) {
-            return null;
-        }
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
+        String url = String.format(ARGO_PROJECT_URL_TEMPLATE, baseUrl, name);
+        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
+        return serviceFactory.getResponseParser().extractArgoApplicationItem(response.getBody());
     }
 
     /**
