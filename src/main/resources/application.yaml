@@ -9,7 +9,8 @@ spring:
  application:
     name: argo-integrator
     description: API for integrating with Argo Tool
- lifecycle:    timeout-per-shutdown-phase: 2h
+ lifecycle:
+    timeout-per-shutdown-phase: 2h
 
 ---
 
