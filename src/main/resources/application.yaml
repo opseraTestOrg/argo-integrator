@@ -10,10 +10,6 @@ spring:
     name: argo-integrator
     description: API for integrating with Argo Tool
  lifecycle:    timeout-per-shutdown-phase: 2h
-eureka:
-  instance:
-    leaseRenewalIntervalInSeconds: 1
-    leaseExpirationDurationInSeconds: 2
 
 ---
 
@@ -30,10 +26,6 @@ customer:
     baseurl: https://freetrial-microservice.opsera.io/api/customer
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: https://freetrial-microservice.opsera.io:8761/eureka/
 
 ---
 
@@ -50,7 +42,3 @@ customer:
     baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/customer    
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://opsera-service-discovery.microservices.svc.cluster.local:8761/eureka/
