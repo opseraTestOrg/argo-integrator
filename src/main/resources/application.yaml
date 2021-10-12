@@ -15,22 +15,6 @@ spring:
 ---
 
 spring:
-  profiles: freetrial
-pipeline:
-  config:
-    baseurl: https://freetrial-microservice.opsera.io/api/pipeline
-vault:
-  config:
-    baseurl: https://freetrial-microservice.opsera.io/api/vault
-customer:
-  config:
-    baseurl: https://freetrial-microservice.opsera.io/api/customer
-argo:
-  defaultUrl: https://ivt-argo.opsera.io/
-
----
-
-spring:
   profiles: kubernetes
 pipeline:
   config:
