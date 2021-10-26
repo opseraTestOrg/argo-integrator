@@ -1,6 +1,8 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
+import static com.opsera.integrator.argo.resources.Constants.AWS;
+import static com.opsera.integrator.argo.resources.Constants.AZURE;
 
 import java.io.UnsupportedEncodingException;
 
@@ -17,11 +19,16 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
+import com.opsera.integrator.argo.resources.ArgoClusterItem;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.AwsClusterDetails;
+import com.opsera.integrator.argo.resources.AzureClusterDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateCluster;
+import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
@@ -254,9 +261,7 @@ public class ArgoOrchestrator {
     /**
      * Delete repository.
      *
-     * @param argoToolId the argo tool id
-     * @param customerId the customer id
-     * @param repoUrl    the repo url
+     * @param request the request
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public void deleteRepository(CreateRepositoryRequest request) throws UnsupportedEncodingException {
@@ -325,6 +330,62 @@ public class ArgoOrchestrator {
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         serviceFactory.getArgoHelper().deleteArgoProject(projectName, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
         LOGGER.debug("To Completed to delete the projectName {} and customerId {} and toolId {}", projectName, customerId, argoToolId);
+    }
+
+    /**
+     * Creates the cluster.
+     *
+     * @param request the request
+     * @return the response entity
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    public ResponseEntity<String> createCluster(CreateCluster request) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to create/update the cluster {} ", request);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        CreateClusterRequest clusterItem = serviceFactory.getRequestBuilder().createClusterRequest(request);
+        ArgoClusterItem projectItem = getArgoCluster(argoToolDetails, clusterItem.getServer(), argoPassword);
+        if (null == projectItem) {
+            return serviceFactory.getArgoHelper().createCluster(clusterItem, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        } else {
+            return serviceFactory.getArgoHelper().updateCluster(clusterItem, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        }
+    }
+
+    /**
+     * Gets the argo cluster.
+     *
+     * @param argoToolDetails the argo tool details
+     * @param name            the name
+     * @param argoPassword    the argo password
+     * @return the argo cluster
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    private ArgoClusterItem getArgoCluster(ArgoToolDetails argoToolDetails, String name, String argoPassword) throws UnsupportedEncodingException {
+        LOGGER.debug("Starting to fetch Argo Cluster {} ", name);
+        return serviceFactory.getArgoHelper().getArgoCluster(name, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+    }
+
+    /**
+     * Delete cluster.
+     *
+     * @param request the request
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    public void deleteCluster(CreateCluster request) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to delete the cluster request {}", request);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        String serverUrl = "";
+        if (AWS.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+            AwsClusterDetails clusterDetails = serviceFactory.getConfigCollector().getAWSEKSClusterDetails(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
+            serverUrl = clusterDetails.getCluster().getEndpoint();
+        } else if (AZURE.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+            AzureClusterDetails azureClusterDetails = serviceFactory.getConfigCollector().getAKSClusterDetails(request);
+            serverUrl = azureClusterDetails.getServer();
+        }
+        serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+        LOGGER.debug("Completed to delete the cluster request {}", request);
     }
 
 }

@@ -9,10 +9,12 @@ import com.google.gson.reflect.TypeToken;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
+import com.opsera.integrator.argo.resources.ArgoClusterItem;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.AwsClusterDetails;
 import com.opsera.integrator.argo.resources.ToolConfig;
 
 /**
@@ -105,6 +107,30 @@ public class ResponseParser {
      */
     public ArgoRepositoriesList extractArgoRepositoriesList(String response) {
         Type type = new TypeToken<ArgoRepositoriesList>() {
+        }.getType();
+        return serviceFactory.gson().fromJson(response, type);
+    }
+
+    /**
+     * Extract EKS cluster details.
+     *
+     * @param response the response
+     * @return the aws cluster details
+     */
+    public AwsClusterDetails extractEKSClusterDetails(String response) {
+        Type type = new TypeToken<AwsClusterDetails>() {
+        }.getType();
+        return serviceFactory.gson().fromJson(response, type);
+    }
+
+    /**
+     * Extract argo cluster.
+     *
+     * @param response the response
+     * @return the argo cluster item
+     */
+    public ArgoClusterItem extractArgoCluster(String response) {
+        Type type = new TypeToken<ArgoClusterItem>() {
         }.getType();
         return serviceFactory.gson().fromJson(response, type);
     }
