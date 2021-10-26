@@ -51,3 +51,9 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://opsera-service-discovery.microservices.svc.cluster.local:8761/eureka/
+aws:
+  service:
+    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/aws
+azure:
+  service:
+    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/azure

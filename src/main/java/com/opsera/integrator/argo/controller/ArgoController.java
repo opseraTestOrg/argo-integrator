@@ -26,6 +26,7 @@ import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
@@ -373,4 +374,47 @@ public class ArgoController {
         }
     }
 
+    /**
+     * Creates the argo cluster.
+     *
+     * @param request the request
+     * @return the response entity
+     * @throws ResourcesNotAvailable        the resources not available
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    @PostMapping(path = "v1.0/argo/clusters/create")
+    @ApiOperation("To create an argo project")
+    public ResponseEntity<String> createArgoCluster(@RequestBody CreateCluster request) throws ResourcesNotAvailable, UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received createArgoCluster request {}", request);
+            return serviceFactory.getArgoOrchestrator().createCluster(request);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed createArgoCluster time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+
+    /**
+     * Delete argo cluster.
+     *
+     * @param request the request
+     * @return the response entity
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    @PostMapping(path = "v1.0/argo/clusters/delete")
+    @ApiOperation("To delete application")
+    public ResponseEntity<String> deleteArgoCluster(@RequestBody CreateCluster request) throws UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received deleteArgoCluster request {}", request);
+            serviceFactory.getArgoOrchestrator().deleteCluster(request);
+            return new ResponseEntity<>("", HttpStatus.OK);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("To deleted the cluster and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
+        }
+    }
 }
