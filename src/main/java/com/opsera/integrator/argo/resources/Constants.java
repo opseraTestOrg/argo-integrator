@@ -26,4 +26,10 @@ public class Constants {
     public static final String ALL_ARGO_REPOSITORY_URL_TEMPLATE = "%s/api/v1/repositories";
     public static final String VAULT_READ = "/read";
     public static final String FAILED = "Failed";
+    public static final String QUERY_PARM_AWS_TOOLID = "awsToolConfigId";
+    public static final String AWS_EKS_CLUSTER_ENDPOINT = "/eks/clusters/";
+    public static final String AWS = "AWS";
+    public static final String AZURE = "AZURE";
+    public static final String ARGO_CLUSTER_URL_TEMPLATE = "%s/api/v1/clusters/%s";
+    public static final String CLUSTERS = "/clusters";
 }

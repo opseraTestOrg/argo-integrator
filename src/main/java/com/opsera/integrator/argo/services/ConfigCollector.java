@@ -5,6 +5,9 @@ import static com.opsera.integrator.argo.resources.Constants.PIPELINE_TABLE_ENDP
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_CUSTOMERID;
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_TOOLID;
 import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPOINT;
+import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_AWS_TOOLID;
+import static com.opsera.integrator.argo.resources.Constants.AWS_EKS_CLUSTER_ENDPOINT;
+import static com.opsera.integrator.argo.resources.Constants.CLUSTERS;
 
 import java.util.Optional;
 
@@ -25,6 +28,9 @@ import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.AwsClusterDetails;
+import com.opsera.integrator.argo.resources.AzureClusterDetails;
+import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ToolDetails;
 
@@ -126,5 +132,36 @@ public class ConfigCollector {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, toolConfigId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
         return restTemplate.getForObject(uriBuilder.toUriString(), ToolDetails.class);
+    }
+
+    /**
+     * Gets the AWSEKS cluster details.
+     *
+     * @param awsToolConfigId the aws tool config id
+     * @param customerId      the customer id
+     * @param clusterName     the cluster name
+     * @return the AWSEKS cluster details
+     */
+    public AwsClusterDetails getAWSEKSClusterDetails(String awsToolConfigId, String customerId, String clusterName) {
+        LOGGER.debug("Starting to get Cluster Details for toolId {} and customerId {}", awsToolConfigId, customerId);
+        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getAwsServiceBaseUrl() + AWS_EKS_CLUSTER_ENDPOINT + clusterName).queryParam(QUERY_PARM_AWS_TOOLID, awsToolConfigId)
+                .queryParam(QUERY_PARM_CUSTOMERID, customerId);
+        String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
+        return serviceFactory.getResponseParser().extractEKSClusterDetails(response);
+    }
+
+    /**
+     * Gets the AKS cluster details.
+     *
+     * @param request the request
+     * @return the AKS cluster details
+     */
+    public AzureClusterDetails getAKSClusterDetails(CreateCluster request) {
+        LOGGER.debug("Starting to get AKS Cluster Details request", request);
+        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        String toolsConfigURL = appConfig.getAzureServiceBaseUrl() + CLUSTERS;
+        AzureClusterDetails response = restTemplate.postForObject(toolsConfigURL, request, AzureClusterDetails.class);
+        return response;
     }
 }

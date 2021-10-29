@@ -27,3 +27,9 @@ customer:
     baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/customer    
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
+aws:
+  service:
+    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/aws
+azure:
+  service:
+    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/azure
