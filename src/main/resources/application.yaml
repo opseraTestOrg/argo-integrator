@@ -1,36 +1,16 @@
 logging:
-  file: argoIntegrator
-  path: /apps/OpsERA/logs/components/argo-integrator
+  file: 
+    name: argoIntegrator
+    path: /apps/OpsERA/logs/components/argo-integrator
 server:
   port: 9096
+  shutdown: graceful
 spring:
- application:
+  application:
     name: argo-integrator
     description: API for integrating with Argo Tool
-eureka:
-  instance:
-    leaseRenewalIntervalInSeconds: 1
-    leaseExpirationDurationInSeconds: 2
-
----
-
-spring:
-  profiles: freetrial
-pipeline:
-  config:
-    baseurl: https://freetrial-microservice.opsera.io/api/pipeline
-vault:
-  config:
-    baseurl: https://freetrial-microservice.opsera.io/api/vault
-customer:
-  config:
-    baseurl: https://freetrial-microservice.opsera.io/api/customer
-argo:
-  defaultUrl: https://ivt-argo.opsera.io/
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: https://freetrial-microservice.opsera.io:8761/eureka/
+  lifecycle:
+    timeout-per-shutdown-phase: 2h
 
 ---
 
@@ -47,10 +27,6 @@ customer:
     baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/customer    
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://opsera-service-discovery.microservices.svc.cluster.local:8761/eureka/
 aws:
   service:
     baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/aws
