@@ -27,6 +27,12 @@ public class AppConfig {
 
     @Value("${customer.config.baseurl}")
     private String customerBaseUrl;
+    
+    @Value("${azure.service.baseurl}")
+    private String azureServiceBaseUrl;
+    
+    @Value("${aws.service.baseurl}")
+    private String awsServiceBaseUrl;
 
     /**
      * Factory Bean Creation

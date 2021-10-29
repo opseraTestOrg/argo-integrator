@@ -1,20 +1,31 @@
 package com.opsera.integrator.argo.services;
 
+import static com.opsera.integrator.argo.resources.Constants.AWS;
+import static com.opsera.integrator.argo.resources.Constants.AZURE;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
+import com.opsera.integrator.argo.resources.ArgoClusterConfig;
 import com.opsera.integrator.argo.resources.ArgoProjectMetadata;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
+import com.opsera.integrator.argo.resources.AwsClusterDetails;
+import com.opsera.integrator.argo.resources.AzureClusterDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
+import com.opsera.integrator.argo.resources.CreateCluster;
+import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.Project;
+import com.opsera.integrator.argo.resources.TLSClientConfig;
 import com.opsera.integrator.argo.resources.ToolConfig;
 
 /**
@@ -25,6 +36,10 @@ public class RequestBuilder {
 
     /** The Constant LOGGER. */
     public static final Logger LOGGER = LoggerFactory.getLogger(RequestBuilder.class);
+
+    /** The service factory. */
+    @Autowired
+    private IServiceFactory serviceFactory;
 
     /**
      * Creates the application request.
@@ -99,4 +114,37 @@ public class RequestBuilder {
         return createProjectRequest;
     }
 
+    /**
+     * Creates the cluster request.
+     *
+     * @param request the request
+     * @return the creates the cluster request
+     */
+    public CreateClusterRequest createClusterRequest(CreateCluster request) {
+        AwsClusterDetails awsClusterDetails = new AwsClusterDetails();
+        AzureClusterDetails azureClusterDetails = new AzureClusterDetails();
+        CreateClusterRequest createClusterRequest = new CreateClusterRequest();
+        TLSClientConfig tlsClientConfig = new TLSClientConfig();
+        ArgoClusterConfig argoClusterConfig = new ArgoClusterConfig();
+
+        if (AWS.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+            awsClusterDetails = serviceFactory.getConfigCollector().getAWSEKSClusterDetails(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
+            createClusterRequest.setServer(awsClusterDetails.getCluster().getEndpoint());
+            createClusterRequest.setName(awsClusterDetails.getCluster().getName());
+            tlsClientConfig.setCaData(awsClusterDetails.getCluster().getCertificateAuthority().getData());
+            argoClusterConfig.setTlsClientConfig(tlsClientConfig);
+            createClusterRequest.setConfig(argoClusterConfig);
+        } else if (AZURE.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+            azureClusterDetails = serviceFactory.getConfigCollector().getAKSClusterDetails(request);
+            createClusterRequest.setServer(azureClusterDetails.getServer());
+            createClusterRequest.setName(azureClusterDetails.getName());
+            tlsClientConfig.setCaData(azureClusterDetails.getCaData());
+            tlsClientConfig.setCertData(azureClusterDetails.getCertData());
+            argoClusterConfig.setTlsClientConfig(tlsClientConfig);
+            argoClusterConfig.setBearerToken(azureClusterDetails.getBearerToken());
+            createClusterRequest.setConfig(argoClusterConfig);
+        }
+        return createClusterRequest;
+
+    }
 }
