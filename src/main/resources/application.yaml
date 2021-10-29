@@ -6,10 +6,10 @@ server:
   port: 9096
   shutdown: graceful
 spring:
- application:
+  application:
     name: argo-integrator
     description: API for integrating with Argo Tool
- lifecycle:
+  lifecycle:
     timeout-per-shutdown-phase: 2h
 
 ---
