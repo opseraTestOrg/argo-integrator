@@ -11,6 +11,7 @@ import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -382,8 +383,8 @@ public class ArgoController {
      * @throws ResourcesNotAvailable        the resources not available
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    @PostMapping(path = "v1.0/argo/clusters/create")
-    @ApiOperation("To create an argo project")
+    @PostMapping(path = "v1.0/argo/clusters")
+    @ApiOperation("To create an argo cluster")
     public ResponseEntity<String> createArgoCluster(@RequestBody CreateCluster request) throws ResourcesNotAvailable, UnsupportedEncodingException {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
@@ -397,13 +398,35 @@ public class ArgoController {
     }
 
     /**
+     * Update argo cluster.
+     *
+     * @param request the request
+     * @return the response entity
+     * @throws ResourcesNotAvailable        the resources not available
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    @PutMapping(path = "v1.0/argo/clusters")
+    @ApiOperation("To update an argo cluster")
+    public ResponseEntity<String> updateArgoCluster(@RequestBody CreateCluster request) throws ResourcesNotAvailable, UnsupportedEncodingException {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received updateArgoCluster request {}", request);
+            return serviceFactory.getArgoOrchestrator().updateCluster(request);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed updateArgoCluster time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+
+    /**
      * Delete argo cluster.
      *
      * @param request the request
      * @return the response entity
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    @PostMapping(path = "v1.0/argo/clusters/delete")
+    @DeleteMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To delete application")
     public ResponseEntity<String> deleteArgoCluster(@RequestBody CreateCluster request) throws UnsupportedEncodingException {
         StopWatch stopwatch = serviceFactory.stopWatch();

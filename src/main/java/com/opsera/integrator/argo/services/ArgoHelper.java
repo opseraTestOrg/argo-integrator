@@ -393,35 +393,10 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> updateProject(CreateProjectRequest request, String baseUrl, String username, String password) {
-        LOGGER.debug("To Starting to create the project {} and url {} ", request.getProject().getMetadata().getName(), baseUrl);
+        LOGGER.debug("To Starting to update the project {} and url {} ", request.getProject().getMetadata().getName(), baseUrl);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), baseUrl, username, password);
         String url = String.format(ARGO_PROJECT_URL_TEMPLATE, baseUrl, request.getProject().getMetadata().getName());
         return serviceFactory.getRestTemplate().exchange(url, HttpMethod.PUT, requestEntity, String.class);
-    }
-
-    /**
-     * Gets the argo cluster.
-     *
-     * @param serverName the server name
-     * @param baseUrl    the base url
-     * @param username   the username
-     * @param password   the password
-     * @return the argo cluster
-     * @throws UnsupportedEncodingException the unsupported encoding exception
-     */
-    public ArgoClusterItem getArgoCluster(String serverName, String baseUrl, String username, String password) throws UnsupportedEncodingException {
-        LOGGER.debug("Starting to get All Argo Clusters for baseUrl {}", baseUrl);
-        ResponseEntity<String> response = null;
-        try {
-            HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
-            String serverUrl = encodeURL(serverName);
-            String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, baseUrl, serverUrl);
-            response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
-            return serviceFactory.getResponseParser().extractArgoCluster(response.getBody());
-        } catch (Exception e) {
-            return null;
-        }
-
     }
 
     /**
@@ -451,7 +426,7 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public ResponseEntity<String> updateCluster(CreateClusterRequest request, String baseUrl, String username, String password) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to create the cluster {} and url {} ", request.getName(), baseUrl);
+        LOGGER.debug("To Starting to update the cluster {} and url {} ", request.getName(), baseUrl);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), baseUrl, username, password);
         String serverUrl = encodeURL(request.getServer());
         String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, baseUrl, serverUrl);
@@ -468,11 +443,11 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public void deleteArgoCluster(String server, String baseUrl, String username, String password) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to delete the project {} and url {} ", server, baseUrl);
+        LOGGER.debug("To Starting to delete the cluster {} and url {} ", server, baseUrl);
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(baseUrl, username, password);
         String serverUrl = encodeURL(server);
         String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, baseUrl, serverUrl);
         serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, Void.class);
-        LOGGER.debug("To Completed to delete the project {} and url {} ", server, baseUrl);
+        LOGGER.debug("To Completed to delete the cluster {} and url {} ", server, baseUrl);
     }
 }
