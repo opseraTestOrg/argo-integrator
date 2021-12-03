@@ -32,4 +32,5 @@ public class Constants {
     public static final String AZURE = "AZURE";
     public static final String ARGO_CLUSTER_URL_TEMPLATE = "%s/api/v1/clusters/%s";
     public static final String CLUSTERS = "/clusters";
+    public static final String ASTERISK ="*";
 }
