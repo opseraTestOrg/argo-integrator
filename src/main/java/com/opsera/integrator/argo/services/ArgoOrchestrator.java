@@ -1,8 +1,8 @@
 package com.opsera.integrator.argo.services;
 
-import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.AWS;
 import static com.opsera.integrator.argo.resources.Constants.AZURE;
+import static com.opsera.integrator.argo.resources.Constants.FAILED;
 
 import java.io.UnsupportedEncodingException;
 
@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
@@ -19,7 +18,6 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
-import com.opsera.integrator.argo.resources.ArgoClusterItem;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
@@ -293,6 +291,7 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         ArgoApplicationMetadataList applicationMetadataList = getAllProjects(request.getToolId(), request.getCustomerId());
+        serviceFactory.getRequestBuilder().createProjectRequest(request);
         boolean isProjectExists = applicationMetadataList.getApplicationList().stream()
                 .anyMatch(applicationMetadata -> applicationMetadata.getName().equals(request.getProject().getMetadata().getName()));
         if (isProjectExists) {
@@ -340,30 +339,26 @@ public class ArgoOrchestrator {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public ResponseEntity<String> createCluster(CreateCluster request) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to create/update the cluster {} ", request);
+        LOGGER.debug("Starting to create the cluster {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         CreateClusterRequest clusterItem = serviceFactory.getRequestBuilder().createClusterRequest(request);
-        ArgoClusterItem projectItem = getArgoCluster(argoToolDetails, clusterItem.getServer(), argoPassword);
-        if (null == projectItem) {
-            return serviceFactory.getArgoHelper().createCluster(clusterItem, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        } else {
-            return serviceFactory.getArgoHelper().updateCluster(clusterItem, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        }
+        return serviceFactory.getArgoHelper().createCluster(clusterItem, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
     /**
-     * Gets the argo cluster.
+     * Update cluster.
      *
-     * @param argoToolDetails the argo tool details
-     * @param name            the name
-     * @param argoPassword    the argo password
-     * @return the argo cluster
+     * @param request the request
+     * @return the response entity
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    private ArgoClusterItem getArgoCluster(ArgoToolDetails argoToolDetails, String name, String argoPassword) throws UnsupportedEncodingException {
-        LOGGER.debug("Starting to fetch Argo Cluster {} ", name);
-        return serviceFactory.getArgoHelper().getArgoCluster(name, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+    public ResponseEntity<String> updateCluster(CreateCluster request) throws UnsupportedEncodingException {
+        LOGGER.debug("Starting to update the cluster {} ", request);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        CreateClusterRequest clusterItem = serviceFactory.getRequestBuilder().createClusterRequest(request);
+        return serviceFactory.getArgoHelper().updateCluster(clusterItem, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
     /**

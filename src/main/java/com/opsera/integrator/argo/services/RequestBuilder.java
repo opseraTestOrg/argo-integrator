@@ -2,6 +2,10 @@ package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.AWS;
 import static com.opsera.integrator.argo.resources.Constants.AZURE;
+import static com.opsera.integrator.argo.resources.Constants.ASTERISK;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +19,10 @@ import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
 import com.opsera.integrator.argo.resources.ArgoClusterConfig;
+import com.opsera.integrator.argo.resources.ArgoProjectClusterResourceWhiteList;
 import com.opsera.integrator.argo.resources.ArgoProjectMetadata;
+import com.opsera.integrator.argo.resources.ArgoProjectNamespaceResourceBlacklist;
+import com.opsera.integrator.argo.resources.ArgoProjectNamespaceResourceWhitelist;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.AwsClusterDetails;
 import com.opsera.integrator.argo.resources.AzureClusterDetails;
@@ -121,12 +128,12 @@ public class RequestBuilder {
      * @return the creates the cluster request
      */
     public CreateClusterRequest createClusterRequest(CreateCluster request) {
+        LOGGER.debug("Starting to create Argo cluster Request {}", request);
         AwsClusterDetails awsClusterDetails = new AwsClusterDetails();
         AzureClusterDetails azureClusterDetails = new AzureClusterDetails();
         CreateClusterRequest createClusterRequest = new CreateClusterRequest();
         TLSClientConfig tlsClientConfig = new TLSClientConfig();
         ArgoClusterConfig argoClusterConfig = new ArgoClusterConfig();
-
         if (AWS.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
             awsClusterDetails = serviceFactory.getConfigCollector().getAWSEKSClusterDetails(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
             createClusterRequest.setServer(awsClusterDetails.getCluster().getEndpoint());
@@ -145,6 +152,123 @@ public class RequestBuilder {
             createClusterRequest.setConfig(argoClusterConfig);
         }
         return createClusterRequest;
+    }
 
+    /**
+     * Creates the project request.
+     *
+     * @param request the request
+     */
+    public void createProjectRequest(CreateProjectRequest request) {
+        LOGGER.debug("Starting to Build Request for Argo Project {}", request);
+        List<ArgoProjectClusterResourceWhiteList> clusterResourceWhitelist = setClusterResourceWhiteList(request);
+        request.getProject().getSpec().setClusterResourceWhitelist(clusterResourceWhitelist);
+        List<ArgoProjectNamespaceResourceBlacklist> namespaceResourceBlacklist = setNamespaceResourceBlacklist(request);
+        request.getProject().getSpec().setNamespaceResourceBlacklist(namespaceResourceBlacklist);
+        List<ArgoProjectNamespaceResourceWhitelist> namespaceResourceWhitelist = setNamespaceResourceWhitelist(request);
+        request.getProject().getSpec().setNamespaceResourceWhitelist(namespaceResourceWhitelist);
+        LOGGER.debug("Completed to Build Request for Argo Project {}", request);
+    }
+
+    /**
+     * Sets the cluster resource white list.
+     *
+     * @param request the request
+     * @return the list
+     */
+    private List<ArgoProjectClusterResourceWhiteList> setClusterResourceWhiteList(CreateProjectRequest request) {
+        LOGGER.debug("Starting to set Cluster Resource WhiteList for Argo Project {}", request);
+        List<ArgoProjectClusterResourceWhiteList> clusterResourceWhitelist = new ArrayList<>();
+        ArgoProjectClusterResourceWhiteList clusterResourceWhite;
+        if (request.getProject().getSpec().getClusterResourceWhitelist() != null) {
+            for (ArgoProjectClusterResourceWhiteList clusterResource : request.getProject().getSpec().getClusterResourceWhitelist()) {
+                clusterResourceWhite = new ArgoProjectClusterResourceWhiteList();
+                if (clusterResource.getGroup().isEmpty()) {
+                    clusterResourceWhite.setGroup(ASTERISK);
+                } else {
+                    clusterResourceWhite.setGroup(clusterResource.getGroup());
+                }
+                if (clusterResource.getKind().isEmpty()) {
+                    clusterResourceWhite.setKind(ASTERISK);
+                } else {
+                    clusterResourceWhite.setKind(clusterResource.getKind());
+                }
+                clusterResourceWhitelist.add(clusterResourceWhite);
+            }
+        } else {
+            clusterResourceWhite = new ArgoProjectClusterResourceWhiteList();
+            clusterResourceWhite.setGroup(ASTERISK);
+            clusterResourceWhite.setKind(ASTERISK);
+            clusterResourceWhitelist.add(clusterResourceWhite);
+        }
+        return clusterResourceWhitelist;
+    }
+
+    /**
+     * Sets the namespace resource blacklist.
+     *
+     * @param request the request
+     * @return the list
+     */
+    private List<ArgoProjectNamespaceResourceBlacklist> setNamespaceResourceBlacklist(CreateProjectRequest request) {
+        LOGGER.debug("Starting to set Namespace Resource Blacklist for Argo Project {}", request);
+        List<ArgoProjectNamespaceResourceBlacklist> namespaceResourceBlacklist = new ArrayList<>();
+        ArgoProjectNamespaceResourceBlacklist namespaceResourceBlack;
+        if (request.getProject().getSpec().getNamespaceResourceBlacklist() != null) {
+            for (ArgoProjectNamespaceResourceBlacklist namespaceResource : request.getProject().getSpec().getNamespaceResourceBlacklist()) {
+                namespaceResourceBlack = new ArgoProjectNamespaceResourceBlacklist();
+                if (namespaceResource.getGroup().isEmpty()) {
+                    namespaceResourceBlack.setGroup(ASTERISK);
+                } else {
+                    namespaceResourceBlack.setGroup(namespaceResource.getGroup());
+                }
+                if (namespaceResource.getKind().isEmpty()) {
+                    namespaceResourceBlack.setKind(ASTERISK);
+                } else {
+                    namespaceResourceBlack.setKind(namespaceResource.getKind());
+                }
+                namespaceResourceBlacklist.add(namespaceResourceBlack);
+            }
+        } else {
+            namespaceResourceBlack = new ArgoProjectNamespaceResourceBlacklist();
+            namespaceResourceBlack.setGroup(ASTERISK);
+            namespaceResourceBlack.setKind(ASTERISK);
+            namespaceResourceBlacklist.add(namespaceResourceBlack);
+        }
+        return namespaceResourceBlacklist;
+    }
+
+    /**
+     * Sets the namespace resource whitelist.
+     *
+     * @param request the request
+     * @return the list
+     */
+    private List<ArgoProjectNamespaceResourceWhitelist> setNamespaceResourceWhitelist(CreateProjectRequest request) {
+        LOGGER.debug("Starting to set Namespace Resource Whitelist for Argo Project {}", request);
+        List<ArgoProjectNamespaceResourceWhitelist> namespaceResourceWhitelist = new ArrayList<>();
+        ArgoProjectNamespaceResourceWhitelist namespaceResourceWhite;
+        if (request.getProject().getSpec().getNamespaceResourceWhitelist() != null) {
+            for (ArgoProjectNamespaceResourceWhitelist projectNamespaceResource : request.getProject().getSpec().getNamespaceResourceWhitelist()) {
+                namespaceResourceWhite = new ArgoProjectNamespaceResourceWhitelist();
+                if (projectNamespaceResource.getGroup().isEmpty()) {
+                    namespaceResourceWhite.setGroup(ASTERISK);
+                } else {
+                    namespaceResourceWhite.setGroup(projectNamespaceResource.getGroup());
+                }
+                if (projectNamespaceResource.getKind().isEmpty()) {
+                    namespaceResourceWhite.setKind(ASTERISK);
+                } else {
+                    namespaceResourceWhite.setKind(projectNamespaceResource.getKind());
+                }
+                namespaceResourceWhitelist.add(namespaceResourceWhite);
+            }
+        } else {
+            namespaceResourceWhite = new ArgoProjectNamespaceResourceWhitelist();
+            namespaceResourceWhite.setGroup(ASTERISK);
+            namespaceResourceWhite.setKind(ASTERISK);
+            namespaceResourceWhitelist.add(namespaceResourceWhite);
+        }
+        return namespaceResourceWhitelist;
     }
 }
