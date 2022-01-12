@@ -16,5 +16,9 @@ public class CreateCluster {
     private String platform;
 
     private String resourceGroup;
-    
+
+    private String clientId;
+
+    private String clientSecret;
+
 }
