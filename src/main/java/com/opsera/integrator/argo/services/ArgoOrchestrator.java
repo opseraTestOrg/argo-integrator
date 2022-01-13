@@ -367,12 +367,20 @@ public class ArgoOrchestrator {
      * @param request the request
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to delete the cluster {} and customerId {} and toolId {}", serverUrl, customerId, argoToolId);
-        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
+    public void deleteCluster(CreateCluster request) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to delete the cluster request {}", request);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        String serverUrl = "";
+        if (AWS.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+            AwsClusterDetails clusterDetails = serviceFactory.getConfigCollector().getAWSEKSClusterDetails(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
+            serverUrl = clusterDetails.getCluster().getEndpoint();
+        } else if (AZURE.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+            AzureClusterDetails azureClusterDetails = serviceFactory.getConfigCollector().getAKSClusterDetails(request);
+            serverUrl = azureClusterDetails.getServer();
+        }
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        LOGGER.debug("Completed to delete the cluster {} and customerId {} and toolId {}", serverUrl, customerId, argoToolId);
+        LOGGER.debug("Completed to delete the cluster request {}", request);
     }
 
 }
