@@ -4,7 +4,7 @@ COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
 RUN gradle clean build --no-daemon
 
-FROM openjdk:8-jre-slim
+FROM openjdk:18-ea-11-jdk-alpine3.14
 RUN apt-get update && apt-get install -y curl dnsutils iputils-ping
 RUN mkdir /app
 COPY --from=build /home/gradle/src/build/libs/*.jar /apps/OpsERA/components/argo-integrator/argo-integrator.jar
