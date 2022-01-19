@@ -1,4 +1,4 @@
-FROM gradle:6.3.0-jdk8 AS build
+FROM gradle:6-jdk11-alpine AS build
 ENV DOCKER_ENV=dev
 COPY --chown=gradle:gradle . /home/gradle/src
 WORKDIR /home/gradle/src
