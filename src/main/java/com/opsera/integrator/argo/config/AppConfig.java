@@ -67,11 +67,9 @@ public class AppConfig {
      */
     @Bean
     public RestTemplate getRestTemplate() {
-        return new RestTemplate() {
-            {
-                setInterceptors(Collections.singletonList(new CorrelationIdInterceptor()));
-            }
-        };
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setInterceptors(Collections.singletonList(new CorrelationIdInterceptor()));
+        return restTemplate;
     }
 
 }
