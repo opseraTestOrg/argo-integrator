@@ -1,11 +1,15 @@
 package com.opsera.integrator.argo.config;
 
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ServiceLocatorFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
+
+import com.opsera.integrator.argo.log.CorrelationIdInterceptor;
 
 import lombok.Getter;
 
@@ -27,10 +31,10 @@ public class AppConfig {
 
     @Value("${customer.config.baseurl}")
     private String customerBaseUrl;
-    
+
     @Value("${azure.service.baseurl}")
     private String azureServiceBaseUrl;
-    
+
     @Value("${aws.service.baseurl}")
     private String awsServiceBaseUrl;
 
@@ -63,6 +67,11 @@ public class AppConfig {
      */
     @Bean
     public RestTemplate getRestTemplate() {
-        return new RestTemplate();
+        return new RestTemplate() {
+            {
+                setInterceptors(Collections.singletonList(new CorrelationIdInterceptor()));
+            }
+        };
     }
+
 }

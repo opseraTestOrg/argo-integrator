@@ -5,23 +5,18 @@
     <springProperty name="LOG_PATH" source="logging.path" defaultValue="/apps/OpsERA/logs/components/argo-integrator" />
     <springProperty name="LOG_FILE" source="logging.file" defaultValue="argoIntegrator" />
 
-
     <property name="LOG_PATTERN"
               value="%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %p %m%n" />
 
     <appender name="console"
-              class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-        </encoder>
-    </appender>
-
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+	</appender>
+	
     <appender name="applicationLog"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${LOG_FILE}.log</file>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
-        </encoder>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <fileNamePattern>${LOG_PATH}/${LOG_FILE}-%i.log</fileNamePattern>
@@ -66,5 +61,6 @@
 
     <root level="info">
         <appender-ref ref="console" />
+        <appender-ref ref="applicationLog" />
     </root>
 </configuration>
