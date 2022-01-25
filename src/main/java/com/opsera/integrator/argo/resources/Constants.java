@@ -28,9 +28,21 @@ public class Constants {
     public static final String FAILED = "Failed";
     public static final String QUERY_PARM_AWS_TOOLID = "awsToolConfigId";
     public static final String AWS_EKS_CLUSTER_ENDPOINT = "/eks/clusters/";
+    public static final String AWS_STS_CLUSTER_TOKEN_ENDPOINT = "/sts/eksToken/";
     public static final String AWS = "AWS";
     public static final String AZURE = "AZURE";
     public static final String ARGO_CLUSTER_URL_TEMPLATE = "%s/api/v1/clusters/%s";
     public static final String CLUSTERS = "/clusters";
     public static final String ASTERISK ="*";
+    public static final String V1 = "v1";
+    public static final String SERVICE_ACCOUNT = "ServiceAccount";
+    public static final String CLUSTER_ROLE_BINDING = "ClusterRoleBinding";
+    public static final String READ_SECRETS_GLOBAL = "read-secrets-global";
+    public static final String CLUSTER_ROLE = "ClusterRole";
+    public static final String CLUSTER_ADMIN = "cluster-admin";
+    public static final String API_GROUP = "rbac.authorization.k8s.io";
+    public static final String API_VERSION = "rbac.authorization.k8s.io/v1";
+    public static final String K8_SERVCE_ACCOUNT_NAME = "kubernetes.io/service-account.name";
+    public static final String TOKEN = "token";
+    public static final String NAMESPACE_OPSERA = "opsera";
 }

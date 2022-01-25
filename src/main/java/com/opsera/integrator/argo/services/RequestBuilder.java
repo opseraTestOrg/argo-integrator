@@ -1,8 +1,9 @@
 package com.opsera.integrator.argo.services;
 
+import static com.opsera.integrator.argo.resources.Constants.ASTERISK;
 import static com.opsera.integrator.argo.resources.Constants.AWS;
 import static com.opsera.integrator.argo.resources.Constants.AZURE;
-import static com.opsera.integrator.argo.resources.Constants.ASTERISK;
+import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -140,6 +141,9 @@ public class RequestBuilder {
             createClusterRequest.setName(awsClusterDetails.getCluster().getName());
             tlsClientConfig.setCaData(awsClusterDetails.getCluster().getCertificateAuthority().getData());
             argoClusterConfig.setTlsClientConfig(tlsClientConfig);
+            String eksToken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
+            String bearerToken = serviceFactory.getConfigCollector().getBearerToken(createClusterRequest.getServer(), eksToken, request.getPlatformToolId(), NAMESPACE_OPSERA);
+            argoClusterConfig.setBearerToken(bearerToken);
             createClusterRequest.setConfig(argoClusterConfig);
         } else if (AZURE.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
             azureClusterDetails = serviceFactory.getConfigCollector().getAKSClusterDetails(request);

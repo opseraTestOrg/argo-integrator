@@ -1,8 +1,8 @@
 package com.opsera.integrator.argo.services;
 
-import static com.opsera.integrator.argo.resources.Constants.AWS;
-import static com.opsera.integrator.argo.resources.Constants.AZURE;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
+import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
+import static com.opsera.integrator.argo.resources.Constants.AWS;
 
 import java.io.UnsupportedEncodingException;
 
@@ -22,8 +22,6 @@ import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
-import com.opsera.integrator.argo.resources.AwsClusterDetails;
-import com.opsera.integrator.argo.resources.AzureClusterDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
 import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
@@ -367,12 +365,16 @@ public class ArgoOrchestrator {
      * @param request the request
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to delete the cluster {} and customerId {} and toolId {}", serverUrl, customerId, argoToolId);
+    public void deleteCluster(String argoToolId, String customerId, String serverUrl, String platformToolId, String platform, String clusterName) throws UnsupportedEncodingException {
+        LOGGER.debug("To Starting to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        if (AWS.equalsIgnoreCase(platform)) {
+            String awsEkstoken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(platformToolId, customerId, clusterName);
+            serviceFactory.getConfigCollector().deleteServiceAccount(serverUrl, awsEkstoken, platformToolId, NAMESPACE_OPSERA);
+        }
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        LOGGER.debug("Completed to delete the cluster {} and customerId {} and toolId {}", serverUrl, customerId, argoToolId);
+        LOGGER.debug("Completed to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
     }
 
 }
