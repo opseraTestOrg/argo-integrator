@@ -371,7 +371,7 @@ public class ArgoOrchestrator {
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         if (AWS.equalsIgnoreCase(platform)) {
             String awsEkstoken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(platformToolId, customerId, clusterName);
-            serviceFactory.getConfigCollector().deleteServiceAccount(serverUrl, awsEkstoken, platformToolId, NAMESPACE_OPSERA);
+            serviceFactory.getConfigCollector().deleteServiceAccount(serverUrl, awsEkstoken, argoToolId, NAMESPACE_OPSERA);
         }
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
         LOGGER.debug("Completed to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);

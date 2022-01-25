@@ -142,7 +142,7 @@ public class RequestBuilder {
             tlsClientConfig.setCaData(awsClusterDetails.getCluster().getCertificateAuthority().getData());
             argoClusterConfig.setTlsClientConfig(tlsClientConfig);
             String eksToken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
-            String bearerToken = serviceFactory.getConfigCollector().getBearerToken(createClusterRequest.getServer(), eksToken, request.getPlatformToolId(), NAMESPACE_OPSERA);
+            String bearerToken = serviceFactory.getConfigCollector().getBearerToken(createClusterRequest.getServer(), eksToken, request.getArgoToolId(), NAMESPACE_OPSERA);
             argoClusterConfig.setBearerToken(bearerToken);
             createClusterRequest.setConfig(argoClusterConfig);
         } else if (AZURE.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
