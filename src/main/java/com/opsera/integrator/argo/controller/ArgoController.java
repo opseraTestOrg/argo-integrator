@@ -428,12 +428,13 @@ public class ArgoController {
      */
     @DeleteMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To delete an argo cluster")
-    public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server) throws UnsupportedEncodingException {
+    public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server, @RequestParam String platformToolId,
+            @RequestParam String platform, @RequestParam String clusterName) throws UnsupportedEncodingException {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
             LOGGER.info("Received deleteArgoCluster for argoToolId: {}, cluster: {}", argoToolId, server);
-            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server);
+            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server, platformToolId, clusterName, platform);
             return new ResponseEntity<>("", HttpStatus.OK);
         } finally {
             stopwatch.stop();
