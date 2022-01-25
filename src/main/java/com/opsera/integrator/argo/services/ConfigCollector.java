@@ -176,7 +176,7 @@ public class ConfigCollector {
     public AwsClusterDetails getAWSEKSClusterDetails(String awsToolConfigId, String customerId, String clusterName) {
         LOGGER.debug("Starting to get Cluster Details for toolId {} and customerId {}", awsToolConfigId, customerId);
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl("http://localhost:9080/" + AWS_EKS_CLUSTER_ENDPOINT + clusterName).queryParam(QUERY_PARM_AWS_TOOLID, awsToolConfigId)
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getAwsServiceBaseUrl() + AWS_EKS_CLUSTER_ENDPOINT + clusterName).queryParam(QUERY_PARM_AWS_TOOLID, awsToolConfigId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
         String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
         return serviceFactory.getResponseParser().extractEKSClusterDetails(response);
