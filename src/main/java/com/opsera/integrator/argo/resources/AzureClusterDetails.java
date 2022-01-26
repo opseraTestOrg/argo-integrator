@@ -13,5 +13,7 @@ public class AzureClusterDetails {
     
     private String certData;
     
+    private String keyData;
+    
     private String bearerToken;
 }
