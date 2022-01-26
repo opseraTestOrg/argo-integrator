@@ -151,6 +151,7 @@ public class RequestBuilder {
             createClusterRequest.setName(azureClusterDetails.getName());
             tlsClientConfig.setCaData(azureClusterDetails.getCaData());
             tlsClientConfig.setCertData(azureClusterDetails.getCertData());
+            tlsClientConfig.setKeyData(azureClusterDetails.getKeyData());
             argoClusterConfig.setTlsClientConfig(tlsClientConfig);
             argoClusterConfig.setBearerToken(azureClusterDetails.getBearerToken());
             createClusterRequest.setConfig(argoClusterConfig);
