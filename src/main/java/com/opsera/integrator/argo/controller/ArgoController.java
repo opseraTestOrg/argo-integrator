@@ -433,8 +433,8 @@ public class ArgoController {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
-            LOGGER.info("Received deleteArgoCluster for argoToolId: {}, cluster: {}", argoToolId, server);
-            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server, platformToolId, clusterName, platform);
+            LOGGER.info("Received deleteArgoCluster for argoToolId: {}, cluster: {}, platformToolId {}, platform {}", argoToolId, server, platformToolId, platform);
+            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server, platformToolId, platform, clusterName);
             return new ResponseEntity<>("", HttpStatus.OK);
         } finally {
             stopwatch.stop();
