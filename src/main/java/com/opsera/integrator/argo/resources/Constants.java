@@ -45,4 +45,6 @@ public class Constants {
     public static final String K8_SERVCE_ACCOUNT_NAME = "kubernetes.io/service-account.name";
     public static final String TOKEN = "token";
     public static final String NAMESPACE_OPSERA = "opsera";
+    public static final String AMAZON_AWS = "amazonaws";
+    public static final String AZURE_K8S= "azmk8s";
 }

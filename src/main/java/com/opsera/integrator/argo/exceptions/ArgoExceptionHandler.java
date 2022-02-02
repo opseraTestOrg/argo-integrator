@@ -3,6 +3,7 @@ package com.opsera.integrator.argo.exceptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -12,18 +13,20 @@ import com.google.gson.Gson;
 import com.opsera.integrator.argo.config.IServiceFactory;
 
 /**
- * Exception Handler
+ * Exception Handler.
  */
+@ControllerAdvice
 public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
 
+    /** The factory. */
     @Autowired
     private IServiceFactory factory;
 
     /**
-     * Custom exception handler for record not found
+     * Custom exception handler for record not found.
      *
-     * @param ex
-     * @return
+     * @param ex the ex
+     * @return the response entity
      */
     @ExceptionHandler(InternalServiceException.class)
     protected ResponseEntity<Object> handleRecordNotFound(InternalServiceException ex) {
@@ -35,11 +38,10 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Handling Server side error while calling other service.
      *
-     * Handling Server side error while calling other service
-     *
-     * @param ex
-     * @return
+     * @param ex the ex
+     * @return the response entity
      */
     @ExceptionHandler(HttpServerErrorException.class)
     protected ResponseEntity<Object> handleHttpServerErrorException(HttpServerErrorException ex) {
@@ -51,11 +53,10 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Handling client side error while calling other service.
      *
-     * Handling client side error while calling other service
-     *
-     * @param ex
-     * @return
+     * @param ex the ex
+     * @return the response entity
      */
     @ExceptionHandler(HttpClientErrorException.class)
     protected ResponseEntity<Object> handleHttpClientErrorException(HttpClientErrorException ex) {
@@ -67,11 +68,10 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * 
-     * Custom exception handler for record not found
-     * 
-     * @param ex
-     * @return
+     * Custom exception handler for record not found.
+     *
+     * @param ex the ex
+     * @return the response entity
      */
     @ExceptionHandler(ResourcesNotAvailable.class)
     protected ResponseEntity<Object> handleRecordNotFound(ResourcesNotAvailable ex) {
@@ -80,5 +80,50 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
         argoErrorResponse.setMessage(ex.getMessage());
         argoErrorResponse.setStatus(HttpStatus.NOT_FOUND.name());
         return new ResponseEntity<>(argoErrorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Handle invalid request exception.
+     *
+     * @param ex the ex
+     * @return the response entity
+     */
+    @ExceptionHandler(InvalidRequestException.class)
+    protected ResponseEntity<Object> handleInvalidRequestException(InvalidRequestException ex) {
+        logger.error("invalid request found is ", ex);
+        ArgoErrorResponse argoErrorResponse = new ArgoErrorResponse();
+        argoErrorResponse.setMessage(ex.getMessage());
+        argoErrorResponse.setStatus(HttpStatus.BAD_REQUEST.name());
+        return new ResponseEntity<>(argoErrorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handle argo service exception.
+     *
+     * @param ex the ex
+     * @return the response entity
+     */
+    @ExceptionHandler(ArgoServiceException.class)
+    protected ResponseEntity<Object> handleArgoServiceException(ArgoServiceException ex) {
+        logger.error("argo service exception found  is ", ex);
+        ArgoErrorResponse argoErrorResponse = new ArgoErrorResponse();
+        argoErrorResponse.setMessage(ex.getMessage());
+        argoErrorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.name());
+        return new ResponseEntity<>(argoErrorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * Handle un authorized exception.
+     *
+     * @param ex the ex
+     * @return the response entity
+     */
+    @ExceptionHandler(UnAuthorizedException.class)
+    protected ResponseEntity<Object> handleUnAuthorizedException(UnAuthorizedException ex) {
+        logger.error("UnAuthorizedException ", ex);
+        ArgoErrorResponse argoErrorResponse = new ArgoErrorResponse();
+        argoErrorResponse.setMessage(ex.getMessage());
+        argoErrorResponse.setStatus(HttpStatus.UNAUTHORIZED.name());
+        return new ResponseEntity<>(argoErrorResponse, HttpStatus.UNAUTHORIZED);
     }
 }
