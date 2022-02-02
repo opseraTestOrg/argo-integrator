@@ -3,6 +3,9 @@ package com.opsera.integrator.argo.services;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
 import static com.opsera.integrator.argo.resources.Constants.AWS;
+import static com.opsera.integrator.argo.resources.Constants.AZURE;
+import static com.opsera.integrator.argo.resources.Constants.AMAZON_AWS;
+import static com.opsera.integrator.argo.resources.Constants.AZURE_K8S;
 
 import java.io.UnsupportedEncodingException;
 
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
@@ -30,6 +34,8 @@ import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
+
+import io.kubernetes.client.openapi.ApiException;
 
 /**
  * Class that orchestrates different classes within the service to provide the
@@ -364,17 +370,35 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @throws UnsupportedEncodingException the unsupported encoding exception
+     * @throws ApiException 
      */
-    public void deleteCluster(String argoToolId, String customerId, String serverUrl, String platformToolId, String platform, String clusterName) throws UnsupportedEncodingException {
-        LOGGER.debug("To Starting to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
+    public void deleteCluster(String argoToolId, String customerId, String serverUrl, String platformToolId, String platform, String clusterName) throws UnsupportedEncodingException, InvalidRequestException {
+        LOGGER.debug("Starting to delete the cluster {} for customerId {} and toolId {}", clusterName, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        if (AWS.equalsIgnoreCase(platform)) {
+        if (AWS.equalsIgnoreCase(platform) && (serverUrl.contains(AMAZON_AWS))) {
             String awsEkstoken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(platformToolId, customerId, clusterName);
             serviceFactory.getConfigCollector().deleteServiceAccount(serverUrl, awsEkstoken, argoToolId, NAMESPACE_OPSERA);
+            processDeleteCluster(serverUrl, argoToolDetails, argoPassword);
+        } else if (AZURE.equalsIgnoreCase(platform) && serverUrl.contains(AZURE_K8S)) {
+            processDeleteCluster(serverUrl, argoToolDetails, argoPassword);
+        } else {
+            LOGGER.error("Invalid platform or platform tool id selected for the cluster: {}", clusterName);
+            throw new InvalidRequestException("Invalid platform or platform tool id selected for the cluster");
         }
+        LOGGER.debug("Completed to delete the cluster {} for customerId {} and toolId {}", clusterName, customerId, argoToolId);
+    }
+
+    /**
+     * Process delete cluster.
+     *
+     * @param serverUrl       the server url
+     * @param argoToolDetails the argo tool details
+     * @param argoPassword    the argo password
+     * @throws UnsupportedEncodingException the unsupported encoding exception
+     */
+    private void processDeleteCluster(String serverUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws UnsupportedEncodingException {
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
-        LOGGER.debug("Completed to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
     }
 
 }
