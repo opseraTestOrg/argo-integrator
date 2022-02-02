@@ -21,6 +21,8 @@ import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPO
 import static com.opsera.integrator.argo.resources.Constants.V1;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -29,16 +31,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opsera.integrator.argo.config.AppConfig;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
+import com.opsera.integrator.argo.exceptions.UnAuthorizedException;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.AwsClusterDetails;
 import com.opsera.integrator.argo.resources.AzureClusterDetails;
@@ -48,6 +53,7 @@ import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
 
 import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.ApiResponse;
 import io.kubernetes.client.openapi.Configuration;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
@@ -60,11 +66,9 @@ import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1SecretList;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountList;
-import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.V1Subject;
 import io.kubernetes.client.util.Config;
 
-// TODO: Auto-generated Javadoc
 /**
  * Class to interact and fetch the configurations.
  */
@@ -215,10 +219,10 @@ public class ConfigCollector {
     /**
      * Gets the bearer token.
      *
-     * @param serverUrl the server url
-     * @param token     the token
-     * @param toolId    the tool id
-     * @param nameSpace the name space
+     * @param serverUrl  the server url
+     * @param token      the token
+     * @param argoToolId the argo tool id
+     * @param nameSpace  the name space
      * @return the bearer token
      */
     public String getBearerToken(String serverUrl, String token, String argoToolId, String nameSpace) {
@@ -273,25 +277,25 @@ public class ConfigCollector {
                     serviceToken = new String(item.getData().get(TOKEN));
                 }
             }
-        } catch (Exception ex) {
-            LOGGER.error("A problem occurred while creating service account and cluster role binding to get aws eks cluster token for service account {}", argoToolId);
-            throw new ArgoServiceException("Exception occured while creating service account and cluster role binding to get aws eks cluster token", ex);
+        } catch (ApiException ex) {
+            LOGGER.error("A problem occurred while creating service account and cluster role binding to get aws eks cluster token for service account {} and cluster {}", argoToolId, serverUrl);
+            processException(ex);
         }
-        LOGGER.debug("Completed to get bearer token for toolId {} and clusterserverUrl {}", argoToolId, serverUrl);
+        LOGGER.debug("Completed to get bearer token for toolId {} and cluster {}", argoToolId, serverUrl);
         return serviceToken;
     }
 
     /**
      * Delete service account.
      *
-     * @param serverUrl the server url
-     * @param token     the token
-     * @param awsToolId the aws tool id
-     * @param nameSpace the name space
+     * @param serverUrl  the server url
+     * @param token      the token
+     * @param argoToolId the argo tool id
+     * @param nameSpace  the name space
      * @return the string
      */
     public void deleteServiceAccount(String serverUrl, String token, String argoToolId, String nameSpace) {
-        LOGGER.debug("Starting to delete service account for aws eks cluster {} and toolId {}", serverUrl, argoToolId);
+        LOGGER.debug("Starting to delete service account for aws eks cluster {} toolId {} ", serverUrl, argoToolId);
         try {
             ApiClient client = Config.fromToken(serverUrl, token, false);
             Configuration.setDefaultApiClient(client);
@@ -319,10 +323,31 @@ public class ConfigCollector {
             } else {
                 LOGGER.debug("Cluster role binding is not available to delete cluster {} and service account {}", serverUrl, argoToolId);
             }
-        } catch (Exception ex) {
+        } catch (ApiException ex) {
             LOGGER.error("A problem occurred while deleting service account for aws eks cluster {} and toolId {}", serverUrl, argoToolId);
-            throw new ArgoServiceException("Exception occured while deleting service account for aws eks cluster", ex);
+            processException(ex);
         }
         LOGGER.debug("Completed to delete service account for aws eks cluster {} and toolId {}", serverUrl, argoToolId);
+    }
+
+    /**
+     * Process exception.
+     *
+     * @param ex the ex
+     */
+    private void processException(ApiException ex) {
+        Map<String, Object> map = new HashMap<>();
+        try {
+            map = new ObjectMapper().readValue(ex.getResponseBody(), Map.class);
+        } catch (Exception e) {
+            throw new ArgoServiceException(ex.getMessage());
+        }
+        if (null != map.get("message")) {
+            if (HttpStatus.UNAUTHORIZED.name().equalsIgnoreCase(map.get("message").toString())) {
+                throw new UnAuthorizedException("Invalid platform credentials or user not authorized to perform this action");
+            }
+        } else {
+            throw new ArgoServiceException(ex.getMessage());
+        }
     }
 }
