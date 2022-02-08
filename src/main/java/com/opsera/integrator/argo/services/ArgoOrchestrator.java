@@ -372,32 +372,10 @@ public class ArgoOrchestrator {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      * @throws ApiException 
      */
-    public void deleteCluster(String argoToolId, String customerId, String serverUrl, String platformToolId, String platform, String clusterName) throws UnsupportedEncodingException, InvalidRequestException {
-        LOGGER.debug("Starting to delete the cluster {} for customerId {} and toolId {}", clusterName, customerId, argoToolId);
+    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws UnsupportedEncodingException {
+        LOGGER.debug("Starting to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-        if (AWS.equalsIgnoreCase(platform) && (serverUrl.contains(AMAZON_AWS))) {
-            String awsEkstoken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(platformToolId, customerId, clusterName);
-            serviceFactory.getConfigCollector().deleteServiceAccount(serverUrl, awsEkstoken, argoToolId, NAMESPACE_OPSERA);
-            processDeleteCluster(serverUrl, argoToolDetails, argoPassword);
-        } else if (AZURE.equalsIgnoreCase(platform) && serverUrl.contains(AZURE_K8S)) {
-            processDeleteCluster(serverUrl, argoToolDetails, argoPassword);
-        } else {
-            LOGGER.error("Invalid platform or platform tool id selected for the cluster: {}", clusterName);
-            throw new InvalidRequestException("Invalid platform or platform tool id selected for the cluster");
-        }
-        LOGGER.debug("Completed to delete the cluster {} for customerId {} and toolId {}", clusterName, customerId, argoToolId);
-    }
-
-    /**
-     * Process delete cluster.
-     *
-     * @param serverUrl       the server url
-     * @param argoToolDetails the argo tool details
-     * @param argoPassword    the argo password
-     * @throws UnsupportedEncodingException the unsupported encoding exception
-     */
-    private void processDeleteCluster(String serverUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws UnsupportedEncodingException {
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
