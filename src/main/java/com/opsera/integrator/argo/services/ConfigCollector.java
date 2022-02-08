@@ -208,12 +208,11 @@ public class ConfigCollector {
      * @param clusterName     the cluster name
      * @return the AWSEKS cluster token
      */
-    public String getAWSEKSClusterToken(String awsToolConfigId, String customerId, String clusterName) {
-        LOGGER.debug("Starting to get Cluster Details for toolId {} and customerId {}", awsToolConfigId, customerId);
+    public String getAWSEKSClusterToken(CreateCluster request) {
+        LOGGER.debug("Starting to get EKS Cluster Details for request {} ", request);
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getAwsServiceBaseUrl() + AWS_STS_CLUSTER_TOKEN_ENDPOINT + clusterName)
-                .queryParam(QUERY_PARM_AWS_TOOLID, awsToolConfigId).queryParam(QUERY_PARM_CUSTOMERID, customerId);
-        return restTemplate.getForObject(uriBuilder.toUriString(), String.class);
+        String clusterConfigURL = appConfig.getAwsServiceBaseUrl() + AWS_STS_CLUSTER_TOKEN_ENDPOINT;
+        return restTemplate.postForObject(clusterConfigURL, request, String.class);
     }
 
     /**
@@ -283,51 +282,6 @@ public class ConfigCollector {
         }
         LOGGER.debug("Completed to get bearer token for toolId {} and cluster {}", argoToolId, serverUrl);
         return serviceToken;
-    }
-
-    /**
-     * Delete service account.
-     *
-     * @param serverUrl  the server url
-     * @param token      the token
-     * @param argoToolId the argo tool id
-     * @param nameSpace  the name space
-     * @return the string
-     */
-    public void deleteServiceAccount(String serverUrl, String token, String argoToolId, String nameSpace) {
-        LOGGER.debug("Starting to delete service account for aws eks cluster {} toolId {} ", serverUrl, argoToolId);
-        try {
-            ApiClient client = Config.fromToken(serverUrl, token, false);
-            Configuration.setDefaultApiClient(client);
-            CoreV1Api api = new CoreV1Api();
-            V1ServiceAccount body = new V1ServiceAccount();
-            body.setApiVersion(V1);
-            body.setKind(SERVICE_ACCOUNT);
-            V1ObjectMeta meta = new V1ObjectMeta();
-            meta.setName(argoToolId);
-            body.setMetadata(meta);
-            ApiResponse<V1ServiceAccountList> v1ServiceAccountList = api.listNamespacedServiceAccountWithHttpInfo(nameSpace, null, null, null, null, null, null, null, null, null, null);
-            boolean isServiceAccountExists = v1ServiceAccountList.getData().getItems().stream().anyMatch(applicationMetadata -> applicationMetadata.getMetadata().getName().equals(argoToolId));
-            if (isServiceAccountExists) {
-                api.deleteNamespacedServiceAccount(argoToolId, nameSpace, null, null, null, null, null, null);
-                LOGGER.debug("Service account deleted for cluster {} and service account {}", serverUrl, argoToolId);
-            } else {
-                LOGGER.debug("Service account is not available to delete cluster {} and service account {}", serverUrl, argoToolId);
-            }
-            RbacAuthorizationV1Api rbacAuthorizationV1Api = new RbacAuthorizationV1Api(client);
-            V1ClusterRoleBindingList clusterRoleBindingList = rbacAuthorizationV1Api.listClusterRoleBinding(null, null, null, null, null, null, null, null, null, null);
-            boolean isClusterRoleBindingExists = clusterRoleBindingList.getItems().stream().anyMatch(applicationMetadata -> applicationMetadata.getMetadata().getName().equals(argoToolId));
-            if (isClusterRoleBindingExists) {
-                rbacAuthorizationV1Api.deleteClusterRoleBinding(argoToolId, null, null, null, null, null, null);
-                LOGGER.debug("Cluster role binding deleted for cluster {} and service account {}", serverUrl, argoToolId);
-            } else {
-                LOGGER.debug("Cluster role binding is not available to delete cluster {} and service account {}", serverUrl, argoToolId);
-            }
-        } catch (ApiException ex) {
-            LOGGER.error("A problem occurred while deleting service account for aws eks cluster {} and toolId {}", serverUrl, argoToolId);
-            processException(ex);
-        }
-        LOGGER.debug("Completed to delete service account for aws eks cluster {} and toolId {}", serverUrl, argoToolId);
     }
 
     /**

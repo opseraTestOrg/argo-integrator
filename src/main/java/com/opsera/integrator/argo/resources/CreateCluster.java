@@ -21,4 +21,10 @@ public class CreateCluster {
 
     private String clientSecret;
 
+    private boolean iamRoleFlag;
+    
+    private String roleArn;
+    
+    private String roleSessionName;
+    
 }

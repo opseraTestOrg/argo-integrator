@@ -28,7 +28,7 @@ public class Constants {
     public static final String FAILED = "Failed";
     public static final String QUERY_PARM_AWS_TOOLID = "awsToolConfigId";
     public static final String AWS_EKS_CLUSTER_ENDPOINT = "/eks/clusters/";
-    public static final String AWS_STS_CLUSTER_TOKEN_ENDPOINT = "/sts/eksToken/";
+    public static final String AWS_STS_CLUSTER_TOKEN_ENDPOINT = "/sts/eksToken";
     public static final String AWS = "AWS";
     public static final String AZURE = "AZURE";
     public static final String ARGO_CLUSTER_URL_TEMPLATE = "%s/api/v1/clusters/%s";
