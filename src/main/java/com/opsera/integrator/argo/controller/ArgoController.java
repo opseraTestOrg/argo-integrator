@@ -34,7 +34,6 @@ import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ValidationResponse;
 
-import io.kubernetes.client.openapi.ApiException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -424,21 +423,21 @@ public class ArgoController {
     /**
      * Delete argo cluster.
      *
-     * @param request the request
+     * @param argoToolId the argo tool id
+     * @param customerId the customer id
+     * @param server the server
      * @return the response entity
      * @throws UnsupportedEncodingException the unsupported encoding exception
-     * @throws InvalidRequestException 
-     * @throws ApiException 
+     * @throws InvalidRequestException the invalid request exception
      */
     @DeleteMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To delete an argo cluster")
-    public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server, @RequestParam String platformToolId,
-            @RequestParam String platform, @RequestParam String clusterName) throws UnsupportedEncodingException, InvalidRequestException {
+    public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server) throws UnsupportedEncodingException {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
-            LOGGER.info("Received deleteArgoCluster request for argoToolId: {}, customerId: {}, server: {}, platformToolId: {}, platform: {}, clusterName: {}", argoToolId, customerId, server, platformToolId, platform, clusterName);
-            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server, platformToolId, platform, clusterName);
+            LOGGER.info("Received deleteArgoCluster request for argoToolId: {}, customerId: {}, server: {}", argoToolId, customerId, server);
+            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server);
             return new ResponseEntity<>("", HttpStatus.OK);
         } finally {
             stopwatch.stop();
