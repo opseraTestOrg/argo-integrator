@@ -60,12 +60,15 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.RbacAuthorizationV1Api;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBinding;
 import io.kubernetes.client.openapi.models.V1ClusterRoleBindingList;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1NamespaceList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1RoleRef;
 import io.kubernetes.client.openapi.models.V1Secret;
 import io.kubernetes.client.openapi.models.V1SecretList;
 import io.kubernetes.client.openapi.models.V1ServiceAccount;
 import io.kubernetes.client.openapi.models.V1ServiceAccountList;
+import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.V1Subject;
 import io.kubernetes.client.util.Config;
 
@@ -231,19 +234,35 @@ public class ConfigCollector {
             ApiClient client = Config.fromToken(serverUrl, token, false);
             Configuration.setDefaultApiClient(client);
             CoreV1Api api = new CoreV1Api();
+            V1Namespace v1Namespace = new V1Namespace();
+            v1Namespace.setApiVersion(V1);
+            v1Namespace.setKind("Namespace");
+            V1ObjectMeta nameSpacemeta = new V1ObjectMeta();
+            nameSpacemeta.setName(argoToolId);
+            Map<String, String> map = new HashMap<>();
+            map.put("name", argoToolId);
+            nameSpacemeta.setLabels(map);
+            v1Namespace.setMetadata(nameSpacemeta);
+
+            V1NamespaceList v1NamespaceList = api.listNamespace(null, null, null, null, null, null, null, null, null, null);
+            boolean isNamespaceExists = v1NamespaceList.getItems().stream().anyMatch(applicationMetadata -> applicationMetadata.getMetadata().getName().equals(argoToolId));
+            if (!isNamespaceExists) {
+                api.createNamespace(v1Namespace, null, null, null);
+            }
+
             V1ServiceAccount body = new V1ServiceAccount();
             body.setApiVersion(V1);
             body.setKind(SERVICE_ACCOUNT);
             V1ObjectMeta meta = new V1ObjectMeta();
             meta.setName(argoToolId);
             body.setMetadata(meta);
-            ApiResponse<V1ServiceAccountList> v1ServiceAccountList = api.listNamespacedServiceAccountWithHttpInfo(nameSpace, null, null, null, null, null, null, null, null, null, null);
+            ApiResponse<V1ServiceAccountList> v1ServiceAccountList = api.listNamespacedServiceAccountWithHttpInfo(argoToolId, null, null, null, null, null, null, null, null, null, null);
             boolean isServiceAccountExists = v1ServiceAccountList.getData().getItems().stream().anyMatch(applicationMetadata -> applicationMetadata.getMetadata().getName().equals(argoToolId));
             if (isServiceAccountExists) {
-                api.deleteNamespacedServiceAccount(argoToolId, nameSpace, null, null, null, null, null, null);
+                api.deleteNamespacedServiceAccount(argoToolId, argoToolId, null, null, null, null, null, null);
             }
-            api.createNamespacedServiceAccount(nameSpace, body, null, null, null);
-            v1ServiceAccountList = api.listNamespacedServiceAccountWithHttpInfo(nameSpace, null, null, null, null, null, null, null, null, null, null);
+            api.createNamespacedServiceAccount(argoToolId, body, null, null, null);
+            v1ServiceAccountList = api.listNamespacedServiceAccountWithHttpInfo(argoToolId, null, null, null, null, null, null, null, null, null, null);
             V1ClusterRoleBinding v1ClusterRoleBinding = new V1ClusterRoleBinding();
             v1ClusterRoleBinding.setApiVersion(API_VERSION);
             v1ClusterRoleBinding.setKind(CLUSTER_ROLE_BINDING);
@@ -253,7 +272,7 @@ public class ConfigCollector {
             V1Subject v1Subject = new V1Subject();
             v1Subject.setKind(SERVICE_ACCOUNT);
             v1Subject.setName(argoToolId);
-            v1Subject.setNamespace(nameSpace);
+            v1Subject.setNamespace(argoToolId);
             v1ClusterRoleBinding.setSubjects(Arrays.asList(v1Subject));
             V1RoleRef roleRef = new V1RoleRef();
             roleRef.setKind(CLUSTER_ROLE);
@@ -268,7 +287,7 @@ public class ConfigCollector {
                 rbacAuthorizationV1Api.deleteClusterRoleBinding(argoToolId, null, null, null, null, null, null);
             }
             rbacAuthorizationV1Api.createClusterRoleBinding(v1ClusterRoleBinding, null, null, null);
-            V1SecretList v1SecretList = api.listNamespacedSecret(nameSpace, null, null, null, null, null, null, null, null, null, null);
+            V1SecretList v1SecretList = api.listNamespacedSecret(argoToolId, null, null, null, null, null, null, null, null, null, null);
             for (V1Secret item : v1SecretList.getItems()) {
                 if (null != item.getMetadata().getAnnotations() && item.getMetadata().getAnnotations().containsKey(K8_SERVCE_ACCOUNT_NAME)
                         && meta.getName().equalsIgnoreCase(item.getMetadata().getAnnotations().get(K8_SERVCE_ACCOUNT_NAME))) {
@@ -291,6 +310,7 @@ public class ConfigCollector {
      */
     private void processException(ApiException ex) {
         Map<String, Object> map = new HashMap<>();
+        V1Status status = serviceFactory.gson().fromJson(ex.getResponseBody(), V1Status.class);
         try {
             map = new ObjectMapper().readValue(ex.getResponseBody(), Map.class);
         } catch (Exception e) {
@@ -300,8 +320,7 @@ public class ConfigCollector {
             if (HttpStatus.UNAUTHORIZED.name().equalsIgnoreCase(map.get("message").toString())) {
                 throw new UnAuthorizedException("Invalid platform credentials or user not authorized to perform this action");
             }
-        } else {
-            throw new ArgoServiceException(ex.getMessage());
         }
+        throw new ArgoServiceException(status.getMessage(), status.getCode());
     }
 }
