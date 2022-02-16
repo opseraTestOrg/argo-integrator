@@ -236,7 +236,7 @@ public class ConfigCollector {
             CoreV1Api api = new CoreV1Api();
             V1Namespace v1Namespace = new V1Namespace();
             v1Namespace.setApiVersion(V1);
-            v1Namespace.setKind("Namepace");
+            v1Namespace.setKind("Namespace");
             V1ObjectMeta nameSpacemeta = new V1ObjectMeta();
             nameSpacemeta.setName(argoToolId);
             Map<String, String> map = new HashMap<>();
