@@ -108,8 +108,8 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("argo service exception found  is ", ex);
         ArgoErrorResponse argoErrorResponse = new ArgoErrorResponse();
         argoErrorResponse.setMessage(ex.getMessage());
-        argoErrorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.name());
-        return new ResponseEntity<>(argoErrorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        argoErrorResponse.setStatus(String.valueOf(ex.getErrorCode()));
+        return new ResponseEntity<>(argoErrorResponse, HttpStatus.valueOf(ex.getErrorCode()));
     }
 
     /**
