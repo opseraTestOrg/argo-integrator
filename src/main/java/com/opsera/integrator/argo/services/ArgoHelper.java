@@ -4,7 +4,9 @@ import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_APPLICATIO
 import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_LOG_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
@@ -12,8 +14,8 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
-import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -28,10 +30,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
-import com.opsera.integrator.argo.resources.ArgoClusterItem;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
@@ -39,6 +42,7 @@ import com.opsera.integrator.argo.resources.ArgoSessionRequest;
 import com.opsera.integrator.argo.resources.ArgoSessionToken;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
+import com.opsera.integrator.argo.resources.LogResult;
 
 /**
  * Class handles all the interaction with argo server.
@@ -449,5 +453,34 @@ public class ArgoHelper {
         String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, baseUrl, serverUrl);
         serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, Void.class);
         LOGGER.debug("To Completed to delete the cluster {} and url {} ", server, baseUrl);
+    }
+    
+    /**
+     * Gets the argo application log.
+     *
+     * @param applicationName the application name
+     * @param baseUrl the base url
+     * @param username the username
+     * @param password the password
+     * @return the argo application log
+     */
+    public String getArgoApplicationLog(String applicationName, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to get argo Application log for applicationName {}", applicationName);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
+        String url = String.format(ARGO_APPLICATION_LOG_URL_TEMPLATE, baseUrl, applicationName);
+        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
+        String structure = response.getBody();
+        StringBuilder sb = new StringBuilder();
+        final JsonMapper mapper = new JsonMapper();
+        try (MappingIterator<LogResult> it = mapper.readerFor(LogResult.class).readValues(structure)) {
+            while (it.hasNextValue()) {
+                LogResult logResult = it.nextValue();
+                sb.append(String.format(logResult.getResult().getContent()));
+                sb.append(System.getProperty("line.separator"));
+            }
+        } catch (IOException e) {
+            LOGGER.error("Exception occured while parsing the console log. message: {}", e.getMessage());
+        }
+        return sb.toString();
     }
 }

@@ -1,11 +1,6 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
-import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
-import static com.opsera.integrator.argo.resources.Constants.AWS;
-import static com.opsera.integrator.argo.resources.Constants.AZURE;
-import static com.opsera.integrator.argo.resources.Constants.AMAZON_AWS;
-import static com.opsera.integrator.argo.resources.Constants.AZURE_K8S;
 
 import java.io.UnsupportedEncodingException;
 
@@ -16,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
@@ -377,6 +371,15 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
+    }
+
+    public String getArgoLog(OpseraPipelineMetadata pipelineMetadata) {
+        LOGGER.debug("Starting to get Argo Application Log for request{}", pipelineMetadata);
+        ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
+        ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+        String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        return serviceFactory.getArgoHelper().getArgoApplicationLog(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration().getToolURL(),
+                argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
 }
