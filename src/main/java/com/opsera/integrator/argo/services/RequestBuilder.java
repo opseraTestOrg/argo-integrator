@@ -7,11 +7,14 @@ import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
 
 import java.util.ArrayList;
 import java.util.List;
+import static com.opsera.integrator.argo.resources.Constants.AZURE_DEVOPS_TOOL_IDENTIFIER;
+import static com.opsera.integrator.argo.resources.Constants.OPSERA_USER;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
@@ -35,6 +38,7 @@ import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.Project;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
 import com.opsera.integrator.argo.resources.ToolConfig;
+import com.opsera.integrator.argo.resources.ToolDetails;
 
 /**
  * The Class RequestBuilder.
@@ -86,17 +90,21 @@ public class RequestBuilder {
      * @param secret     the secret
      * @return the argo repository item
      */
-    public ArgoRepositoryItem createRepositoryRequest(CreateRepositoryRequest request, ToolConfig toolConfig, String secret) {
+    public ArgoRepositoryItem createRepositoryRequest(CreateRepositoryRequest request, ToolDetails toolDetails, String secret) {
         LOGGER.debug("Starting to create Argo Repository Request {}", request);
         ArgoRepositoryItem argoRepositoryItem = new ArgoRepositoryItem();
         argoRepositoryItem.setName(request.getRepositoryName());
         argoRepositoryItem.setType(request.getRepositoryType());
+        ToolConfig toolConfig = toolDetails.getConfiguration();
         if (toolConfig.isTwoFactorAuthentication()) {
             argoRepositoryItem.setRepo(request.getSshUrl());
             argoRepositoryItem.setSshPrivateKey(secret);
         } else {
             argoRepositoryItem.setRepo(request.getHttpsUrl());
-            argoRepositoryItem.setUsername(toolConfig.getAccountUsername());
+            if (AZURE_DEVOPS_TOOL_IDENTIFIER.equalsIgnoreCase(toolDetails.getToolIdentifier()) && StringUtils.isEmpty(toolConfig.getAccountUsername()))
+                argoRepositoryItem.setUsername(OPSERA_USER);
+            else
+                argoRepositoryItem.setUsername(toolConfig.getAccountUsername());
             argoRepositoryItem.setPassword(secret);
         }
         return argoRepositoryItem;
@@ -130,8 +138,8 @@ public class RequestBuilder {
      */
     public CreateClusterRequest createClusterRequest(CreateCluster request) {
         LOGGER.debug("Starting to create Argo cluster Request {}", request);
-        AwsClusterDetails awsClusterDetails = new AwsClusterDetails();
-        AzureClusterDetails azureClusterDetails = new AzureClusterDetails();
+        AwsClusterDetails awsClusterDetails;
+        AzureClusterDetails azureClusterDetails;
         CreateClusterRequest createClusterRequest = new CreateClusterRequest();
         TLSClientConfig tlsClientConfig = new TLSClientConfig();
         ArgoClusterConfig argoClusterConfig = new ArgoClusterConfig();

@@ -29,6 +29,8 @@ public class ToolDetails implements Serializable {
     private String password;
 
     private String applicationName;
+    
+    private String toolIdentifier;
 
     private ToolConfig configuration;
 
