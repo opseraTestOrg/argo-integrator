@@ -47,4 +47,6 @@ public class Constants {
     public static final String NAMESPACE_OPSERA = "opsera";
     public static final String AMAZON_AWS = "amazonaws";
     public static final String AZURE_K8S= "azmk8s";
+    public static final String OPSERA_USER = "opsera_user";
+    public static final String AZURE_DEVOPS_TOOL_IDENTIFIER = "azure-devops";
 }
