@@ -12,24 +12,28 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 2h
 
+pipeline:
+  config:
+    baseurl: ${opsera.config.baseurl}/api/pipeline
+vault:
+  config:
+    baseurl: ${opsera.config.baseurl}/api/vault
+customer:
+  config:
+    baseurl: ${opsera.config.baseurl}/api/customer 
+aws:
+  service:
+    baseurl: ${opsera.config.baseurl}/api/aws
+azure:
+  service:
+    baseurl: ${opsera.config.baseurl}/api/azure
+argo:
+  defaultUrl: https://ivt-argo.opsera.io/
 ---
 
 spring:
   profiles: kubernetes
-pipeline:
+   
+opsera:
   config:
-    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/pipeline
-vault:
-  config:
-    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/vault
-customer:
-  config:
-    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/customer    
-argo:
-  defaultUrl: https://ivt-argo.opsera.io/
-aws:
-  service:
-    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/aws
-azure:
-  service:
-    baseurl: http://opsera-apigateway.microservices.svc.cluster.local:9091/api/azure
+    baseurl: ${OPSERA_API_SERVICE_URL:http://opsera-apigateway.microservices.svc.cluster.local:9091}
