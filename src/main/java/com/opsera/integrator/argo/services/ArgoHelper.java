@@ -5,12 +5,14 @@ import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_REPOSITORY
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_LOG_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_URL;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_OPERATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
@@ -43,6 +45,7 @@ import com.opsera.integrator.argo.resources.ArgoSessionToken;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.LogResult;
+import com.opsera.integrator.argo.resources.ResourceTree;
 
 /**
  * Class handles all the interaction with argo server.
@@ -138,6 +141,24 @@ public class ArgoHelper {
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationItem.class);
         return response.getBody();
     }
+    
+    
+    /**
+     * Sync application operation.
+     *
+     * @param applicationName the application name
+     * @param baseUrl the base url
+     * @param username the username
+     * @param password the password
+     * @return the argo application item
+     */
+    public ArgoApplicationItem syncApplicationOperation(String applicationName, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to Sync Argo Application Operation for applicationName {}", applicationName);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
+        String url = String.format(ARGO_SYNC_APPLICATION_OPERATION_URL_TEMPLATE, baseUrl, applicationName);      
+        ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, ArgoApplicationItem.class);
+        return response.getBody();
+    }
 
     /**
      * creates an argo application.
@@ -229,7 +250,7 @@ public class ArgoHelper {
      * @param password    the password
      * @return the request entity with body
      */
-    private HttpEntity<String> getRequestEntityWithBody(String requestBody, String baseUrl, String username, String password) {
+    public HttpEntity<String> getRequestEntityWithBody(String requestBody, String baseUrl, String username, String password) {
         LOGGER.debug("To Starting to get Request Entity with Body {}", requestBody);
         ArgoSessionToken sessionToken = getSessionToken(baseUrl, username, password);
         HttpHeaders requestHeaders = new HttpHeaders();
@@ -464,10 +485,10 @@ public class ArgoHelper {
      * @param password the password
      * @return the argo application log
      */
-    public String getArgoApplicationLog(String applicationName, String baseUrl, String username, String password) {
+    public String getArgoApplicationLog(String applicationName, String baseUrl, String username, String password, String podName, String namespace) {
         LOGGER.debug("Starting to get argo Application log for applicationName {}", applicationName);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
-        String url = String.format(ARGO_APPLICATION_LOG_URL_TEMPLATE, baseUrl, applicationName);
+        String url = String.format(ARGO_APPLICATION_LOG_URL_TEMPLATE, baseUrl, applicationName, podName, namespace);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, String.class);
         String structure = response.getBody();
         StringBuilder sb = new StringBuilder();
@@ -480,7 +501,16 @@ public class ArgoHelper {
             }
         } catch (IOException e) {
             LOGGER.error("Exception occured while parsing the console log. message: {}", e.getMessage());
+            return "";
         }
         return sb.toString();
+    }
+    
+    public ResourceTree getResourceTree(String applicationName, String baseUrl, String username, String password) {
+        LOGGER.debug("Starting to get argo Application log for applicationName {}", applicationName);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, baseUrl, username, password);
+        String url = String.format(ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE, baseUrl, applicationName);
+        ResponseEntity<ResourceTree> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, ResourceTree.class);
+        return response.getBody();
     }
 }

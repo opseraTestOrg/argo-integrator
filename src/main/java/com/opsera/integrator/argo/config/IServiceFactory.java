@@ -1,15 +1,18 @@
 package com.opsera.integrator.argo.config;
 
-import com.opsera.integrator.argo.services.RequestBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.opsera.integrator.argo.services.ArgoHelper;
 import com.opsera.integrator.argo.services.ArgoOrchestrator;
+import com.opsera.integrator.argo.services.ArgoOrchestratorV2;
 import com.opsera.integrator.argo.services.ConfigCollector;
+import com.opsera.integrator.argo.services.KafkaHelper;
 import com.opsera.integrator.argo.services.ObjectTranslator;
+import com.opsera.integrator.argo.services.RequestBuilder;
 import com.opsera.integrator.argo.services.ResponseParser;
 import com.opsera.integrator.argo.services.VaultHelper;
 
@@ -35,5 +38,11 @@ public interface IServiceFactory {
     public RestTemplate getRestTemplate();
 
     public RequestBuilder getRequestBuilder();
+    
+    public ObjectMapper getObjectMapper();
+    
+    public ArgoOrchestratorV2 getArgoOrchestratorV2();
+    
+    public KafkaHelper getKafkaHelper();
 
 }
