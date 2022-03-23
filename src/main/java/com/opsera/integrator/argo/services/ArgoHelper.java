@@ -241,7 +241,7 @@ public class ArgoHelper {
 
     private String getArgoBearerToken(ToolConfig toolConfig, String argoPassword) {
         String argoToken;
-        if (!StringUtils.isEmpty(toolConfig.isSecretAccessTokenEnabled())) {
+        if (!toolConfig.isSecretAccessTokenEnabled()) {
             ArgoSessionToken sessionToken = getSessionToken(toolConfig.getToolURL(), toolConfig.getUserName(), argoPassword);
             argoToken = sessionToken.getToken();
         } else {
