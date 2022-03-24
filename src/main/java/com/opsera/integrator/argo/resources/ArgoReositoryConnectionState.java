@@ -12,6 +12,4 @@ public class ArgoReositoryConnectionState {
     
     private String message;
     
-    private String attemptedAt;
-    
 }
