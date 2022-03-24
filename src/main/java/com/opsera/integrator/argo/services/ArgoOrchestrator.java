@@ -1,7 +1,5 @@
 package com.opsera.integrator.argo.services;
 
-import static com.opsera.integrator.argo.resources.Constants.FAILED;
-
 import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
@@ -208,12 +206,12 @@ public class ArgoOrchestrator {
             }
             String secret = serviceFactory.getVaultHelper().getSecret(credentialToolDetails.getOwner(), credentialSecret, credentialToolDetails.getVault());
             ArgoRepositoryItem argoApplication = serviceFactory.getRequestBuilder().createRepositoryRequest(request, credentialToolDetails, secret);
-            ArgoRepositoryItem applicationItem = getRepository(request.getToolId(), request.getCustomerId(), repositoryUrl, argoToolDetails, argoPassword);
-            if (null != applicationItem && applicationItem.getConnectionState().getStatus().equalsIgnoreCase(FAILED)) {
-                return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
-            } else {
+            try {
+                getRepository(request.getToolId(), request.getCustomerId(), repositoryUrl, argoToolDetails, argoPassword);
                 return serviceFactory.getArgoHelper().updateRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
-
+            } catch (Exception e) {
+                LOGGER.error("Repository doesn't exists in the Argo. message: {}",e.getMessage());
+                return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
             }
         }
         return null;
