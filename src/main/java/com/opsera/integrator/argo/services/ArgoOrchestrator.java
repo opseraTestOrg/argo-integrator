@@ -1,5 +1,7 @@
 package com.opsera.integrator.argo.services;
 
+import static com.opsera.integrator.argo.resources.Constants.FAILED;
+
 import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
@@ -128,9 +130,22 @@ public class ArgoOrchestrator {
         LOGGER.debug("To Starting to create/update the application {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
-        ArgoApplicationItem argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
-        ArgoApplicationMetadataList applicationMetadataList = getAllApplications(request.getToolId(), request.getCustomerId());
-        boolean isApplicationExists = applicationMetadataList.getApplicationList().stream().anyMatch(applicationMetadata -> applicationMetadata.getName().equals(request.getApplicationName()));
+        boolean isApplicationExists;
+        ArgoApplicationItem argoApplication = null;
+        try {
+            argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
+            ArgoApplicationMetadataList applicationMetadataList = getAllApplications(request.getToolId(), request.getCustomerId());
+            isApplicationExists = applicationMetadataList.getApplicationList().stream().anyMatch(applicationMetadata -> applicationMetadata.getName().equals(request.getApplicationName()));
+            return createOrUpdateApplication(request, argoToolDetails, argoPassword, isApplicationExists, argoApplication);
+        } catch (Exception e) {
+            LOGGER.debug("Application doesn't exists. message: {} ", e.getMessage());
+            isApplicationExists = false;
+            return createOrUpdateApplication(request, argoToolDetails, argoPassword, isApplicationExists, argoApplication);
+        }
+    }
+
+    private ResponseEntity<String> createOrUpdateApplication(CreateApplicationRequest request, ArgoToolDetails argoToolDetails, String argoPassword, boolean isApplicationExists,
+            ArgoApplicationItem argoApplication) {
         if (isApplicationExists) {
             return serviceFactory.getArgoHelper().updateApplication(argoApplication, argoToolDetails.getConfiguration(), argoPassword, request.getApplicationName());
         } else {
@@ -207,8 +222,12 @@ public class ArgoOrchestrator {
             String secret = serviceFactory.getVaultHelper().getSecret(credentialToolDetails.getOwner(), credentialSecret, credentialToolDetails.getVault());
             ArgoRepositoryItem argoApplication = serviceFactory.getRequestBuilder().createRepositoryRequest(request, credentialToolDetails, secret);
             try {
-                getRepository(request.getToolId(), request.getCustomerId(), repositoryUrl, argoToolDetails, argoPassword);
-                return serviceFactory.getArgoHelper().updateRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
+                ArgoRepositoryItem applicationItem = getRepository(request.getToolId(), request.getCustomerId(), repositoryUrl, argoToolDetails, argoPassword);
+                if (null != applicationItem && applicationItem.getConnectionState().getStatus().equalsIgnoreCase(FAILED)) {
+                    return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
+                } else {
+                    return serviceFactory.getArgoHelper().updateRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
+                }
             } catch (Exception e) {
                 LOGGER.error("Repository doesn't exists in the Argo. message: {}",e.getMessage());
                 return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
