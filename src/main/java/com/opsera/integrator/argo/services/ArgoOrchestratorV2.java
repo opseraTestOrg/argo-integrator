@@ -138,6 +138,7 @@ public class ArgoOrchestratorV2 {
                         pipelineMetadata.setConsoleLog(logs);
                         pipelineMetadata.setStatus(RUNNING);
                         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_CONSOLE_LOG, serviceFactory.gson().toJson(pipelineMetadata));
+                        Thread.sleep(5000);
                     }
                 }
             } else {
