@@ -5,6 +5,7 @@ import static com.opsera.integrator.argo.resources.Constants.AWS;
 import static com.opsera.integrator.argo.resources.Constants.AZURE;
 import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import static com.opsera.integrator.argo.resources.Constants.AZURE_DEVOPS_TOOL_IDENTIFIER;
@@ -135,8 +136,9 @@ public class RequestBuilder {
      *
      * @param request the request
      * @return the creates the cluster request
+     * @throws IOException 
      */
-    public CreateClusterRequest createClusterRequest(CreateCluster request) {
+    public CreateClusterRequest createClusterRequest(CreateCluster request) throws IOException {
         LOGGER.debug("Starting to create Argo cluster Request {}", request);
         AwsClusterDetails awsClusterDetails;
         AzureClusterDetails azureClusterDetails;

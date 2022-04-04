@@ -2,16 +2,15 @@ package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import com.opsera.core.exception.ServiceException;
 import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
@@ -51,8 +50,9 @@ public class ArgoOrchestrator {
      * @param argoToolId the argo tool id
      * @param customerId the customer id
      * @return the all applications
+     * @throws IOException 
      */
-    public ArgoApplicationMetadataList getAllApplications(String argoToolId, String customerId) {
+    public ArgoApplicationMetadataList getAllApplications(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Applications for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -67,8 +67,9 @@ public class ArgoOrchestrator {
      * @param argoToolId the argo tool id
      * @param customerId the customer id
      * @return the all clusters
+     * @throws IOException 
      */
-    public ArgoClusterList getAllClusters(String argoToolId, String customerId) {
+    public ArgoClusterList getAllClusters(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Clusters for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -81,8 +82,9 @@ public class ArgoOrchestrator {
      * @param argoToolId the argo tool id
      * @param customerId the customer id
      * @return the all projects
+     * @throws IOException 
      */
-    public ArgoApplicationMetadataList getAllProjects(String argoToolId, String customerId) {
+    public ArgoApplicationMetadataList getAllProjects(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Projects for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -98,8 +100,9 @@ public class ArgoOrchestrator {
      * @param customerId      the customer id
      * @param applicationName the application name
      * @return the application
+     * @throws IOException 
      */
-    public ArgoApplicationItem getApplication(String argoToolId, String customerId, String applicationName) {
+    public ArgoApplicationItem getApplication(String argoToolId, String customerId, String applicationName) throws IOException {
         LOGGER.debug("Starting to fetch Argo Application for toolId {} and customerId {} and applicationName {}", argoToolId, customerId, applicationName);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -111,8 +114,9 @@ public class ArgoOrchestrator {
      *
      * @param pipelineMetadata the pipeline metadata
      * @return the argo application operation
+     * @throws IOException 
      */
-    public ArgoApplicationOperation syncApplication(OpseraPipelineMetadata pipelineMetadata) {
+    public ArgoApplicationOperation syncApplication(OpseraPipelineMetadata pipelineMetadata) throws IOException {
         LOGGER.debug("Starting to Sync Argo Application for request{}", pipelineMetadata);
         ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
@@ -127,8 +131,9 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @return the response entity
+     * @throws IOException 
      */
-    public ResponseEntity<String> createApplication(CreateApplicationRequest request) {
+    public String createApplication(CreateApplicationRequest request) throws IOException {
         LOGGER.debug("To Starting to create/update the application {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -148,8 +153,9 @@ public class ArgoOrchestrator {
      *
      * @param customerId the customer id
      * @param argoToolId the argo tool id
+     * @throws IOException 
      */
-    public void validate(String customerId, String argoToolId) {
+    public void validate(String customerId, String argoToolId) throws IOException {
         LOGGER.debug("To validate the credentials for customerId {} and toolId {}", customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -164,7 +170,7 @@ public class ArgoOrchestrator {
      * @return the string
      * @throws ResourcesNotAvailable the resources not available
      */
-    public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable {
+    public String generateNewToken(String customerId, String toolId) throws ServiceException {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
         ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
         return details.getPassword();
@@ -176,8 +182,9 @@ public class ArgoOrchestrator {
      * @param argoToolId      the argo tool id
      * @param customerId      the customer id
      * @param applicationName the application name
+     * @throws IOException 
      */
-    public void deleteApplication(String argoToolId, String customerId, String applicationName) {
+    public void deleteApplication(String argoToolId, String customerId, String applicationName) throws IOException {
         LOGGER.debug("To Starting to delete the application {} and customerId {} and toolId {}", applicationName, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -190,10 +197,10 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @return the response entity
+     * @throws IOException 
      * @throws ResourcesNotAvailable        the resources not available
-     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public ResponseEntity<String> createRepository(CreateRepositoryRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
+    public String createRepository(CreateRepositoryRequest request) throws ServiceException, IOException {
         LOGGER.debug("To Starting to create/update the repository {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -233,9 +240,9 @@ public class ArgoOrchestrator {
      * @param argoToolDetails the argo tool details
      * @param argoPassword    the argo password
      * @return the repository
-     * @throws UnsupportedEncodingException the unsupported encoding exception
+     * @throws IOException 
      */
-    private ArgoRepositoryItem getRepository(String toolId, String customerId, String repositoryUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws UnsupportedEncodingException {
+    private ArgoRepositoryItem getRepository(String toolId, String customerId, String repositoryUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws IOException {
         LOGGER.debug("Starting to fetch Argo Repository {} ", repositoryUrl);
         return serviceFactory.getArgoHelper().getArgoRepository(repositoryUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
@@ -246,8 +253,9 @@ public class ArgoOrchestrator {
      * @param argoToolId the argo tool id
      * @param customerId the customer id
      * @return the all argo repositories
+     * @throws IOException 
      */
-    public ArgoRepositoriesList getAllArgoRepositories(String argoToolId, String customerId) {
+    public ArgoRepositoriesList getAllArgoRepositories(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Repositories for toolId{} ", argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -258,9 +266,9 @@ public class ArgoOrchestrator {
      * Delete repository.
      *
      * @param request the request
-     * @throws UnsupportedEncodingException the unsupported encoding exception
+     * @throws IOException 
      */
-    public void deleteRepository(CreateRepositoryRequest request) throws UnsupportedEncodingException {
+    public void deleteRepository(CreateRepositoryRequest request) throws IOException {
         LOGGER.debug("To Starting to delete the repository request {}", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -283,8 +291,9 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @return the response entity
+     * @throws IOException 
      */
-    public ResponseEntity<String> createProject(CreateProjectRequest request) {
+    public String createProject(CreateProjectRequest request) throws IOException {
         LOGGER.debug("To Starting to create/update the project {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -308,8 +317,9 @@ public class ArgoOrchestrator {
      * @param name            the name
      * @param argoPassword    the argo password
      * @return the argo project
+     * @throws IOException 
      */
-    private ArgoApplicationItem getArgoProject(ArgoToolDetails argoToolDetails, String name, String argoPassword) {
+    private ArgoApplicationItem getArgoProject(ArgoToolDetails argoToolDetails, String name, String argoPassword) throws IOException {
         LOGGER.debug("Starting to fetch Argo Projet {} ", name);
         return serviceFactory.getArgoHelper().getArgoProject(name, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
@@ -320,8 +330,9 @@ public class ArgoOrchestrator {
      * @param argoToolId  the argo tool id
      * @param customerId  the customer id
      * @param projectName the project name
+     * @throws IOException 
      */
-    public void deleteProject(String argoToolId, String customerId, String projectName) {
+    public void deleteProject(String argoToolId, String customerId, String projectName) throws IOException {
         LOGGER.debug("To Starting to delete the projectName {} and customerId {} and toolId {}", projectName, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -334,9 +345,9 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @return the response entity
-     * @throws UnsupportedEncodingException the unsupported encoding exception
+     * @throws IOException 
      */
-    public ResponseEntity<String> createCluster(CreateCluster request) throws UnsupportedEncodingException {
+    public String createCluster(CreateCluster request) throws IOException {
         LOGGER.debug("Starting to create the cluster {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -349,9 +360,9 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @return the response entity
-     * @throws UnsupportedEncodingException the unsupported encoding exception
+     * @throws IOException 
      */
-    public ResponseEntity<String> updateCluster(CreateCluster request) throws UnsupportedEncodingException {
+    public String updateCluster(CreateCluster request) throws IOException {
         LOGGER.debug("Starting to update the cluster {} ", request);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(request.getArgoToolId(), request.getCustomerId());
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -363,17 +374,17 @@ public class ArgoOrchestrator {
      * Delete cluster.
      *
      * @param request the request
-     * @throws UnsupportedEncodingException the unsupported encoding exception
+     * @throws IOException 
      * @throws ApiException 
      */
-    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws UnsupportedEncodingException {
+    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws IOException {
         LOGGER.debug("Starting to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         String argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration().getToolURL(), argoToolDetails.getConfiguration().getUserName(), argoPassword);
     }
 
-    public String getArgoLog(OpseraPipelineMetadata pipelineMetadata) {
+    public String getArgoLog(OpseraPipelineMetadata pipelineMetadata) throws IOException {
         LOGGER.debug("Starting to get Argo Application Log for request{}", pipelineMetadata);
         ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());

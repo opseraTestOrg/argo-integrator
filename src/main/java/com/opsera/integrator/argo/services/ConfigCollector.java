@@ -20,6 +20,7 @@ import static com.opsera.integrator.argo.resources.Constants.TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPOINT;
 import static com.opsera.integrator.argo.resources.Constants.V1;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,22 +29,15 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opsera.core.exception.ServiceException;
+import com.opsera.core.rest.RestTemplateHelper;
 import com.opsera.integrator.argo.config.AppConfig;
 import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.exceptions.ArgoServiceException;
-import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
-import com.opsera.integrator.argo.exceptions.UnAuthorizedException;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.AwsClusterDetails;
 import com.opsera.integrator.argo.resources.AzureClusterDetails;
@@ -94,12 +88,13 @@ public class ConfigCollector {
      *
      * @param opseraPipelineMetadata the opsera pipeline metadata
      * @return the argo details
+     * @throws IOException 
      */
-    public ToolConfig getArgoDetails(OpseraPipelineMetadata opseraPipelineMetadata) {
+    public ToolConfig getArgoDetails(OpseraPipelineMetadata opseraPipelineMetadata) throws IOException {
         LOGGER.debug("Starting to get Tool Config Details for request {}", opseraPipelineMetadata);
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        RestTemplateHelper restTemplate = serviceFactory.getRestTemplate();
         String toolsConfigURL = appConfig.getPipelineConfigBaseUrl() + PIPELINE_TABLE_ENDPOINT;
-        String response = restTemplate.postForObject(toolsConfigURL, opseraPipelineMetadata, String.class);
+        String response = restTemplate.postForEntity(String.class, toolsConfigURL, opseraPipelineMetadata);
         return serviceFactory.getResponseParser().extractArgoToolConfig(response);
     }
 
@@ -109,13 +104,14 @@ public class ConfigCollector {
      * @param argoToolId the argo tool id
      * @param customerId the customer id
      * @return the argo details
+     * @throws IOException 
      */
-    public ArgoToolDetails getArgoDetails(String argoToolId, String customerId) {
+    public ArgoToolDetails getArgoDetails(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to get Argo Tool Details for toolId {} and customerId {}", argoToolId, customerId);
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        RestTemplateHelper restTemplate = serviceFactory.getRestTemplate();
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl() + TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, argoToolId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
-        String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
+        String response = restTemplate.getForEntity(String.class, uriBuilder.toUriString());
         return serviceFactory.getResponseParser().extractArgoToolDetails(response);
     }
 
@@ -127,34 +123,22 @@ public class ConfigCollector {
      * @return the tools details
      * @throws ResourcesNotAvailable the resources not available
      */
-    public ToolDetails getToolsDetails(String customerId, String toolId) throws ResourcesNotAvailable {
+    public ToolDetails getToolsDetails(String customerId, String toolId) throws ServiceException {
         LOGGER.debug("Starting to fetch Tool Details for toolId {} and customerId {}", toolId, customerId);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getCustomerBaseUrl()).path(String.format(GET_TOOL_DETAILS, customerId, toolId));
         try {
-            ResponseEntity<ToolDetails> responseEntity = serviceFactory.getRestTemplate().exchange(uriBuilder.toUriString(), HttpMethod.GET, getRequestEntity(null), ToolDetails.class);
-            Optional<ToolDetails> response = Optional.ofNullable(responseEntity.getBody());
+            ToolDetails responseEntity = serviceFactory.getRestTemplate().getForEntity(ToolDetails.class, uriBuilder.toUriString());
+            Optional<ToolDetails> response = Optional.ofNullable(responseEntity);
             if (response.isPresent()) {
                 return response.get();
             } else {
                 LOGGER.warn("No Tools Details available for tool Id {}", toolId);
-                throw new ResourcesNotAvailable(String.format("No Tools Details available for tool Id %s", toolId));
+                throw new ServiceException(String.format("No Tools Details available for tool Id %s", toolId));
             }
         } catch (Exception ex) {
             LOGGER.warn("Exception while retrieving tools Details", ex);
-            throw new ResourcesNotAvailable(String.format("No Tools Details available for tool Id %s", toolId));
+            throw new ServiceException(String.format("No Tools Details available for tool Id %s", toolId));
         }
-    }
-
-    /**
-     * This method used to construct http header.
-     *
-     * @param obj the obj
-     * @return the request entity
-     */
-    private HttpEntity<Object> getRequestEntity(Object obj) {
-        HttpHeaders requestHeaders = new HttpHeaders();
-        requestHeaders.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-        return null != obj ? new HttpEntity<>(obj, requestHeaders) : new HttpEntity<>(requestHeaders);
     }
 
     /**
@@ -163,13 +147,14 @@ public class ConfigCollector {
      * @param toolConfigId the tool config id
      * @param customerId   the customer id
      * @return the tool details
+     * @throws IOException 
      */
-    public ToolDetails getToolDetails(String toolConfigId, String customerId) {
+    public ToolDetails getToolDetails(String toolConfigId, String customerId) throws IOException {
         LOGGER.debug("Starting to get Tool Details for toolId {} and customerId {}", toolConfigId, customerId);
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        RestTemplateHelper restTemplate = serviceFactory.getRestTemplate();
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(TOOL_REGISTRY_ENDPOINT).queryParam(QUERY_PARM_TOOLID, toolConfigId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
-        return restTemplate.getForObject(uriBuilder.toUriString(), ToolDetails.class);
+        return restTemplate.getForEntity(ToolDetails.class, uriBuilder.toUriString());
     }
 
     /**
@@ -179,13 +164,14 @@ public class ConfigCollector {
      * @param customerId      the customer id
      * @param clusterName     the cluster name
      * @return the AWSEKS cluster details
+     * @throws IOException 
      */
-    public AwsClusterDetails getAWSEKSClusterDetails(String awsToolConfigId, String customerId, String clusterName) {
+    public AwsClusterDetails getAWSEKSClusterDetails(String awsToolConfigId, String customerId, String clusterName) throws IOException {
         LOGGER.debug("Starting to get Cluster Details for toolId {} and customerId {}", awsToolConfigId, customerId);
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        RestTemplateHelper restTemplate = serviceFactory.getRestTemplate();
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getAwsServiceBaseUrl() + AWS_EKS_CLUSTER_ENDPOINT + clusterName).queryParam(QUERY_PARM_AWS_TOOLID, awsToolConfigId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
-        String response = restTemplate.getForObject(uriBuilder.toUriString(), String.class);
+        String response = restTemplate.getForEntity(String.class, uriBuilder.toUriString());
         return serviceFactory.getResponseParser().extractEKSClusterDetails(response);
     }
 
@@ -194,12 +180,13 @@ public class ConfigCollector {
      *
      * @param request the request
      * @return the AKS cluster details
+     * @throws IOException 
      */
-    public AzureClusterDetails getAKSClusterDetails(CreateCluster request) {
+    public AzureClusterDetails getAKSClusterDetails(CreateCluster request) throws IOException {
         LOGGER.debug("Starting to get AKS Cluster Details request", request);
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        RestTemplateHelper restTemplate = serviceFactory.getRestTemplate();
         String toolsConfigURL = appConfig.getAzureServiceBaseUrl() + CLUSTERS;
-        AzureClusterDetails response = restTemplate.postForObject(toolsConfigURL, request, AzureClusterDetails.class);
+        AzureClusterDetails response = restTemplate.postForEntity(AzureClusterDetails.class, toolsConfigURL, request);
         return response;
     }
 
@@ -210,12 +197,13 @@ public class ConfigCollector {
      * @param customerId      the customer id
      * @param clusterName     the cluster name
      * @return the AWSEKS cluster token
+     * @throws IOException 
      */
-    public String getAWSEKSClusterToken(CreateCluster request) {
+    public String getAWSEKSClusterToken(CreateCluster request) throws IOException {
         LOGGER.debug("Starting to get EKS Cluster Details for request {} ", request);
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
+        RestTemplateHelper restTemplate = serviceFactory.getRestTemplate();
         String clusterConfigURL = appConfig.getAwsServiceBaseUrl() + AWS_STS_CLUSTER_TOKEN_ENDPOINT;
-        return restTemplate.postForObject(clusterConfigURL, request, String.class);
+        return restTemplate.postForEntity(String.class, clusterConfigURL, request);
     }
 
     /**
@@ -314,13 +302,13 @@ public class ConfigCollector {
         try {
             map = new ObjectMapper().readValue(ex.getResponseBody(), Map.class);
         } catch (Exception e) {
-            throw new ArgoServiceException(ex.getMessage());
+            throw new ServiceException(ex.getMessage());
         }
         if (null != map.get("message")) {
             if (HttpStatus.UNAUTHORIZED.name().equalsIgnoreCase(map.get("message").toString())) {
-                throw new UnAuthorizedException("Invalid platform credentials or user not authorized to perform this action");
+                throw new ServiceException("Invalid platform credentials or user not authorized to perform this action");
             }
         }
-        throw new ArgoServiceException(status.getMessage(), status.getCode());
+        throw new ServiceException(status.getMessage());
     }
 }
