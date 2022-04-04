@@ -53,7 +53,7 @@
         </triggeringPolicy>
     </appender>
 
-    <logger name="com.opsera.integrator.argo" level="DEBUG">
+    <logger name="com.opsera" level="DEBUG">
         <appender-ref ref="applicationLog" />
         <appender-ref ref="console" />
     </logger>

@@ -15,9 +15,6 @@ spring:
 pipeline:
   config:
     baseurl: ${opsera.config.baseurl}/api/pipeline
-vault:
-  config:
-    baseurl: ${opsera.config.baseurl}/api/vault
 customer:
   config:
     baseurl: ${opsera.config.baseurl}/api/customer 

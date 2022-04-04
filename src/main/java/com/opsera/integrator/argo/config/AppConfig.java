@@ -4,8 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ServiceLocatorFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.util.StopWatch;
-import org.springframework.web.client.RestTemplate;
 
 import lombok.Getter;
 
@@ -21,9 +19,6 @@ public class AppConfig {
 
     @Value("${argo.defaultUrl}")
     private String argoDefaultUrl;
-
-    @Value("${vault.config.baseurl}")
-    private String vaultBaseUrl;
 
     @Value("${customer.config.baseurl}")
     private String customerBaseUrl;
@@ -46,23 +41,4 @@ public class AppConfig {
         return factoryBean;
     }
 
-    /**
-     * Stopwatch Bean Creation
-     * 
-     * @return
-     */
-    @Bean
-    public StopWatch stopWatch() {
-        return new StopWatch();
-    }
-
-    /**
-     * Rest Template Bean Creation
-     * 
-     * @return
-     */
-    @Bean
-    public RestTemplate getRestTemplate() {
-        return new RestTemplate();
-    }
 }
