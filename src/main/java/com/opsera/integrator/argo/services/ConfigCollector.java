@@ -13,8 +13,10 @@ import static com.opsera.integrator.argo.resources.Constants.K8_SERVCE_ACCOUNT_N
 import static com.opsera.integrator.argo.resources.Constants.PIPELINE_TABLE_ENDPOINT;
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_AWS_TOOLID;
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_CUSTOMERID;
+import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_PIPELINE_ID;
 import static com.opsera.integrator.argo.resources.Constants.QUERY_PARM_TOOLID;
 import static com.opsera.integrator.argo.resources.Constants.READ_SECRETS_GLOBAL;
+import static com.opsera.integrator.argo.resources.Constants.RUN_COUNT_BY_PIPELINE_V2;
 import static com.opsera.integrator.argo.resources.Constants.SERVICE_ACCOUNT;
 import static com.opsera.integrator.argo.resources.Constants.TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.TOOL_REGISTRY_ENDPOINT;
@@ -322,5 +324,12 @@ public class ConfigCollector {
             }
         }
         throw new ArgoServiceException(status.getMessage(), status.getCode());
+    }
+    
+    public Integer getRunCount(String pipelineId, String customerId) {
+        LOGGER.info("Getting the latest run count for pipeline Id {}, customer Id {}", pipelineId, customerId);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(RUN_COUNT_BY_PIPELINE_V2).queryParam(QUERY_PARM_PIPELINE_ID, pipelineId)
+                .queryParam(QUERY_PARM_CUSTOMERID, customerId);
+        return serviceFactory.getRestTemplate().getForObject(uriBuilder.toUriString(), Integer.class);
     }
 }

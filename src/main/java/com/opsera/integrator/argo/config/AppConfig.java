@@ -7,11 +7,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import lombok.Getter;
 
-/**
- * All app config reside here
- */
 @Configuration
 @Getter
 public class AppConfig {
@@ -27,18 +26,13 @@ public class AppConfig {
 
     @Value("${customer.config.baseurl}")
     private String customerBaseUrl;
-    
+
     @Value("${azure.service.baseurl}")
     private String azureServiceBaseUrl;
-    
+
     @Value("${aws.service.baseurl}")
     private String awsServiceBaseUrl;
 
-    /**
-     * Factory Bean Creation
-     * 
-     * @return
-     */
     @Bean
     public ServiceLocatorFactoryBean serviceLocatorFactoryBean() {
         ServiceLocatorFactoryBean factoryBean = new ServiceLocatorFactoryBean();
@@ -46,21 +40,16 @@ public class AppConfig {
         return factoryBean;
     }
 
-    /**
-     * Stopwatch Bean Creation
-     * 
-     * @return
-     */
     @Bean
     public StopWatch stopWatch() {
         return new StopWatch();
     }
 
-    /**
-     * Rest Template Bean Creation
-     * 
-     * @return
-     */
+    @Bean
+    public ObjectMapper getObjectMapper() {
+        return new ObjectMapper();
+    }
+
     @Bean
     public RestTemplate getRestTemplate() {
         return new RestTemplate();
