@@ -259,7 +259,7 @@ public class ArgoHelper {
      * @return the request entity with body
      */
     public HttpEntity<String> getRequestEntityWithBody(String requestBody, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("To Starting to get Request Entity with Body {}", requestBody);
+        LOGGER.debug("To Starting to get Request Entity for baseUrl {} with payload", toolConfig.getToolURL());
         String argoToken = getArgoBearerToken(toolConfig, argoPassword);
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
