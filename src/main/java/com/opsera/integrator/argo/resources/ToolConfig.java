@@ -33,5 +33,9 @@ public class ToolConfig implements Serializable {
     private boolean twoFactorAuthentication;
 
     private VaultSecretDetails secretPrivateKey;
+    
+    private boolean secretAccessTokenEnabled;
+    
+    private VaultSecretDetails secretAccessTokenKey;
 
 }

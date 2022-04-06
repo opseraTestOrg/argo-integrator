@@ -13,7 +13,9 @@ public class Constants {
     public static final String ARGO_ALL_PROJECT_URL_TEMPLATE = "%s/api/v1/projects";
     public static final String ARGO_PROJECT_URL_TEMPLATE = "%s/api/v1/projects/%s";
     public static final String ARGO_SYNC_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications/%s/sync";
-    public static final String ARGO_APPLICATION_LOG_URL_TEMPLATE = "%s/api/v1/applications/%s/logs";
+    public static final String ARGO_SYNC_APPLICATION_OPERATION_URL_TEMPLATE = "%s/api/v1/applications/%s?operation=true";
+    public static final String ARGO_APPLICATION_LOG_URL_TEMPLATE = "%s/api/v1/applications/%s/pods/%s/logs?namespace=%s";
+    public static final String ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE = "%s/api/v1/applications/%s/resource-tree";
     public static final String ARGO_CREATE_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
     public static final String TOOL_REGISTRY_ENDPOINT = "/v2/registry/tool";
@@ -50,4 +52,12 @@ public class Constants {
     public static final String AZURE_K8S= "azmk8s";
     public static final String OPSERA_USER = "opsera_user";
     public static final String AZURE_DEVOPS_TOOL_IDENTIFIER = "azure-devops";
+    public static final String SUCCESS = "Success";
+    public static final String COMPLETED = "Completed";
+    public static final String RUNNING = "Running";
+    public static final String OPSERA_PIPELINE_ARGO_REQUEST = "opsera.pipeline.argo.request";
+    public static final String RUN_COUNT_BY_PIPELINE_V2 = "/v2/pipeline/runcount";
+    public static final String QUERY_PARM_PIPELINE_ID = "pipelineId";
+    public static final String ARGO_SYNC_FAILED = "Argo Application Sync Failed";
+    public static final String ARGO_SYNC_CONSOLE_FAILED = "Argo pod logs retrieved only for successfully synced applications.";
 }

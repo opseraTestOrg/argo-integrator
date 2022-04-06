@@ -444,23 +444,4 @@ public class ArgoController {
             LOGGER.info("To deleted the cluster and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
         }
     }
-    
-    /**
-     * Gets the argo log.
-     *
-     * @param pipelineMetadata the pipeline metadata
-     * @return the argo log
-     */
-    @PostMapping(path = "v1.0/argo/application/log")
-    @ApiOperation("to get argo application sync log")
-    public ResponseEntity<String> getArgoLog(@RequestBody OpseraPipelineMetadata pipelineMetadata) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received getArgoLog for pipelineMetadata : {}", pipelineMetadata);
-            String response = serviceFactory.getArgoOrchestrator().getArgoLog(pipelineMetadata);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } finally {
-            LOGGER.info("Completed getArgoLog, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
-    }
 }

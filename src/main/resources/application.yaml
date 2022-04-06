@@ -11,6 +11,22 @@ spring:
     description: API for integrating with Argo Tool
   lifecycle:
     timeout-per-shutdown-phase: 2h
+  task:
+    execution:
+      pool:
+        core-size: 50
+        queue-capacity: 100 
+        max-size: 200
+      shutdown:
+        await-termination: true
+        await-termination-period: 2h
+      thread-name-prefix: ArgoAsyncThread-
+kafka:
+  consumer:
+    autocommit.interval: 10
+    concurrentcount: 3
+  service:
+    baseurl: ${opsera.config.baseurl}/api/kafka
 
 pipeline:
   config:
@@ -29,11 +45,15 @@ azure:
     baseurl: ${opsera.config.baseurl}/api/azure
 argo:
   defaultUrl: https://ivt-argo.opsera.io/
+  
 ---
 
 spring:
   profiles: kubernetes
-   
+kafka:
+  bootstrapServer: ${OPSERA_KAFKA_BOOTSTRAP_URL:kafka.kafka.svc.cluster.local:9092}
+  consumer:
+    groupId: argo-kubernetes-group   
 opsera:
   config:
     baseurl: ${OPSERA_API_SERVICE_URL:http://opsera-apigateway.microservices.svc.cluster.local:9091}
