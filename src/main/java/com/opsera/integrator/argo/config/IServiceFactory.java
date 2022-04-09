@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.opsera.integrator.argo.services.ArgoHelper;
 import com.opsera.integrator.argo.services.ArgoOrchestrator;
 import com.opsera.integrator.argo.services.ArgoOrchestratorV2;
+import com.opsera.integrator.argo.services.AwsServiceHelper;
 import com.opsera.integrator.argo.services.ConfigCollector;
 import com.opsera.integrator.argo.services.KafkaHelper;
 import com.opsera.integrator.argo.services.ObjectTranslator;
@@ -44,5 +45,7 @@ public interface IServiceFactory {
     public ArgoOrchestratorV2 getArgoOrchestratorV2();
     
     public KafkaHelper getKafkaHelper();
+    
+    public AwsServiceHelper getAwsServiceHelper();
 
 }

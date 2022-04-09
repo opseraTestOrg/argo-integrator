@@ -10,7 +10,6 @@ import lombok.Data;
 @Data
 public class ToolConfig implements Serializable {
 
-    
     /**
      * 
      */
@@ -33,9 +32,24 @@ public class ToolConfig implements Serializable {
     private boolean twoFactorAuthentication;
 
     private VaultSecretDetails secretPrivateKey;
-    
+
     private boolean secretAccessTokenEnabled;
-    
+
     private VaultSecretDetails secretAccessTokenKey;
+
+    private VaultSecretDetails accessKey;
+    private VaultSecretDetails secretKey;
+    private VaultSecretDetails awsAccountId;
+    private String regions;
+    private VaultSecretDetails subscriptionId;
+    private VaultSecretDetails tenantId;
+    private VaultSecretDetails applicationId;
+    private VaultSecretDetails applicationPassword;
+    private VaultSecretDetails token;
+    private VaultSecretDetails clientId;
+    private VaultSecretDetails clientSecret;
+    private String azureTenantId;
+    private String azureSubscriptionId;
+    private VaultSecretDetails gcpConfigFile;
 
 }
