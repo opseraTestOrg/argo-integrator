@@ -16,5 +16,6 @@ public class OpseraPipelineMetadata {
     private String status;
     private String podName;
     private String namespace;
+    private String jobId;
 
 }
