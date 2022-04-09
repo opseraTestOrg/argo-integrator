@@ -8,6 +8,7 @@ import static com.opsera.integrator.argo.resources.Constants.CLUSTERS;
 import static com.opsera.integrator.argo.resources.Constants.CLUSTER_ADMIN;
 import static com.opsera.integrator.argo.resources.Constants.CLUSTER_ROLE;
 import static com.opsera.integrator.argo.resources.Constants.CLUSTER_ROLE_BINDING;
+import static com.opsera.integrator.argo.resources.Constants.GET_PARENT_ID;
 import static com.opsera.integrator.argo.resources.Constants.GET_TOOL_DETAILS;
 import static com.opsera.integrator.argo.resources.Constants.K8_SERVCE_ACCOUNT_NAME;
 import static com.opsera.integrator.argo.resources.Constants.PIPELINE_TABLE_ENDPOINT;
@@ -251,7 +252,7 @@ public class ConfigCollector {
             if (!isNamespaceExists) {
                 api.createNamespace(v1Namespace, null, null, null);
             }
-
+            
             V1ServiceAccount body = new V1ServiceAccount();
             body.setApiVersion(V1);
             body.setKind(SERVICE_ACCOUNT);
@@ -304,7 +305,7 @@ public class ConfigCollector {
         LOGGER.debug("Completed to get bearer token for toolId {} and cluster {}", argoToolId, serverUrl);
         return serviceToken;
     }
-
+    
     /**
      * Process exception.
      *
@@ -331,5 +332,11 @@ public class ConfigCollector {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(RUN_COUNT_BY_PIPELINE_V2).queryParam(QUERY_PARM_PIPELINE_ID, pipelineId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
         return serviceFactory.getRestTemplate().getForObject(uriBuilder.toUriString(), Integer.class);
+    }
+    
+    public String getParentId(String customerId) {
+        LOGGER.info("Getting the parent id for customer Id {}", customerId);
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(GET_PARENT_ID).queryParam(QUERY_PARM_CUSTOMERID, customerId);
+        return serviceFactory.getRestTemplate().getForObject(uriBuilder.toUriString(), String.class);
     }
 }

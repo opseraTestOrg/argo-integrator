@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class OpseraPipelineMetadata {
 
+    private String jobId;
     private String pipelineId;
     private String customerId;
     private String stepId;
