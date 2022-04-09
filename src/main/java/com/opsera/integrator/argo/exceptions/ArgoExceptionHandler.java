@@ -3,6 +3,7 @@ package com.opsera.integrator.argo.exceptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
@@ -48,8 +49,9 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("HttpServerErrorException", ex);
         String response = ex.getResponseBodyAsString();
         Gson gson = factory.gson();
-        ArgoErrorResponse sonarQubeErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);
-        return new ResponseEntity<>(sonarQubeErrorResponse, ex.getStatusCode());
+        ArgoErrorResponse argoErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);
+        return new ResponseEntity<>(CollectionUtils.isEmpty(argoErrorResponse.getErrors()) ? argoErrorResponse : argoErrorResponse.getErrors().get(0), ex.getStatusCode());
+
     }
 
     /**
@@ -63,8 +65,9 @@ public class ArgoExceptionHandler extends ResponseEntityExceptionHandler {
         logger.error("HttpClientErrorException", ex);
         String response = ex.getResponseBodyAsString();
         Gson gson = factory.gson();
-        ArgoErrorResponse sonarQubeErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);
-        return new ResponseEntity<>(sonarQubeErrorResponse, ex.getStatusCode());
+        ArgoErrorResponse argoErrorResponse = gson.fromJson(response, ArgoErrorResponse.class);
+        return new ResponseEntity<>(CollectionUtils.isEmpty(argoErrorResponse.getErrors()) ? argoErrorResponse : argoErrorResponse.getErrors().get(0), ex.getStatusCode());
+
     }
 
     /**
