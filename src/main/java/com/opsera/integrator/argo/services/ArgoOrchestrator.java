@@ -133,16 +133,19 @@ public class ArgoOrchestrator {
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
         boolean isApplicationExists;
         ArgoApplicationItem argoApplication = null;
-        try {
-            argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
-            ArgoApplicationMetadataList applicationMetadataList = getAllApplications(request.getToolId(), request.getCustomerId());
-            isApplicationExists = applicationMetadataList.getApplicationList().stream().anyMatch(applicationMetadata -> applicationMetadata.getName().equals(request.getApplicationName()));
-            return createOrUpdateApplication(request, argoToolDetails, argoPassword, isApplicationExists, argoApplication);
-        } catch (Exception e) {
-            LOGGER.debug("Application doesn't exists. message: {} ", e.getMessage());
-            isApplicationExists = false;
-            return createOrUpdateApplication(request, argoToolDetails, argoPassword, isApplicationExists, argoApplication);
+        if (!StringUtils.isEmpty(argoPassword)) {
+            try {
+                argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
+                ArgoApplicationMetadataList applicationMetadataList = getAllApplications(request.getToolId(), request.getCustomerId());
+                isApplicationExists = applicationMetadataList.getApplicationList().stream().anyMatch(applicationMetadata -> applicationMetadata.getName().equals(request.getApplicationName()));
+                return createOrUpdateApplication(request, argoToolDetails, argoPassword, isApplicationExists, argoApplication);
+            } catch (Exception e) {
+                LOGGER.debug("Application doesn't exists. message: {} ", e.getMessage());
+                isApplicationExists = false;
+                return createOrUpdateApplication(request, argoToolDetails, argoPassword, isApplicationExists, argoApplication);
+            }
         }
+        return null;
     }
 
     private ResponseEntity<String> createOrUpdateApplication(CreateApplicationRequest request, ArgoToolDetails argoToolDetails, String argoPassword, boolean isApplicationExists,
@@ -398,12 +401,9 @@ public class ArgoOrchestrator {
     
     private ArgoToolDetails getArgoToolDetailsInline(String argoToolId, String customerId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
-        if (null != argoToolDetails && null != argoToolDetails.getConfiguration() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getToolURL())
-                && ((!argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getAccountUsername())
-                        && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getAccountPassword()))
-                        || (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && null != argoToolDetails.getConfiguration().getSecretAccessTokenKey()))) {
+        if (null != argoToolDetails && null != argoToolDetails.getConfiguration() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getToolURL())) {
             return argoToolDetails;
         }
-        throw new InvalidRequestException("Argo connection details seems to be incorrect. Please verify argo tool connection details and retry..!");
+        throw new InvalidRequestException("Argo connection details seems to be incorrect. Please verify argo connection details and retry..!");
     }
 }
