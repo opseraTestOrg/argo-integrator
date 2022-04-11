@@ -22,4 +22,6 @@ public class ArgoRepositoryItem {
     
     private ArgoReositoryConnectionState connectionState;
     
+    private String project;
+    
 }

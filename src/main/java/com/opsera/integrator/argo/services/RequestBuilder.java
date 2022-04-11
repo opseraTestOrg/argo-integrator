@@ -115,6 +115,9 @@ public class RequestBuilder {
         ArgoRepositoryItem argoRepositoryItem = new ArgoRepositoryItem();
         argoRepositoryItem.setName(request.getRepositoryName());
         argoRepositoryItem.setType(request.getRepositoryType());
+        if (!StringUtils.isEmpty(request.getProjectName())) {
+            argoRepositoryItem.setProject(request.getProjectName());
+        }
         ToolConfig toolConfig = toolDetails.getConfiguration();
         if (toolConfig.isTwoFactorAuthentication()) {
             argoRepositoryItem.setRepo(request.getSshUrl());
