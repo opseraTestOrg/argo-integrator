@@ -225,7 +225,7 @@ public class ArgoHelper {
             String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
             return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
         } catch (Exception e) {
-            throw new UnAuthorizedException(e.getMessage());
+            throw new UnAuthorizedException("Invalid credemtials provided for authentication. Please check the connection details and retry..!");
         }
     }
     
