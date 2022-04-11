@@ -19,12 +19,15 @@ import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_TOKEN
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_URL;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -195,7 +198,7 @@ public class RequestBuilder {
         }
         return createClusterRequest;
     }
-    
+
     public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException {
         String parentId = serviceFactory.getConfigCollector().getParentId(request.getCustomerId());
         Map<String, String> vaultData = serviceFactory.getVaultHelper().getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
@@ -211,86 +214,87 @@ public class RequestBuilder {
         LOGGER.info("Starting to create kubernetes pod on the customer data plane");
         KubernetesPodHandler handler = new KubernetesPodHandler(url, token, request.getArgoToolId(), null, 0);
         try {
-            handler.createJob(String.format("bitnami/kubectl:%s", "latest"), commands, envVar);
-            //String.format("bitnami/kubectl:%s", "latest")
+            handler.createJob("ubuntu", commands, envVar);
+            // String.format("bitnami/kubectl:%s", "latest")
         } catch (KubernetesHelperException e) {
             e.printStackTrace();
         }
-        //CompletableFuture.runAsync(() -> streamConsoleLogAsync(opseraPipelineMetadata, handler, config), taskExecutor);
+        // CompletableFuture.runAsync(() ->
+        // streamConsoleLogAsync(opseraPipelineMetadata, handler, config),
+        // taskExecutor);
     }
-    
+
     private List<String> getCommands(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar) throws IOException {
         List<String> commands = new ArrayList<>();
         commands.add("/bin/sh");
         commands.add("-exc");
-        StringBuilder command = new StringBuilder();
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("rollout_script.txt");
+        String baseScript = IOUtils.toString(inputStream, Charset.defaultCharset());
+        StringBuilder command = new StringBuilder(baseScript).append(System.lineSeparator());
         if (AWS.equalsIgnoreCase(request.getPlatform())) {
             getAwsDetails(config, request, envVar, command);
         } else if (AZURE.equalsIgnoreCase(request.getPlatform())) {
             getAzureDetails(config, request, envVar, command);
-        } 
+        }
         commands.add(command.toString());
         LOGGER.info("Successfully to construct the packer commands");
         return commands;
-   }
-    
-   private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
-       ToolConfig configuration = config.getConfiguration();
-       String secretKey = configuration.getSecretKey().getVaultKey();
-       String accessKey = configuration.getAccessKey().getVaultKey();
-       List<String> vaultKey = Arrays.asList(accessKey, secretKey);
-       Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(config.getOwner(), vaultKey, null);
-       AwsDetails awsDetails = new AwsDetails();
-       if (request.isIamRoleFlag()) {
-           awsDetails.setCustomerId(config.getOwner());
-           awsDetails.setToolId(request.getPlatformToolId());
-           awsDetails.setRoleArn(request.getRoleArn());
-           awsDetails.setRoleSessionName(config.getOwner());
-           awsDetails = serviceFactory.getAwsServiceHelper().getCredentials(awsDetails);
-           awsDetails.setRegion(configuration.getRegions());
-       } else {
-           awsDetails.setAccessKeyId(secrects.get(accessKey));
-           awsDetails.setSecretAccessKey(secrects.get(secretKey));
-           awsDetails.setRegion(configuration.getRegions());
-       }
-       if (!StringUtils.isEmpty(awsDetails.getAccessKeyId())) {
-           envVar.put(AWS_ACCESS_KEY_ID, awsDetails.getAccessKeyId());
-       }
-       if (!StringUtils.isEmpty(awsDetails.getSecretAccessKey())) {
-           envVar.put(AWS_SECRET_ACCESS_KEY, awsDetails.getSecretAccessKey());
-       }
-       if (!StringUtils.isEmpty(awsDetails.getRegion())) {
-           envVar.put(AWS_DEFAULT_REGION, awsDetails.getRegion());
-       }
-       if (!StringUtils.isEmpty(awsDetails.getSessionToken())) {
-           envVar.put(AWS_SESSION_TOKEN, awsDetails.getSessionToken());
-       }
-       
-       command.append("kubectl version").append(System.lineSeparator());
-       command.append("kubectl version").append(System.lineSeparator());
-      // command.append(String.format("aws eks --region %s update-kubeconfig --name %s", awsDetails.getRegion(), request.getClusterName())).append(System.lineSeparator());
-      // command.append("sleep 1h").append(System.lineSeparator());
-   }
-    
-   private void getAzureDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
-       ToolConfig configuration = config.getConfiguration();
-       String subscriptionIdKey = configuration.getAzureSubscriptionId();
-       String tenantIdKey = configuration.getAzureTenantId();
-       if (!StringUtils.isEmpty(request.getClientId())) {
-           envVar.put(ARM_CLIENT_ID, request.getClientId());
-       }
-       if (!StringUtils.isEmpty(request.getClientSecret())) {
-           envVar.put(ARM_CLIENT_SECRET, request.getClientSecret());
-       }
-       if (!StringUtils.isEmpty(subscriptionIdKey)) {
-           envVar.put(ARM_SUBSCRIPTION_ID, subscriptionIdKey);
-       }
-       if (!StringUtils.isEmpty(tenantIdKey)) {
-           envVar.put(ARM_TENANT_ID, tenantIdKey);
-       }
-       command.append("").append(System.lineSeparator());
-   }
-   
+    }
+
+    private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
+        ToolConfig configuration = config.getConfiguration();
+        String secretKey = configuration.getSecretKey().getVaultKey();
+        String accessKey = configuration.getAccessKey().getVaultKey();
+        List<String> vaultKey = Arrays.asList(accessKey, secretKey);
+        Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(config.getOwner(), vaultKey, null);
+        AwsDetails awsDetails = new AwsDetails();
+        if (request.isIamRoleFlag()) {
+            awsDetails.setCustomerId(config.getOwner());
+            awsDetails.setToolId(request.getPlatformToolId());
+            awsDetails.setRoleArn(request.getRoleArn());
+            awsDetails.setRoleSessionName(config.getOwner());
+            awsDetails = serviceFactory.getAwsServiceHelper().getCredentials(awsDetails);
+            awsDetails.setRegion(configuration.getRegions());
+        } else {
+            awsDetails.setAccessKeyId(secrects.get(accessKey));
+            awsDetails.setSecretAccessKey(secrects.get(secretKey));
+            awsDetails.setRegion(configuration.getRegions());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getAccessKeyId())) {
+            envVar.put(AWS_ACCESS_KEY_ID, awsDetails.getAccessKeyId());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getSecretAccessKey())) {
+            envVar.put(AWS_SECRET_ACCESS_KEY, awsDetails.getSecretAccessKey());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getRegion())) {
+            envVar.put(AWS_DEFAULT_REGION, awsDetails.getRegion());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getSessionToken())) {
+            envVar.put(AWS_SESSION_TOKEN, awsDetails.getSessionToken());
+        }
+
+      //  command.append("sleep 1h").append(System.lineSeparator());
+    }
+
+    private void getAzureDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
+        ToolConfig configuration = config.getConfiguration();
+        String subscriptionIdKey = configuration.getAzureSubscriptionId();
+        String tenantIdKey = configuration.getAzureTenantId();
+        if (!StringUtils.isEmpty(request.getClientId())) {
+            envVar.put(ARM_CLIENT_ID, request.getClientId());
+        }
+        if (!StringUtils.isEmpty(request.getClientSecret())) {
+            envVar.put(ARM_CLIENT_SECRET, request.getClientSecret());
+        }
+        if (!StringUtils.isEmpty(subscriptionIdKey)) {
+            envVar.put(ARM_SUBSCRIPTION_ID, subscriptionIdKey);
+        }
+        if (!StringUtils.isEmpty(tenantIdKey)) {
+            envVar.put(ARM_TENANT_ID, tenantIdKey);
+        }
+        command.append("").append(System.lineSeparator());
+    }
+
     /**
      * Creates the project request.
      *
