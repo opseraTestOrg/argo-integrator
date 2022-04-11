@@ -18,5 +18,7 @@ public class CreateRepositoryRequest {
     private String httpsUrl;
 
     private String gitToolId;
+    
+    private String projectName;
 
 }
