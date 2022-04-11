@@ -60,4 +60,20 @@ public class Constants {
     public static final String QUERY_PARM_PIPELINE_ID = "pipelineId";
     public static final String ARGO_SYNC_FAILED = "Argo Application Sync Failed";
     public static final String ARGO_SYNC_CONSOLE_FAILED = "Argo pod logs retrieved only for successfully synced applications.";
+    public static final String GET_PARENT_ID = "/customer/parent";
+    public static final String VAULT_CLUSTER_URL = "kubernetes-cluster-url";
+    public static final String VAULT_CLUSTER_TOKEN = "kubernetes-cluster-service-token";
+    public static final String CUSTOMER_CLUSTER_INFO_MISSING = "Failed : Customer kubernetes cluster information missing in customer vault";
+    public static final String STS_SESSION_TOKEN = "/sts/sessionToken";
+    
+    public static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
+    public static final String AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
+    public static final String AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION";
+    public static final String AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
+    
+    public static final String ARM_SUBSCRIPTION_ID = "ARM_SUBSCRIPTION_ID";
+    public static final String ARM_TENANT_ID = "ARM_TENANT_ID";
+    public static final String ARM_CLIENT_ID = "ARM_CLIENT_ID";
+    public static final String ARM_CLIENT_SECRET = "ARM_CLIENT_SECRET";
+    
 }

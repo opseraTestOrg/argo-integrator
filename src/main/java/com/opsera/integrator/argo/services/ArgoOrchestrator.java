@@ -4,6 +4,7 @@ import static com.opsera.integrator.argo.resources.Constants.FAILED;
 
 import java.io.UnsupportedEncodingException;
 
+import org.apache.kafka.common.errors.ApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,6 @@ import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
-
-import io.kubernetes.client.openapi.ApiException;
 
 /**
  * Class that orchestrates different classes within the service to provide the

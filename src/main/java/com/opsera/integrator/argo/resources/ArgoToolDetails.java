@@ -1,5 +1,7 @@
 package com.opsera.integrator.argo.resources;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
@@ -26,5 +28,7 @@ public class ArgoToolDetails {
     private String toolIdentifier;
 
     private ToolConfig configuration;
+    
+    private List<Application> applications;
 
 }
