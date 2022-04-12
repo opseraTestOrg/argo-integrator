@@ -17,6 +17,7 @@ public class Constants {
     public static final String ARGO_APPLICATION_LOG_URL_TEMPLATE = "%s/api/v1/applications/%s/pods/%s/logs?namespace=%s";
     public static final String ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE = "%s/api/v1/applications/%s/resource-tree";
     public static final String ARGO_CREATE_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
+    public static final String ARGO_GENERATE_TOKEN_API = "%s/api/v1/account/%s/token";
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
     public static final String TOOL_REGISTRY_ENDPOINT = "/v2/registry/tool";
     public static final String VAULT_READ_ENDPOINT = "/read";
