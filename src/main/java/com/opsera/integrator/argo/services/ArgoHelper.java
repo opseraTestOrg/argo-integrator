@@ -9,6 +9,7 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RE
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_GET_USER_INFO_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SESSION_TOKEN_URL;
@@ -16,12 +17,14 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATI
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
+import static com.opsera.integrator.argo.resources.Constants.INVALID_CONNECTION_DETAILS;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
@@ -47,6 +51,7 @@ import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.LogResult;
 import com.opsera.integrator.argo.resources.ResourceTree;
 import com.opsera.integrator.argo.resources.ToolConfig;
+import com.opsera.integrator.argo.resources.UserInfo;
 
 /**
  * Class handles all the interaction with argo server.
@@ -215,10 +220,29 @@ public class ArgoHelper {
      * @return the session token
      */
     private ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
-        LOGGER.debug("To Starting to get session token with baseUrl {}", baseUrl);
-        ArgoSessionRequest request = new ArgoSessionRequest(username, password);
-        String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
-        return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
+        try {
+            LOGGER.debug("To Starting to get session token with baseUrl {}", baseUrl);
+            ArgoSessionRequest request = new ArgoSessionRequest(username, password);
+            String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
+            return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
+        } catch (Exception e) {
+            throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
+        }
+    }
+    
+    private UserInfo getUserInfo(String baseUrl, String argoToken) {
+        try {
+            LOGGER.debug("To Starting to get user info to valiate token with baseUrl {}", baseUrl);
+            String url = String.format(ARGO_GET_USER_INFO_TEMPLATE, baseUrl);
+            HttpHeaders requestHeaders = new HttpHeaders();
+            requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+            requestHeaders.setBearerAuth(argoToken);
+            ResponseEntity<UserInfo> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, new HttpEntity<>(requestHeaders), UserInfo.class);
+            return response.getBody();
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+            throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
+        }
     }
 
     /**
@@ -244,7 +268,12 @@ public class ArgoHelper {
             ArgoSessionToken sessionToken = getSessionToken(toolConfig.getToolURL(), toolConfig.getUserName(), argoPassword);
             argoToken = sessionToken.getToken();
         } else {
-            argoToken = argoPassword;
+            UserInfo userInfo = getUserInfo(toolConfig.getToolURL(), argoPassword);
+            if (!StringUtils.isEmpty(userInfo.getUsername())) {
+                argoToken = argoPassword;
+            } else {
+                throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
+            }
         }
         return argoToken;
     }
