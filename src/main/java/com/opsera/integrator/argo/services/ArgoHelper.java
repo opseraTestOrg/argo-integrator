@@ -17,6 +17,7 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATI
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_EMPTY_BODY;
 import static com.opsera.integrator.argo.resources.Constants.HTTP_HEADER_ACCEPT;
+import static com.opsera.integrator.argo.resources.Constants.INVALID_CONNECTION_DETAILS;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +38,6 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.UnAuthorizedException;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
@@ -226,7 +226,7 @@ public class ArgoHelper {
             String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
             return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
         } catch (Exception e) {
-            throw new UnAuthorizedException("Invalid connection details provided for authentication. Please check the connection details and retry..!");
+            throw new UnAuthorizedException(INVALID_CONNECTION_DETAILS);
         }
     }
     
@@ -241,7 +241,7 @@ public class ArgoHelper {
             return response.getBody();
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
-            throw new InvalidRequestException("Invalid access token provided for authentication");
+            throw new UnAuthorizedException(INVALID_CONNECTION_DETAILS);
         }
     }
 
@@ -272,7 +272,7 @@ public class ArgoHelper {
             if (!StringUtils.isEmpty(userInfo.getUsername())) {
                 argoToken = argoPassword;
             } else {
-                throw new UnAuthorizedException("Invalid connection details provided for authentication. Please check the connection details and retry..!");
+                throw new UnAuthorizedException(INVALID_CONNECTION_DETAILS);
             }
         }
         return argoToken;

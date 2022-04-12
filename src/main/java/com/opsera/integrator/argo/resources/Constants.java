@@ -61,4 +61,5 @@ public class Constants {
     public static final String QUERY_PARM_PIPELINE_ID = "pipelineId";
     public static final String ARGO_SYNC_FAILED = "Argo Application Sync Failed";
     public static final String ARGO_SYNC_CONSOLE_FAILED = "Argo pod logs retrieved only for successfully synced applications.";
+    public static final String INVALID_CONNECTION_DETAILS = "Invalid connection details provided for authentication. Please check the connection details and retry..!";
 }
