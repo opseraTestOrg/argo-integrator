@@ -198,11 +198,10 @@ public class ConfigCollector {
      * @return the AKS cluster details
      */
     public AzureClusterDetails getAKSClusterDetails(CreateCluster request) {
-        LOGGER.debug("Starting to get AKS Cluster Details request", request);
+        LOGGER.debug("Starting to get AKS Cluster Details request {}", request);
         RestTemplate restTemplate = serviceFactory.getRestTemplate();
         String toolsConfigURL = appConfig.getAzureServiceBaseUrl() + CLUSTERS;
-        AzureClusterDetails response = restTemplate.postForObject(toolsConfigURL, request, AzureClusterDetails.class);
-        return response;
+        return restTemplate.postForObject(toolsConfigURL, request, AzureClusterDetails.class);
     }
 
     /**
@@ -293,7 +292,6 @@ public class ConfigCollector {
             for (V1Secret item : v1SecretList.getItems()) {
                 if (null != item.getMetadata().getAnnotations() && item.getMetadata().getAnnotations().containsKey(K8_SERVCE_ACCOUNT_NAME)
                         && meta.getName().equalsIgnoreCase(item.getMetadata().getAnnotations().get(K8_SERVCE_ACCOUNT_NAME))) {
-                    System.out.println(new String(item.getData().get(TOKEN)));
                     serviceToken = new String(item.getData().get(TOKEN));
                 }
             }
