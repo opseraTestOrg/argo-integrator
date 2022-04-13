@@ -62,21 +62,19 @@ public class RequestBuilder {
     public ArgoApplicationItem createApplicationRequest(CreateApplicationRequest request) {
         LOGGER.debug("Starting to create Argo Application Request {}", request);
         ArgoApplicationItem argoApplication = new ArgoApplicationItem();
-
         ArgoApplicationMetadata metadata = new ArgoApplicationMetadata();
         metadata.setName(request.getApplicationName());
-
         ArgoApplicationSpec spec = new ArgoApplicationSpec();
         ArgoApplicationSource source = new ArgoApplicationSource();
-        ArgoApplicationDestination destination = new ArgoApplicationDestination();
         source.setRepoURL(request.getGitUrl());
         source.setPath(request.getGitPath());
         source.setTargetRevision(request.getBranchName());
+        ArgoApplicationDestination destination = new ArgoApplicationDestination();
         destination.setNamespace(request.getNamespace());
         destination.setServer(request.getCluster());
         spec.setSource(source);
         spec.setDestination(destination);
-
+        spec.setProject(request.getProjectName());
         argoApplication.setMetadata(metadata);
         argoApplication.setSpec(spec);
         return argoApplication;
