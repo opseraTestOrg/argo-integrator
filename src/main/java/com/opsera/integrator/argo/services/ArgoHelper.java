@@ -221,13 +221,12 @@ public class ArgoHelper {
 
     public ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
         try {
-            LOGGER.debug("To Starting to get session token with baseUrl {}, username: {}, password: {}", baseUrl, username, password);
+            LOGGER.debug("To Starting to get session token with baseUrl {}, username: {}", baseUrl, username);
             ArgoSessionRequest request = new ArgoSessionRequest(username, password);
             String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
             return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
         } catch (Exception e) {
-            LOGGER.error("###MESSAGE### - {}", e.getMessage());
-            e.printStackTrace();
+            LOGGER.error("Exception occured while invoking getSessionToken. Message: {}", e.getMessage());
             throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
         }
     }
