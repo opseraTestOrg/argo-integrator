@@ -185,15 +185,15 @@ public class ArgoOrchestrator {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
         ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
         if (!StringUtils.isEmpty(details.getLocalUsername()) && !StringUtils.isEmpty(details.getLocalPassword())) {
-            String sessionUrl = String.format(ARGO_SESSION_TOKEN_URL, details.getUrl(), details.getLocalUsername());
-            ArgoSessionToken sessionToken = serviceFactory.getArgoHelper().getSessionToken(sessionUrl, details.getLocalUsername(), details.getLocalPassword());
+            ArgoSessionToken sessionToken = serviceFactory.getArgoHelper().getSessionToken(details.getUrl(), details.getLocalUsername(), details.getLocalPassword());
             String argoToken = sessionToken.getToken();
             String url = String.format(ARGO_GENERATE_TOKEN_API, details.getUrl(), details.getLocalUsername());
-            ArgoAccount argoAccount = ArgoAccount.builder().name(toolId).build();
+            ArgoAccount argoAccount = new ArgoAccount();
+            argoAccount.setName(toolId);
             HttpEntity<Object> requestEntity = serviceFactory.getArgoHelper().getRequestEntity(argoToken, argoAccount);
             ResponseEntity<ArgoAccount> tokenResponse = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoAccount.class);
             if (tokenResponse.hasBody()) {
-                return argoAccount.getToken();
+                return tokenResponse.getBody().getToken();
             }
             throw new InternalServiceException(String.format("Invalid tools details found for the given toolId: %s", toolId));
         }
