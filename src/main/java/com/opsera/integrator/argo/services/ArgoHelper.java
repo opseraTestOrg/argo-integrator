@@ -221,7 +221,7 @@ public class ArgoHelper {
 
     public ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
         try {
-            LOGGER.debug("To Starting to get session token with baseUrl {}", baseUrl);
+            LOGGER.debug("To Starting to get session token with baseUrl {}, username: {}, password: {}", baseUrl, username, password);
             ArgoSessionRequest request = new ArgoSessionRequest(username, password);
             String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
             return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
