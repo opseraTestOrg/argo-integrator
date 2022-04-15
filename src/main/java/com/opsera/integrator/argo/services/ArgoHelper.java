@@ -226,6 +226,8 @@ public class ArgoHelper {
             String url = String.format(ARGO_SESSION_TOKEN_URL, baseUrl);
             return serviceFactory.getRestTemplate().postForObject(url, request, ArgoSessionToken.class);
         } catch (Exception e) {
+            LOGGER.error("###MESSAGE### - {}", e.getMessage());
+            e.printStackTrace();
             throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
         }
     }
