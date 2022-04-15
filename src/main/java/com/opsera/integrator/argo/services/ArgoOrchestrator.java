@@ -2,6 +2,7 @@ package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ARGO_GENERATE_TOKEN_API;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
+import static com.opsera.integrator.argo.resources.Constants.INVALID_CONNECTION_DETAILS;
 
 import java.io.UnsupportedEncodingException;
 
@@ -183,12 +184,14 @@ public class ArgoOrchestrator {
      * @param toolId     the tool id
      * @return the string
      * @throws ResourcesNotAvailable the resources not available
+     * @throws InterruptedException 
      */
-    public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable {
+    public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable, InterruptedException {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
         ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
         if (!StringUtils.isEmpty(details.getLocalUsername()) && !StringUtils.isEmpty(details.getLocalPassword())) {
-            ArgoSessionToken sessionToken = serviceFactory.getArgoHelper().getSessionToken(details.getUrl(), details.getLocalUsername(), details.getLocalPassword());
+            int retryCount = 0;
+            ArgoSessionToken sessionToken = retryArgoSessionTokenCreation(details, retryCount);
             String argoToken = sessionToken.getToken();
             String url = String.format(ARGO_GENERATE_TOKEN_API, details.getUrl(), details.getLocalUsername());
             ArgoAccount argoAccount = new ArgoAccount();
@@ -201,6 +204,20 @@ public class ArgoOrchestrator {
             throw new InternalServiceException(String.format("Invalid tools details found for the given toolId: %s", toolId));
         }
         return details.getPassword();
+    }
+
+    private ArgoSessionToken retryArgoSessionTokenCreation(ToolDetails details, int retryCount) throws InterruptedException {
+        try {
+            LOGGER.debug("Getting session token for Argo api token generation. toolUrl: {}, localUserName: {}, retryCount: {}", details.getUrl(), details.getLocalUsername(), retryCount);
+            return serviceFactory.getArgoHelper().getSessionToken(details.getUrl(), details.getLocalUsername(), details.getLocalPassword());
+        } catch (Exception e) {
+            if (retryCount < 4) {
+                Thread.sleep(retryCount * 30000);
+                retryCount = retryCount + 1;
+                return retryArgoSessionTokenCreation(details, retryCount);
+            }
+            throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
+        }
     }
 
     /**
