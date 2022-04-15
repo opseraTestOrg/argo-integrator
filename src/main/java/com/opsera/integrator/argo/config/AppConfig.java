@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ServiceLocatorFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 import org.springframework.util.StopWatch;
 import org.springframework.web.client.RestTemplate;
 
@@ -41,6 +42,7 @@ public class AppConfig {
     }
 
     @Bean
+    @Scope(value = "prototype")
     public StopWatch stopWatch() {
         return new StopWatch();
     }
