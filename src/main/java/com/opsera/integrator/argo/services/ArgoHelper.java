@@ -86,8 +86,8 @@ public class ArgoHelper {
     /**
      * get all argo applications.
      *
-     * @param toolConfig  the base url
-     * @param username the username
+     * @param toolConfig the base url
+     * @param username   the username
      * @return the all argo applications
      */
     public ArgoApplicationsList getAllArgoApplications(ToolConfig toolConfig, String argoPassword) {
@@ -143,21 +143,20 @@ public class ArgoHelper {
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationItem.class);
         return response.getBody();
     }
-    
-    
+
     /**
      * Sync application operation.
      *
      * @param applicationName the application name
-     * @param baseUrl the base url
-     * @param username the username
-     * @param password the password
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
      * @return the argo application item
      */
     public ArgoApplicationItem syncApplicationOperation(String applicationName, ToolConfig toolConfig, String argoPassword) {
         LOGGER.debug("Starting to Sync Argo Application Operation for applicationName {}", applicationName);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, toolConfig, argoPassword);
-        String url = String.format(ARGO_SYNC_APPLICATION_OPERATION_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);      
+        String url = String.format(ARGO_SYNC_APPLICATION_OPERATION_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, ArgoApplicationItem.class);
         return response.getBody();
     }
@@ -173,7 +172,7 @@ public class ArgoHelper {
      */
     public ResponseEntity<String> createApplication(ArgoApplicationItem argoApplication, ToolConfig toolConfig, String argoPassword) {
         LOGGER.debug("Starting to Create Argo Application for request {}", argoApplication);
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication),toolConfig, argoPassword);
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), toolConfig, argoPassword);
         String url = String.format(ARGO_CREATE_APPLICATION_URL_TEMPLATE, toolConfig.getToolURL());
         return serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, String.class);
     }
@@ -219,7 +218,8 @@ public class ArgoHelper {
      * @param password the password
      * @return the session token
      */
-    private ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
+
+    public ArgoSessionToken getSessionToken(String baseUrl, String username, String password) {
         try {
             LOGGER.debug("To Starting to get session token with baseUrl {}", baseUrl);
             ArgoSessionRequest request = new ArgoSessionRequest(username, password);
@@ -229,7 +229,7 @@ public class ArgoHelper {
             throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
         }
     }
-    
+
     private UserInfo getUserInfo(String baseUrl, String argoToken) {
         try {
             LOGGER.debug("To Starting to get user info to valiate token with baseUrl {}", baseUrl);
@@ -276,6 +276,20 @@ public class ArgoHelper {
             }
         }
         return argoToken;
+    }
+
+    /**
+     * Return header with object body
+     * 
+     * @param argoToken
+     * @param request
+     * @return
+     */
+    public HttpEntity<Object> getRequestEntity(String argoToken, Object request) {
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+        requestHeaders.setBearerAuth(argoToken);
+        return new HttpEntity<>(request, requestHeaders);
     }
 
     /**
@@ -512,14 +526,14 @@ public class ArgoHelper {
         serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, Void.class);
         LOGGER.debug("To Completed to delete the cluster {} and url {} ", server, toolConfig.getToolURL());
     }
-    
+
     /**
      * Gets the argo application log.
      *
      * @param applicationName the application name
-     * @param baseUrl the base url
-     * @param username the username
-     * @param password the password
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
      * @return the argo application log
      */
     public String getArgoApplicationLog(String applicationName, ToolConfig toolConfig, String argoPassword, String podName, String namespace) {
@@ -542,7 +556,7 @@ public class ArgoHelper {
         }
         return sb.toString();
     }
-    
+
     public ResourceTree getResourceTree(String applicationName, ToolConfig toolConfig, String argoPassword) {
         LOGGER.debug("Starting to get argo Application log for applicationName {}", applicationName);
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, toolConfig, argoPassword);

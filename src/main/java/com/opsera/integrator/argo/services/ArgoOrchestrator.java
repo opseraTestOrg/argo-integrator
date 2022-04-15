@@ -1,5 +1,6 @@
 package com.opsera.integrator.argo.services;
 
+import static com.opsera.integrator.argo.resources.Constants.ARGO_GENERATE_TOKEN_API;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 
 import java.io.UnsupportedEncodingException;
@@ -7,13 +8,17 @@ import java.io.UnsupportedEncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.InternalServiceException;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
+import com.opsera.integrator.argo.resources.ArgoAccount;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
@@ -21,6 +26,7 @@ import com.opsera.integrator.argo.resources.ArgoApplicationsList;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
+import com.opsera.integrator.argo.resources.ArgoSessionToken;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
 import com.opsera.integrator.argo.resources.CreateCluster;
@@ -181,6 +187,19 @@ public class ArgoOrchestrator {
     public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
         ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
+        if (!StringUtils.isEmpty(details.getLocalUsername()) && !StringUtils.isEmpty(details.getLocalPassword())) {
+            ArgoSessionToken sessionToken = serviceFactory.getArgoHelper().getSessionToken(details.getUrl(), details.getLocalUsername(), details.getLocalPassword());
+            String argoToken = sessionToken.getToken();
+            String url = String.format(ARGO_GENERATE_TOKEN_API, details.getUrl(), details.getLocalUsername());
+            ArgoAccount argoAccount = new ArgoAccount();
+            argoAccount.setName(toolId);
+            HttpEntity<Object> requestEntity = serviceFactory.getArgoHelper().getRequestEntity(argoToken, argoAccount);
+            ResponseEntity<ArgoAccount> tokenResponse = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoAccount.class);
+            if (tokenResponse.hasBody()) {
+                return tokenResponse.getBody().getToken();
+            }
+            throw new InternalServiceException(String.format("Invalid tools details found for the given toolId: %s", toolId));
+        }
         return details.getPassword();
     }
 
@@ -233,7 +252,7 @@ public class ArgoOrchestrator {
                     return serviceFactory.getArgoHelper().updateRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
                 }
             } catch (Exception e) {
-                LOGGER.error("Repository doesn't exists in the Argo. message: {}",e.getMessage());
+                LOGGER.error("Repository doesn't exists in the Argo. message: {}", e.getMessage());
                 return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
             }
         }
@@ -380,7 +399,7 @@ public class ArgoOrchestrator {
      *
      * @param request the request
      * @throws UnsupportedEncodingException the unsupported encoding exception
-     * @throws ApiException 
+     * @throws ApiException
      */
     public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws UnsupportedEncodingException {
         LOGGER.debug("Starting to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
@@ -388,7 +407,7 @@ public class ArgoOrchestrator {
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
         serviceFactory.getArgoHelper().deleteArgoCluster(serverUrl, argoToolDetails.getConfiguration(), argoPassword);
     }
-    
+
     private String getArgoSecretTokenOrPassword(ArgoToolDetails argoToolDetails) {
         String argoPassword;
         if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
