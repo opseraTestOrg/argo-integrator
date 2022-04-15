@@ -223,10 +223,11 @@ public class ArgoController {
      * @param toolId     the tool id
      * @return the response entity
      * @throws ResourcesNotAvailable the resources not available
+     * @throws InterruptedException 
      */
     @GetMapping(path = "v1.0/generateNewToken")
     @ApiOperation("Gets argocd password ")
-    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable {
+    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable, InterruptedException {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
