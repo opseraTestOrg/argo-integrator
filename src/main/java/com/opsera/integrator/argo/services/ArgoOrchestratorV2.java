@@ -8,7 +8,9 @@ import static com.opsera.integrator.argo.resources.Constants.RUNNING;
 import static com.opsera.integrator.argo.resources.Constants.SUCCESS;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -92,6 +94,7 @@ public class ArgoOrchestratorV2 {
                 streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
             } else {
                 LOGGER.warn("Phase Succeeded but Status is OutOfSync");
+                CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync"));
             }
         } else if (operationState.getPhase().equalsIgnoreCase("Error")) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
@@ -128,8 +131,9 @@ public class ArgoOrchestratorV2 {
         try {
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             List<String> podNames = getRunningPodList(resourceTree.getNodes(), pipelineMetadata);
-            if (!CollectionUtils.isEmpty(podNames)) {
-                for (String podName : podNames) {
+            Set<String> uniquePodNames = new HashSet<>(podNames);
+            if (!CollectionUtils.isEmpty(uniquePodNames)) {
+                for (String podName : uniquePodNames) {
                     String logs = serviceFactory.getArgoHelper().getArgoApplicationLog(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword, podName,
                             pipelineMetadata.getNamespace());
                     if (!StringUtils.isEmpty(logs)) {
@@ -161,9 +165,7 @@ public class ArgoOrchestratorV2 {
             filteredNode.forEach(fNode -> {
                 List<Info> infos = fNode.getInfo();
                 infos.forEach(info -> {
-                    if (info.getValue().equalsIgnoreCase("Running")) {
-                        podNames.add(fNode.getName());
-                    }
+                    podNames.add(fNode.getName());
                 });
             });
         } catch (Exception e) {
