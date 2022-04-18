@@ -4,6 +4,7 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_GENERATE_TOKEN
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.INVALID_CONNECTION_DETAILS;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
@@ -441,5 +442,11 @@ public class ArgoOrchestrator {
             return argoToolDetails;
         }
         throw new InvalidRequestException("Argo connection details seems to be incorrect. Please verify argo connection details and retry..!");
+    }
+
+    public ResponseEntity<String> createNamespace(CreateCluster request) throws ResourcesNotAvailable, IOException {
+        LOGGER.debug("Starting to create the namespace in the cluster {} ", request.getClusterName());
+        serviceFactory.getRequestBuilder().execKubectlOnPod(request);
+        return null;
     }
 }

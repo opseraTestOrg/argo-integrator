@@ -36,6 +36,13 @@ targetCompatibility = 1.8
 repositories {
 	mavenCentral()
 	jcenter()
+	maven {
+    		url "https://opserarepo.jfrog.io/artifactory/opsera-platform-libs-release"
+    		credentials {
+            username "support@opsera.io"
+            password "eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiI0V0c0bE1FTGNVQVNRWEtaSm1ib1VSNkpBcnZUMjdwNzQyOTZqaGtMZndBIn0.eyJleHQiOiJ7XCJyZXZvY2FibGVcIjpcInRydWVcIn0iLCJzdWIiOiJqZmFjQDAxZnA2NHE4eGM3d3RoMDF2cWN5NnkwdnZoXC91c2Vyc1wvc3VwcG9ydEBvcHNlcmEuaW8iLCJzY3AiOiJhcHBsaWVkLXBlcm1pc3Npb25zXC91c2VyIiwiYXVkIjpbImpmcnRAKiIsImpmYWNAKiIsImpmZXZ0QCoiLCJqZm1kQCoiLCJqZmNvbkAqIl0sImlzcyI6ImpmZmVAMDAwIiwiZXhwIjoxNjcwMzA5MzQ0LCJpYXQiOjE2Mzg3NzMzNDQsImp0aSI6ImU2OWFhZGMwLTgxODgtNDI0MS1hYTAxLWVkZGI5YjYzMWRhMSJ9.PWQoY1NPOpyt6LSOYrbcsouHQeOlGbagYdAjU38U8saD5psG8ezLhf1Tq4ZxCxTzyw8vIofZuLzopzRzQRZifnu__NmmbpZf6xvwc9IGTCreapL6qRop3SPP1DlziNmAZGoacHoHmX_l11bSj1ty9M3zyHR6z1X5sZVxCucD9xYuFuN7TzONAyl4CK5Qg_4PRPHXfRtTKCp2hG_WoSAdLUq9XcQHUldnXztiPiq6XICrfjPq9yPr4i3BGpkJ9HEkJv623XebojcLCKCF-ee3Bwd_8cCvSh06koxj9gxZV9ycnMVrW9TkW_xHQfg0Cf4vxiU5Mr16b2RI4x_Om-psOA"
+        }
+    	}
 }
 
 dependencies {
@@ -47,7 +54,9 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	implementation group: 'charset', name: 'charset', version: '1.2.1'
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	compile('com.opsera:kubernetes-client:1.1.0')
 	compile('io.kubernetes:client-java:12.0.2')
 	compile('org.apache.httpcomponents:httpclient:4.5.12')
 	implementation 'org.springframework.kafka:spring-kafka:2.4.5.RELEASE'
+	compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.7.4')
 }

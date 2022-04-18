@@ -96,11 +96,11 @@ public class ArgoOrchestratorV2 {
                 LOGGER.warn("Phase Succeeded but Status is OutOfSync");
                 CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync"));
             }
-        } else if (operationState.getPhase().equalsIgnoreCase("Error")) {
+        } else if (operationState.getPhase().equalsIgnoreCase("Error") || operationState.getPhase().equalsIgnoreCase("Failed")) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
                     taskExecutor);
         } else {
-            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Unknown state received"));
+            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : "Unknown state received"));
         }
         return null;
     }
