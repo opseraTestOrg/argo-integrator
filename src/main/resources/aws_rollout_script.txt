@@ -1,5 +1,6 @@
+#!/bin/bash
 apt-get update 
-apt-get install -y curl unzip
+apt-get install -y curl unzip jq
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 ./aws/install
@@ -13,6 +14,7 @@ chmod +x kubectl
 mkdir -p ~/.local/bin
 mv ./kubectl ~/.local/bin/kubectl
 kubectl version --client
-aws eks --region us-east-2 update-kubeconfig --name opsera-dev-cluster
-kubectl create namespace opsera-argo-rollouts
-kubectl apply -n opsera-argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+aws eks --region us-east-2 update-kubeconfig --name $CLUSTER_NAME
+kubectl get namespace | grep -q "^argo-rollouts" || kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml;
+echo "Completed"

@@ -1,6 +1,5 @@
 package com.opsera.integrator.argo.controller;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
@@ -33,6 +32,7 @@ import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ValidationResponse;
 
 import io.swagger.annotations.Api;
@@ -449,12 +449,13 @@ public class ArgoController {
     
     @PostMapping(path = "v1.0/argo/namespace/create")
     @ApiOperation("To create an argo project")
-    public ResponseEntity<String> createNamespace(@RequestBody CreateCluster request) throws ResourcesNotAvailable, IOException {
+    public ResponseEntity<Response> createNamespace(@RequestBody CreateCluster request) {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
             LOGGER.info("Received createNamespace for : {}", request);
-            return serviceFactory.getArgoOrchestrator().createNamespace(request);
+            Response response = serviceFactory.getArgoOrchestrator().createNamespace(request);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } finally {
             stopwatch.stop();
             LOGGER.info("Completed createNamespace, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());

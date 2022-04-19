@@ -4,7 +4,6 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_GENERATE_TOKEN
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.INVALID_CONNECTION_DETAILS;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 import org.slf4j.Logger;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.InternalServiceException;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
@@ -36,6 +36,7 @@ import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
 
@@ -444,9 +445,19 @@ public class ArgoOrchestrator {
         throw new InvalidRequestException("Argo connection details seems to be incorrect. Please verify argo connection details and retry..!");
     }
 
-    public ResponseEntity<String> createNamespace(CreateCluster request) throws ResourcesNotAvailable, IOException {
-        LOGGER.debug("Starting to create the namespace in the cluster {} ", request.getClusterName());
-        serviceFactory.getRequestBuilder().execKubectlOnPod(request);
-        return null;
+    public Response createNamespace(CreateCluster request) {
+        LOGGER.debug("namespace creation in the cluster {} ", request.getClusterName());
+        try {
+            if (request.getNamespace().equalsIgnoreCase("argo-rollouts")) {
+                serviceFactory.getRequestBuilder().createNamespace(request);
+                serviceFactory.getRequestBuilder().execKubectlOnPod(request);
+                return Response.builder().message("namespace created successfully and initiated argo-rollouts controller installation").status("success").build();
+            } else {
+                serviceFactory.getRequestBuilder().createNamespace(request);
+            }
+        } catch (Exception e) {
+            throw new ArgoServiceException(e.getMessage());
+        }
+        return Response.builder().message("namespace created successfully").status("success").build();
     }
 }

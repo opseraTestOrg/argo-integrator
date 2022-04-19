@@ -76,7 +76,6 @@ public class VaultHelper {
         VaultRequest request = VaultRequest.builder().customerId(customerId).vaultId(vaultId).componentKeys(Collections.singletonList(secretKey)).build();
         LOGGER.info("Request to Vault: {}", request);
         VaultData response = restTemplate.postForObject(readURL, request, VaultData.class);
-        LOGGER.info("Response from Vault: {}", response);
         Optional<VaultData> vaultData = Optional.ofNullable(response);
         if (vaultData.isPresent()) {
             return new String(Base64.getDecoder().decode(response.getData().get(secretKey).getBytes()));
@@ -91,7 +90,6 @@ public class VaultHelper {
         VaultRequest request = VaultRequest.builder().customerId(customerId).vaultId(vaultId).componentKeys(secretKeys).build();
         LOGGER.info("Request to Vault: {}", request);
         VaultData response = restTemplate.postForObject(readURL, request, VaultData.class);
-        LOGGER.info("Response from Vault: {}", response);
         Optional<VaultData> vaultData = Optional.ofNullable(response);
         if (vaultData.isPresent()) {
             Map<String, String> vaultDataMap = new LinkedHashMap<>();

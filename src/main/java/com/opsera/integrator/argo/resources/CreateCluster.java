@@ -31,6 +31,4 @@ public class CreateCluster {
     
     private String namespace;
     
-    private boolean rolloutsEnabled;
-
 }

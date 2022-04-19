@@ -82,5 +82,7 @@ public class Constants {
     public static final String ARM_TENANT_ID = "ARM_TENANT_ID";
     public static final String ARM_CLIENT_ID = "ARM_CLIENT_ID";
     public static final String ARM_CLIENT_SECRET = "ARM_CLIENT_SECRET";
+    public static final String ARM_RESOURCE_GROUP_ID = "ARM_RESOURCE_GROUP_ID";
+    public static final String CLUSTER_NAME = "CLUSTER_NAME";
 
 }
