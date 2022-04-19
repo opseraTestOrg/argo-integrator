@@ -91,6 +91,7 @@ public class ArgoOrchestratorV2 {
                 LOGGER.debug("Completed sending success response to kafka {}", pipelineMetadata);
                 serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
                 LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
+                Thread.sleep(5000);
                 streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
             } else {
                 LOGGER.warn("Phase Succeeded but Status is OutOfSync");
