@@ -65,7 +65,7 @@ public class ArgoOrchestratorV2 {
             ArgoApplicationItem applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(),
                     argoPassword);
             if (null != applicationItemOperation && null != applicationItemOperation.getStatus()) {
-                checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
+                checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, 0);
             } else {
                 throw new ArgoServiceException("Unknown state received");
             }
@@ -76,13 +76,13 @@ public class ArgoOrchestratorV2 {
     }
 
     private Object checkOperationStatus(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItemOperation, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails,
-            ToolConfig argoToolConfig, String argoPassword) throws InterruptedException {
+            ToolConfig argoToolConfig, String argoPassword, long retryCount) throws InterruptedException {
         ArgoSyncOperation operationSync = applicationItemOperation.getStatus().getSync();
         ArgoOperationState operationState = applicationItemOperation.getStatus().getOperationState();
         if (operationState.getPhase().equalsIgnoreCase("Running")) {
             Thread.sleep(5000);
             applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
-            return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
+            return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
         } else if (operationState.getPhase().equalsIgnoreCase("Succeeded")) {
             if (operationSync.getStatus().equalsIgnoreCase("Synced")) {
                 pipelineMetadata.setStatus(SUCCESS);
@@ -94,8 +94,14 @@ public class ArgoOrchestratorV2 {
                 Thread.sleep(5000);
                 streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
             } else {
+                if (12 > retryCount) {
+                    Thread.sleep(5000);
+                    retryCount = retryCount + 1;
+                    applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
+                    return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
+                }
                 LOGGER.warn("Phase Succeeded but Status is OutOfSync");
-                CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync"));
+                CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync for more than 5 mins."));
             }
         } else if (operationState.getPhase().equalsIgnoreCase("Error") || operationState.getPhase().equalsIgnoreCase("Failed")) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
