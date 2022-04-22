@@ -451,7 +451,7 @@ public class ArgoOrchestrator {
             if (request.getNamespace().equalsIgnoreCase("argo-rollouts")) {
                 serviceFactory.getRequestBuilder().createNamespace(request);
                 serviceFactory.getRequestBuilder().execKubectlOnPod(request);
-                return Response.builder().message("namespace created successfully and initiated argo-rollouts controller installation").status("success").build();
+                return Response.builder().message("Initiated argo-rollouts installation successfully for b/g deployments").status("success").build();
             } else {
                 serviceFactory.getRequestBuilder().createNamespace(request);
             }
