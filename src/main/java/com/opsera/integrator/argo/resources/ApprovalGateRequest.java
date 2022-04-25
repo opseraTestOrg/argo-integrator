@@ -11,6 +11,6 @@ public class ApprovalGateRequest {
     private String deployToolIdentifier;
     private String status;
     private String customerId;
-    private String pipelineOwner;
+    private String ownerId;
 
 }
