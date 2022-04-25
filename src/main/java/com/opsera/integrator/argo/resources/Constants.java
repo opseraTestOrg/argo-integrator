@@ -17,9 +17,8 @@ public class Constants {
     public static final String ARGO_APPLICATION_LOG_URL_TEMPLATE = "%s/api/v1/applications/%s/pods/%s/logs?namespace=%s";
     public static final String ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE = "%s/api/v1/applications/%s/resource-tree";
     public static final String ARGO_CREATE_APPLICATION_URL_TEMPLATE = "%s/api/v1/applications";
-
+    public static final String ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE = "%s/api/v1/applications/%s/resource/actions?namespace=%s&resourceName=%s&version=v1alpha1&kind=Rollout&group=argoproj.io";
     public static final String ARGO_GENERATE_TOKEN_API = "%s/api/v1/account/%s/token";
-
     public static final String ARGO_GET_USER_INFO_TEMPLATE = "%s/api/v1/session/userinfo";
 
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
@@ -61,6 +60,7 @@ public class Constants {
     public static final String COMPLETED = "Completed";
     public static final String RUNNING = "Running";
     public static final String OPSERA_PIPELINE_ARGO_REQUEST = "opsera.pipeline.argo.request";
+    public static final String OPSERA_PIPELINE_ARGO_NOTIFICATION = "opsera.pipeline.argo.notification";
     public static final String RUN_COUNT_BY_PIPELINE_V2 = "/v2/pipeline/runcount";
     public static final String QUERY_PARM_PIPELINE_ID = "pipelineId";
     public static final String ARGO_SYNC_FAILED = "Argo Application Sync Failed";

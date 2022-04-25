@@ -51,9 +51,9 @@ argo:
 spring:
   profiles: kubernetes
 kafka:
-  bootstrapServer: ${OPSERA_KAFKA_BOOTSTRAP_URL:kafka.kafka.svc.cluster.local:9092}
+  bootstrapServer: ${OPSERA_KAFKA_BOOTSTRAP_URL:aeb8153aa1fc74089bd33608cc2d5e60-0a9b5f33d78b35f5.elb.us-east-2.amazonaws.com:9094}
   consumer:
     groupId: argo-kubernetes-group   
 opsera:
   config:
-    baseurl: ${OPSERA_API_SERVICE_URL:http://opsera-apigateway.microservices.svc.cluster.local:9091}
+    baseurl: ${OPSERA_API_SERVICE_URL:https://apigateway.opsera-test-private.opsera.io}

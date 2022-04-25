@@ -2,6 +2,7 @@ package com.opsera.integrator.argo.listener;
 
 
 import static com.opsera.integrator.argo.resources.Constants.OPSERA_PIPELINE_ARGO_REQUEST;
+import static com.opsera.integrator.argo.resources.Constants.OPSERA_PIPELINE_ARGO_NOTIFICATION;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,17 @@ public class ArgoActionListener {
     @Autowired
     private TaskExecutor taskExecutor;
 
-    @KafkaListener(topics = OPSERA_PIPELINE_ARGO_REQUEST, containerFactory = "kafkaListenerContainerFactory")
-    public void consumeJenkinsRequest(@Payload String message) {
-        LOGGER.info("Message Received from Kafka {}", message);
+    @KafkaListener(topics = { OPSERA_PIPELINE_ARGO_REQUEST }, containerFactory = "kafkaListenerContainerFactory")
+    public void consumeArgoDeploymentRequest(@Payload String message) {
+        LOGGER.info("Message Received from Kafka topic OPSERA_PIPELINE_ARGO_REQUEST : {}", message);
         ArgoDeploymentTask runnable = new ArgoDeploymentTask(message, serviceFactory);
+        taskExecutor.execute(runnable);
+    }
+    
+    @KafkaListener(topics = { OPSERA_PIPELINE_ARGO_NOTIFICATION }, containerFactory = "kafkaListenerContainerFactory")
+    public void consumeArgoNotificationResponse(@Payload String message) {
+        LOGGER.info("Message Received from Kafka topic OPSERA_PIPELINE_ARGO_NOTIFICATION : {}", message);
+        ArgoNotificationTask runnable = new ArgoNotificationTask(message, serviceFactory);
         taskExecutor.execute(runnable);
     }
 }

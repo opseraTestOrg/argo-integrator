@@ -8,6 +8,7 @@ import static com.opsera.integrator.argo.resources.Constants.RUNNING;
 import static com.opsera.integrator.argo.resources.Constants.SUCCESS;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +25,8 @@ import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ArgoServiceException;
+import com.opsera.integrator.argo.resources.Actions;
+import com.opsera.integrator.argo.resources.ApprovalGateRequest;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoOperationState;
 import com.opsera.integrator.argo.resources.ArgoSyncOperation;
@@ -33,6 +36,7 @@ import com.opsera.integrator.argo.resources.KafkaTopics;
 import com.opsera.integrator.argo.resources.Node;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ResourceTree;
+import com.opsera.integrator.argo.resources.RolloutActions;
 import com.opsera.integrator.argo.resources.ToolConfig;
 
 @Component
@@ -84,24 +88,24 @@ public class ArgoOrchestratorV2 {
             applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
         } else if (operationState.getPhase().equalsIgnoreCase("Succeeded")) {
-            if (operationSync.getStatus().equalsIgnoreCase("Synced")) {
+            if (operationSync.getStatus().equalsIgnoreCase("Synced") || argoToolConfig.isBlueGreenDeployment()) {
                 pipelineMetadata.setStatus(SUCCESS);
                 pipelineMetadata.setMessage(operationState.getMessage());
                 serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_REPONSE, serviceFactory.gson().toJson(pipelineMetadata));
                 LOGGER.debug("Completed sending success response to kafka {}", pipelineMetadata);
                 serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
                 LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
-                Thread.sleep(5000);
+                Thread.sleep(60000);
                 streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
             } else {
-                if (12 > retryCount) {
-                    Thread.sleep(5000);
+                if (10 > retryCount) {
+                    Thread.sleep(60000);
                     retryCount = retryCount + 1;
                     applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
                     return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
                 }
                 LOGGER.warn("Phase Succeeded but Status is OutOfSync");
-                CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync for more than 5 mins."));
+                CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync for more than 10 mins."));
             }
         } else if (operationState.getPhase().equalsIgnoreCase("Error") || operationState.getPhase().equalsIgnoreCase("Failed")) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
@@ -179,5 +183,82 @@ public class ArgoOrchestratorV2 {
             LOGGER.warn("Exception while extracting pod name from resource tree nodes. request: {}", pipelineMetadata);
         }
         return podNames;
+    }
+
+    public void promoteOrAbortRolloutDeployment(ApprovalGateRequest approvalGateRequest) {
+        LOGGER.debug("Starting to promote/abort Argo application depoyment based on approval gate response {}", approvalGateRequest);
+        Integer runCount = serviceFactory.getConfigCollector().getRunCount(approvalGateRequest.getPipelineId(), approvalGateRequest.getCustomerId());
+        OpseraPipelineMetadata pipelineMetadata = new OpseraPipelineMetadata();
+        pipelineMetadata.setCustomerId(approvalGateRequest.getCustomerId());
+        pipelineMetadata.setPipelineId(approvalGateRequest.getPipelineId());
+        pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
+        pipelineMetadata.setRunCount(runCount);
+        try {
+            ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
+            ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+            String argoPassword;
+            if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
+                argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
+            } else {
+                argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+            }
+            ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
+            List<Node> rolloutNodeList = resourceTree.getNodes().stream().filter(node -> node.getKind().equalsIgnoreCase("Rollout")).collect(Collectors.toList());
+            processNodeDetailsForApprovalGateResponseTopic(approvalGateRequest, pipelineMetadata, argoToolDetails.getConfiguration(), argoPassword, rolloutNodeList, argoToolConfig.getApplicationName());
+        } catch (Exception e) {
+            pipelineMetadata.setError(Arrays.toString(e.getStackTrace()));
+            pipelineMetadata.setStatus(FAILED);
+            pipelineMetadata.setMessage("Exception occured while processing approval gate reponse. message: " + e.getMessage());
+            serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
+        }
+    }
+
+    private void processNodeDetailsForApprovalGateResponseTopic(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
+            List<Node> rolloutNodeList, String applicationName) {
+        if (!CollectionUtils.isEmpty(rolloutNodeList)) {
+            Node node = rolloutNodeList.get(0);
+            RolloutActions rolloutActions = serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, null);
+            boolean validRequest = false;
+            List<Actions> actions = rolloutActions.getActions();
+            for (Actions action : actions) {
+                if (action.getName().equalsIgnoreCase("promote-full") && approvalGateRequest.getStatus().equalsIgnoreCase("Approved")
+                        || action.getName().equalsIgnoreCase("abort") && action.getName().equalsIgnoreCase("Rejected")) {
+                    validRequest = processValidRolloutRequest(pipelineMetadata, argoToolConfig, argoPassword, node, action, applicationName);
+                }
+            }
+            if (!validRequest) {
+                argoApprovalGateInvalidYaml(pipelineMetadata);
+            }
+        } else {
+            argoApprovalGateInvalidYaml(pipelineMetadata);
+        }
+    }
+
+    private boolean processValidRolloutRequest(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, Node node, Actions action, String applicationName) {
+        boolean validRequest;
+        if (action.isDisabled()) {
+            validRequest = true;
+            pipelineMetadata.setStatus(SUCCESS);
+            pipelineMetadata.setMessage(String.format("Argo blue green deployment was successful. No new revision found in the application %s to promote/abort.", applicationName));
+            serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
+        } else {
+            validRequest = true;
+            serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, action.getName());
+            pipelineMetadata.setStatus(SUCCESS);
+            if (action.getName().equalsIgnoreCase("promote-full")) {
+                pipelineMetadata.setMessage(String.format("The new deployment revision for %s promoted successfully", applicationName));
+            } else if (action.getName().equalsIgnoreCase("abort")) {
+                pipelineMetadata.setMessage(String.format("The new deployment revision for %s Aborted", applicationName));
+            }
+            serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
+        }
+        return validRequest;
+    }
+
+    private void argoApprovalGateInvalidYaml(OpseraPipelineMetadata pipelineMetadata) {
+        pipelineMetadata.setError("Invalid spec found in the deployment yaml. Please define valid spec in the deployment yaml for B/G or Canary Deployments..!");
+        pipelineMetadata.setStatus(FAILED);
+        pipelineMetadata.setMessage("Invalid spec provided in yaml for Argo blue green deployment");
+        serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
     }
 }
