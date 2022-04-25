@@ -98,8 +98,8 @@ public class ArgoOrchestratorV2 {
                 Thread.sleep(60000);
                 streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
             } else {
-                if (10 > retryCount) {
-                    Thread.sleep(60000);
+                if (20 > retryCount) {
+                    Thread.sleep(30000);
                     retryCount = retryCount + 1;
                     applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
                     return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
@@ -206,15 +206,18 @@ public class ArgoOrchestratorV2 {
             List<Node> rolloutNodeList = resourceTree.getNodes().stream().filter(node -> node.getKind().equalsIgnoreCase("Rollout")).collect(Collectors.toList());
             processNodeDetailsForApprovalGateResponseTopic(approvalGateRequest, pipelineMetadata, argoToolDetails.getConfiguration(), argoPassword, rolloutNodeList, argoToolConfig.getApplicationName());
         } catch (Exception e) {
+            LOGGER.error("argo blue green approval flow error. message: {}", Arrays.toString(e.getStackTrace()));
+            pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
             pipelineMetadata.setError(Arrays.toString(e.getStackTrace()));
-            pipelineMetadata.setStatus(FAILED);
-            pipelineMetadata.setMessage("Exception occured while processing approval gate reponse. message: " + e.getMessage());
+            pipelineMetadata.setStatus(SUCCESS);
+            pipelineMetadata.setMessage("Failed to retrieve promotion status for B/G deployment. Please check application status in argo tool for more details.");
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
         }
     }
 
     private void processNodeDetailsForApprovalGateResponseTopic(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
             List<Node> rolloutNodeList, String applicationName) {
+        pipelineMetadata.setStepId(approvalGateRequest.getApprovalGateStepId());
         if (!CollectionUtils.isEmpty(rolloutNodeList)) {
             Node node = rolloutNodeList.get(0);
             RolloutActions rolloutActions = serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, null);
@@ -256,8 +259,7 @@ public class ArgoOrchestratorV2 {
     }
 
     private void argoApprovalGateInvalidYaml(OpseraPipelineMetadata pipelineMetadata) {
-        pipelineMetadata.setError("Invalid spec found in the deployment yaml. Please define valid spec in the deployment yaml for B/G or Canary Deployments..!");
-        pipelineMetadata.setStatus(FAILED);
+        pipelineMetadata.setStatus(SUCCESS);
         pipelineMetadata.setMessage("Invalid spec provided in yaml for Argo blue green deployment");
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
     }
