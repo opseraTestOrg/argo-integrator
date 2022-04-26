@@ -225,8 +225,8 @@ public class ArgoOrchestratorV2 {
             boolean validRequest = false;
             List<Actions> actions = rolloutActions.getActions();
             for (Actions action : actions) {
-                if (action.getName().equalsIgnoreCase("promote-full") && approvalGateRequest.getStatus().equalsIgnoreCase("Approved")
-                        || action.getName().equalsIgnoreCase("abort") && action.getName().equalsIgnoreCase("Rejected")) {
+                if ((action.getName().equalsIgnoreCase("promote-full") && approvalGateRequest.getStatus().equalsIgnoreCase("Approved"))
+                        || (action.getName().equalsIgnoreCase("abort") && approvalGateRequest.getStatus().equalsIgnoreCase("Rejected"))) {
                     validRequest = processValidRolloutRequest(pipelineMetadata, argoToolConfig, argoPassword, node, action, applicationName);
                 }
             }
