@@ -22,6 +22,7 @@ import org.springframework.web.client.RestClientException;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
+import com.opsera.integrator.argo.resources.ApprovalGateRequest;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
@@ -459,6 +460,19 @@ public class ArgoController {
         } finally {
             stopwatch.stop();
             LOGGER.info("Completed createNamespace, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+    
+    @PostMapping(path = "v1.0/argo/application/approvalgate")
+    @ApiOperation("To sync the argo application configured in Opsera pipeline")
+    public String approvalOrRejectPromotion(@RequestBody ApprovalGateRequest request) {
+        Long startTime = System.currentTimeMillis();
+        try {
+            LOGGER.info("Received approvalOrRejectPromotion for pipelineMetadata : {}", request);
+            serviceFactory.getArgoOrchestratorV2().promoteOrAbortRolloutDeployment(request);
+            return "Request Submitted";
+        } finally {
+            LOGGER.info("Completed approvalOrRejectPromotion, time taken to execute {} secs", System.currentTimeMillis() - startTime);
         }
     }
 }

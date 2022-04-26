@@ -88,25 +88,25 @@ public class ArgoOrchestratorV2 {
             applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
         } else if (operationState.getPhase().equalsIgnoreCase("Succeeded")) {
-            if (operationSync.getStatus().equalsIgnoreCase("Synced") || argoToolConfig.isBlueGreenDeployment()) {
-                pipelineMetadata.setStatus(SUCCESS);
-                pipelineMetadata.setMessage(operationState.getMessage());
-                serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_REPONSE, serviceFactory.gson().toJson(pipelineMetadata));
-                LOGGER.debug("Completed sending success response to kafka {}", pipelineMetadata);
-                serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
-                LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
-                Thread.sleep(60000);
-                streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
-            } else {
-                if (20 > retryCount) {
+            String message = operationState.getMessage();
+            if (operationSync.getStatus().equalsIgnoreCase("OutOfSync")) {
+                if (10 > retryCount) {
                     Thread.sleep(30000);
                     retryCount = retryCount + 1;
                     applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
                     return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
                 }
-                LOGGER.warn("Phase Succeeded but Status is OutOfSync");
-                CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, "Phase Succeeded but Status is OutOfSync for more than 10 mins."));
+                message = "successfully synced (all tasks run) but the current status in argo tool is OutOfSync for more than 5 mins and it might take sometime than usual to reflect in the tool";
             }
+            pipelineMetadata.setStatus(SUCCESS);
+            pipelineMetadata.setMessage(operationState.getMessage());
+            serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_REPONSE, serviceFactory.gson().toJson(pipelineMetadata));
+            LOGGER.debug("Completed sending success response to kafka {}", pipelineMetadata);
+            pipelineMetadata.setMessage(message);
+            serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
+            LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
+            Thread.sleep(60000);
+            streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
         } else if (operationState.getPhase().equalsIgnoreCase("Error") || operationState.getPhase().equalsIgnoreCase("Failed")) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
                     taskExecutor);
