@@ -31,6 +31,7 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoOperationState;
 import com.opsera.integrator.argo.resources.ArgoSyncOperation;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.DataTransformerModel;
 import com.opsera.integrator.argo.resources.Info;
 import com.opsera.integrator.argo.resources.KafkaTopics;
 import com.opsera.integrator.argo.resources.Node;
@@ -107,14 +108,16 @@ public class ArgoOrchestratorV2 {
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
             LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
             Thread.sleep(60000);
-            streamConsoleLogAsync(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword);
+            CompletableFuture.runAsync(() -> streamConsoleLogAsync(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword), taskExecutor);
         } else if (operationState.getPhase().equalsIgnoreCase("Error") || operationState.getPhase().equalsIgnoreCase("Failed")) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
                     taskExecutor);
         } else {
-            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : "Unknown state received"));
+            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : "Unknown state received"),
+                    taskExecutor);
         }
-        return null;
+        CompletableFuture.runAsync(() -> publishResponseToDataTransformer(pipelineMetadata, argoToolDetails, argoToolConfig, argoPassword), taskExecutor);
+        return "Check Status Completed";
     }
 
     private ArgoApplicationItem syncApp(ToolConfig argoToolConfig, ArgoToolDetails argoToolDetails, String argoPassword) {
@@ -138,7 +141,7 @@ public class ArgoOrchestratorV2 {
         return null;
     }
 
-    private void streamConsoleLogAsync(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItemOperation, ArgoApplicationItem applicationItem2, ArgoToolDetails argoToolDetails,
+    private void streamConsoleLogAsync(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails,
             ToolConfig argoToolConfig, String argoPassword) {
         try {
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
@@ -263,5 +266,21 @@ public class ArgoOrchestratorV2 {
         pipelineMetadata.setStatus(SUCCESS);
         pipelineMetadata.setMessage("Invalid spec provided in yaml for Argo blue green deployment");
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
+    }
+    
+    private void publishResponseToDataTransformer(OpseraPipelineMetadata pipelineMetadata, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword) {
+        LOGGER.info("Started publishing sync details to Data transformer. pipelineId: {}, stepId: {}, runCount: {}", pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),
+                pipelineMetadata.getRunCount());
+        try {
+            DataTransformerModel dtModel = new DataTransformerModel();
+            dtModel.setPipelineMetadata(pipelineMetadata);
+            dtModel.setToolMetadata(argoToolDetails);
+            dtModel.setApplicationResponse(serviceFactory.getArgoHelper().getArgoApplication(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword));
+            serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_SUMMARY_LOG, serviceFactory.gson().toJson(dtModel));
+            LOGGER.info("Successfully published sync details to Data transformer. pipelineId: {}, stepId: {}, runCount: {}", pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),
+                    pipelineMetadata.getRunCount());
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while publishing sync and application details to data transformer. stack: {}", Arrays.toString(e.getStackTrace()));
+        }
     }
 }
