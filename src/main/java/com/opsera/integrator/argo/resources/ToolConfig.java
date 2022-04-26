@@ -62,6 +62,6 @@ public class ToolConfig implements Serializable {
 
     private VaultSecretDetails gcpConfigFile;
     
-    private boolean isBlueGreenDeployment;
+    private boolean blueGreenDeployment;
 
 }

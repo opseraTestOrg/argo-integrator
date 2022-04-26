@@ -90,7 +90,7 @@ public class ArgoOrchestratorV2 {
             return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
         } else if (operationState.getPhase().equalsIgnoreCase("Succeeded")) {
             String message = operationState.getMessage();
-            if (operationSync.getStatus().equalsIgnoreCase("OutOfSync")) {
+            if (operationSync.getStatus().equalsIgnoreCase("OutOfSync") && !argoToolConfig.isBlueGreenDeployment()) {
                 if (10 > retryCount) {
                     Thread.sleep(30000);
                     retryCount = retryCount + 1;
