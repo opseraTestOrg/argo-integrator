@@ -47,6 +47,7 @@ public class ArgoOrchestratorV2 {
     @Autowired
     private IServiceFactory serviceFactory;
 
+    @Autowired
     private TaskExecutor taskExecutor;
 
     public void syncApplication(OpseraPipelineMetadata pipelineMetadata) {
