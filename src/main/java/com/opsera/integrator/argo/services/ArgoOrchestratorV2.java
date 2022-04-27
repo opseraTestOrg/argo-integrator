@@ -5,8 +5,11 @@ import static com.opsera.integrator.argo.resources.Constants.APPROVED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_CONSOLE_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.COMPLETED;
+import static com.opsera.integrator.argo.resources.Constants.ERROR;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
+import static com.opsera.integrator.argo.resources.Constants.INVALID_SPEC_PROVIDED_IN_YAML;
 import static com.opsera.integrator.argo.resources.Constants.OUT_OF_SYNC;
+import static com.opsera.integrator.argo.resources.Constants.OUT_OF_SYNC_AND_STATUS_SUCCEEDED;
 import static com.opsera.integrator.argo.resources.Constants.PROMOTE_FULL;
 import static com.opsera.integrator.argo.resources.Constants.REJECTED;
 import static com.opsera.integrator.argo.resources.Constants.RUNNING;
@@ -111,7 +114,7 @@ public class ArgoOrchestratorV2 {
                     applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
                     return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
                 }
-                message = "successfully synced (all tasks run) but the current status in argo tool is OutOfSync for more than 5 mins and it might take sometime than usual to reflect in the tool";
+                message = OUT_OF_SYNC_AND_STATUS_SUCCEEDED;
             }
             pipelineMetadata.setStatus(SUCCESS);
             pipelineMetadata.setMessage(operationState.getMessage());
@@ -122,7 +125,7 @@ public class ArgoOrchestratorV2 {
             LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
             Thread.sleep(60000);
             CompletableFuture.runAsync(() -> streamConsoleLogAsync(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword), taskExecutor);
-        } else if (operationState.getPhase().equalsIgnoreCase("Error") || operationState.getPhase().equalsIgnoreCase("Failed")) {
+        } else if (operationState.getPhase().equalsIgnoreCase(ERROR) || operationState.getPhase().equalsIgnoreCase(FAILED)) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
                     taskExecutor);
         } else {
@@ -277,7 +280,7 @@ public class ArgoOrchestratorV2 {
 
     private void argoApprovalGateInvalidYaml(OpseraPipelineMetadata pipelineMetadata) {
         pipelineMetadata.setStatus(SUCCESS);
-        pipelineMetadata.setMessage("Invalid spec provided in yaml for Argo blue green deployment");
+        pipelineMetadata.setMessage(INVALID_SPEC_PROVIDED_IN_YAML);
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
     }
     
