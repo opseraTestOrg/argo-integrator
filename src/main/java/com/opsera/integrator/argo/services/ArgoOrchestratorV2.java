@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -175,14 +176,20 @@ public class ArgoOrchestratorV2 {
     private List<String> getRunningPodList(List<Node> nodes, OpseraPipelineMetadata pipelineMetadata) {
         List<String> podNames = new ArrayList<>();
         try {
-            List<Node> filteredNode = nodes.stream().filter(node -> node.getKind().equalsIgnoreCase("pod")).collect(Collectors.toList());
-            pipelineMetadata.setNamespace(filteredNode.get(0).getNamespace());
-            filteredNode.forEach(fNode -> {
-                List<Info> infos = fNode.getInfo();
-                infos.forEach(info -> {
-                    podNames.add(fNode.getName());
+            String imageTagLatest = null;
+            Optional<Node> firstNode = nodes.stream().filter(node -> node.getKind().equalsIgnoreCase("pod")).findFirst();
+            if (firstNode.isPresent()) {
+                imageTagLatest = firstNode.get().getImages().get(0);
+                final String tempLatestTag = imageTagLatest;
+                List<Node> filteredNode = nodes.stream().filter(node -> node.getKind().equalsIgnoreCase("pod") && node.getImages().contains(tempLatestTag)).collect(Collectors.toList());
+                pipelineMetadata.setNamespace(filteredNode.get(0).getNamespace());
+                filteredNode.forEach(fNode -> {
+                    List<Info> infos = fNode.getInfo();
+                    infos.forEach(info -> {
+                        podNames.add(fNode.getName());
+                    });
                 });
-            });
+            }
         } catch (Exception e) {
             LOGGER.warn("Exception while extracting pod name from resource tree nodes. request: {}", pipelineMetadata);
         }
