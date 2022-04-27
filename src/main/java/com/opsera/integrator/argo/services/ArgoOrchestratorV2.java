@@ -1,11 +1,20 @@
 package com.opsera.integrator.argo.services;
 
+import static com.opsera.integrator.argo.resources.Constants.ABORT;
+import static com.opsera.integrator.argo.resources.Constants.APPROVED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_CONSOLE_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.COMPLETED;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
+import static com.opsera.integrator.argo.resources.Constants.OUT_OF_SYNC;
+import static com.opsera.integrator.argo.resources.Constants.PROMOTE_FULL;
+import static com.opsera.integrator.argo.resources.Constants.REJECTED;
 import static com.opsera.integrator.argo.resources.Constants.RUNNING;
+import static com.opsera.integrator.argo.resources.Constants.SUCCEEDED;
 import static com.opsera.integrator.argo.resources.Constants.SUCCESS;
+import static com.opsera.integrator.argo.resources.Constants.SYNC_IN_PROGRESS;
+import static com.opsera.integrator.argo.resources.Constants.SYNC_TAKING_LONG_TIME;
+import static com.opsera.integrator.argo.resources.Constants.UNKNOWN_STATE_RECEIVED;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,14 +75,14 @@ public class ArgoOrchestratorV2 {
             }
             ArgoApplicationItem applicationItem = syncApp(argoToolConfig, argoToolDetails, argoPassword);
             pipelineMetadata.setStatus(RUNNING);
-            pipelineMetadata.setMessage("Sync in Progress");
+            pipelineMetadata.setMessage(SYNC_IN_PROGRESS);
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_REPONSE, serviceFactory.gson().toJson(pipelineMetadata));
             ArgoApplicationItem applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(),
                     argoPassword);
             if (null != applicationItemOperation && null != applicationItemOperation.getStatus()) {
                 checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, 0);
             } else {
-                throw new ArgoServiceException("Unknown state received");
+                throw new ArgoServiceException(UNKNOWN_STATE_RECEIVED);
             }
         } catch (Exception ex) {
             LOGGER.error("Exception Occurred while processing sync request: {}, exception: {}", pipelineMetadata, ex);
@@ -85,13 +94,17 @@ public class ArgoOrchestratorV2 {
             ToolConfig argoToolConfig, String argoPassword, long retryCount) throws InterruptedException {
         ArgoSyncOperation operationSync = applicationItemOperation.getStatus().getSync();
         ArgoOperationState operationState = applicationItemOperation.getStatus().getOperationState();
-        if (operationState.getPhase().equalsIgnoreCase("Running")) {
-            Thread.sleep(5000);
-            applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
-            return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
-        } else if (operationState.getPhase().equalsIgnoreCase("Succeeded")) {
+        if (operationState.getPhase().equalsIgnoreCase(RUNNING)) {
+            if (20 > retryCount) {
+                Thread.sleep(30000);
+                retryCount = retryCount + 1;
+                applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
+                return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
+            }
+            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, SYNC_TAKING_LONG_TIME), taskExecutor);
+        } else if (operationState.getPhase().equalsIgnoreCase(SUCCEEDED)) {
             String message = operationState.getMessage();
-            if (operationSync.getStatus().equalsIgnoreCase("OutOfSync") && !argoToolConfig.isBlueGreenDeployment()) {
+            if (operationSync.getStatus().equalsIgnoreCase(OUT_OF_SYNC) && !argoToolConfig.isBlueGreenDeployment()) {
                 if (10 > retryCount) {
                     Thread.sleep(30000);
                     retryCount = retryCount + 1;
@@ -228,8 +241,8 @@ public class ArgoOrchestratorV2 {
             boolean validRequest = false;
             List<Actions> actions = rolloutActions.getActions();
             for (Actions action : actions) {
-                if ((action.getName().equalsIgnoreCase("promote-full") && approvalGateRequest.getStatus().equalsIgnoreCase("Approved"))
-                        || (action.getName().equalsIgnoreCase("abort") && approvalGateRequest.getStatus().equalsIgnoreCase("Rejected"))) {
+                if ((action.getName().equalsIgnoreCase(PROMOTE_FULL) && approvalGateRequest.getStatus().equalsIgnoreCase(APPROVED))
+                        || (action.getName().equalsIgnoreCase(ABORT) && approvalGateRequest.getStatus().equalsIgnoreCase(REJECTED))) {
                     validRequest = processValidRolloutRequest(pipelineMetadata, argoToolConfig, argoPassword, node, action, applicationName);
                 }
             }
@@ -252,9 +265,9 @@ public class ArgoOrchestratorV2 {
             validRequest = true;
             serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, action.getName());
             pipelineMetadata.setStatus(SUCCESS);
-            if (action.getName().equalsIgnoreCase("promote-full")) {
+            if (action.getName().equalsIgnoreCase(PROMOTE_FULL)) {
                 pipelineMetadata.setMessage(String.format("The new deployment revision for %s promoted successfully", applicationName));
-            } else if (action.getName().equalsIgnoreCase("abort")) {
+            } else if (action.getName().equalsIgnoreCase(ABORT)) {
                 pipelineMetadata.setMessage(String.format("The new deployment revision for %s Aborted", applicationName));
             }
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));

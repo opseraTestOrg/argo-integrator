@@ -84,5 +84,15 @@ public class Constants {
     public static final String ARM_CLIENT_SECRET = "ARM_CLIENT_SECRET";
     public static final String ARM_RESOURCE_GROUP_ID = "ARM_RESOURCE_GROUP_ID";
     public static final String CLUSTER_NAME = "CLUSTER_NAME";
+    
+    public static final String SYNC_TAKING_LONG_TIME = "Sync is taking a long time";
+    public static final String SYNC_IN_PROGRESS = "Sync in Progress";
+    public static final String SUCCEEDED = "Succeeded";
+    public static final String UNKNOWN_STATE_RECEIVED = "Unknown state received";
+    public static final String PROMOTE_FULL = "promote-full";
+    public static final String ABORT = "abort";
+    public static final String APPROVED = "Approved";
+    public static final String REJECTED = "Rejected";
+    public static final String OUT_OF_SYNC = "OutOfSync";
 
 }
