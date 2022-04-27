@@ -97,6 +97,7 @@ public class ArgoOrchestratorV2 {
             ToolConfig argoToolConfig, String argoPassword, long retryCount) throws InterruptedException {
         ArgoSyncOperation operationSync = applicationItemOperation.getStatus().getSync();
         ArgoOperationState operationState = applicationItemOperation.getStatus().getOperationState();
+        LOGGER.info("applicationItemOperation: {}", serviceFactory.gson().toJson(applicationItemOperation));
         if (operationState.getPhase().equalsIgnoreCase(RUNNING)) {
             if (20 > retryCount) {
                 Thread.sleep(30000);
