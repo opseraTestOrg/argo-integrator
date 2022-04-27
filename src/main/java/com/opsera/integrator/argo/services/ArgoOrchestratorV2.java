@@ -36,7 +36,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
-import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.resources.Actions;
 import com.opsera.integrator.argo.resources.ApprovalGateRequest;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
@@ -66,54 +65,42 @@ public class ArgoOrchestratorV2 {
     public void syncApplication(OpseraPipelineMetadata pipelineMetadata) {
         try {
             LOGGER.debug("Starting to Sync Argo Application for the request {}", pipelineMetadata);
-            Integer runCount = serviceFactory.getConfigCollector().getRunCount(pipelineMetadata.getPipelineId(), pipelineMetadata.getCustomerId());
-            pipelineMetadata.setRunCount(runCount);
+            pipelineMetadata.setRunCount(getRunCount(pipelineMetadata));
             ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
             ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
-            String argoPassword;
-            if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
-                argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
-            } else {
-                argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-            }
-            ArgoApplicationItem applicationItem = syncApp(argoToolConfig, argoToolDetails, argoPassword);
+            String argoPassword = getArgoToolPassword(argoToolDetails);
+            ArgoApplicationItem applicationItem = serviceFactory.getArgoHelper().syncApplication(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             pipelineMetadata.setStatus(RUNNING);
             pipelineMetadata.setMessage(SYNC_IN_PROGRESS);
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_REPONSE, serviceFactory.gson().toJson(pipelineMetadata));
-            ArgoApplicationItem applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(),
-                    argoPassword);
-            if (null != applicationItemOperation && null != applicationItemOperation.getStatus()) {
-                checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, 0);
-            } else {
-                throw new ArgoServiceException(UNKNOWN_STATE_RECEIVED);
-            }
+            Thread.sleep(10000);
+            checkOperationStatus(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword, 0);
         } catch (Exception ex) {
             LOGGER.error("Exception Occurred while processing sync request: {}, exception: {}", pipelineMetadata, ex);
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, ex.getMessage()));
+            Thread.currentThread().interrupt();
         }
     }
 
-    private Object checkOperationStatus(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItemOperation, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails,
-            ToolConfig argoToolConfig, String argoPassword, long retryCount) throws InterruptedException {
+    private Object checkOperationStatus(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword,
+            long retryCount) throws InterruptedException {
+        ArgoApplicationItem applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
         ArgoSyncOperation operationSync = applicationItemOperation.getStatus().getSync();
         ArgoOperationState operationState = applicationItemOperation.getStatus().getOperationState();
-        LOGGER.info("applicationItemOperation: {}", serviceFactory.gson().toJson(applicationItemOperation));
-        if (operationState.getPhase().equalsIgnoreCase(RUNNING)) {
+        if (null != operationState.getPhase() && operationState.getPhase().equalsIgnoreCase(RUNNING)) {
             if (20 > retryCount) {
                 Thread.sleep(30000);
                 retryCount = retryCount + 1;
-                applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
-                return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
+                return checkOperationStatus(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
             }
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, SYNC_TAKING_LONG_TIME), taskExecutor);
-        } else if (operationState.getPhase().equalsIgnoreCase(SUCCEEDED)) {
+        } else if (null != operationState.getPhase() && operationState.getPhase().equalsIgnoreCase(SUCCEEDED)) {
             String message = operationState.getMessage();
             if (operationSync.getStatus().equalsIgnoreCase(OUT_OF_SYNC) && !argoToolConfig.isBlueGreenDeployment()) {
                 if (10 > retryCount) {
                     Thread.sleep(30000);
                     retryCount = retryCount + 1;
-                    applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
-                    return checkOperationStatus(pipelineMetadata, applicationItemOperation, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
+                    return checkOperationStatus(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword, retryCount);
                 }
                 message = OUT_OF_SYNC_AND_STATUS_SUCCEEDED;
             }
@@ -125,20 +112,16 @@ public class ArgoOrchestratorV2 {
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
             LOGGER.debug("Completed sending success to kafka {}", pipelineMetadata);
             Thread.sleep(60000);
+            publishResponseToDataTransformer(pipelineMetadata);
             CompletableFuture.runAsync(() -> streamConsoleLogAsync(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword), taskExecutor);
-        } else if (operationState.getPhase().equalsIgnoreCase(ERROR) || operationState.getPhase().equalsIgnoreCase(FAILED)) {
+        } else if (null != operationState.getPhase() && operationState.getPhase().equalsIgnoreCase(ERROR) || operationState.getPhase().equalsIgnoreCase(FAILED)) {
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
                     taskExecutor);
         } else {
-            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : "Unknown state received"),
+            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : UNKNOWN_STATE_RECEIVED),
                     taskExecutor);
         }
-        CompletableFuture.runAsync(() -> publishResponseToDataTransformer(pipelineMetadata, argoToolDetails, argoToolConfig, argoPassword), taskExecutor);
-        return "Check Status Completed";
-    }
-
-    private ArgoApplicationItem syncApp(ToolConfig argoToolConfig, ArgoToolDetails argoToolDetails, String argoPassword) {
-        return serviceFactory.getArgoHelper().syncApplication(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
+        return "status check completed";
     }
 
     public Object sendErrorResponseToKafka(OpseraPipelineMetadata opseraPipelineMetadata, String message) {
@@ -154,12 +137,12 @@ public class ArgoOrchestratorV2 {
         opseraPipelineMetadata.setConsoleLog(ARGO_SYNC_CONSOLE_FAILED);
         opseraPipelineMetadata.setMessage("");
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_CONSOLE_LOG, serviceFactory.gson().toJson(opseraPipelineMetadata));
+        publishResponseToDataTransformer(opseraPipelineMetadata);
         LOGGER.debug("Completed to send Error log to kafka {}", opseraPipelineMetadata);
         return null;
     }
 
-    private void streamConsoleLogAsync(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails,
-            ToolConfig argoToolConfig, String argoPassword) {
+    private void streamConsoleLogAsync(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword) {
         try {
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             List<String> podNames = getRunningPodList(resourceTree.getNodes(), pipelineMetadata);
@@ -218,14 +201,11 @@ public class ArgoOrchestratorV2 {
             ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
             ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
             String argoPassword;
-            if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
-                argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
-            } else {
-                argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
-            }
+            argoPassword = getArgoToolPassword(argoToolDetails);
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             List<Node> rolloutNodeList = resourceTree.getNodes().stream().filter(node -> node.getKind().equalsIgnoreCase("Rollout")).collect(Collectors.toList());
-            processNodeDetailsForApprovalGateResponseTopic(approvalGateRequest, pipelineMetadata, argoToolDetails.getConfiguration(), argoPassword, rolloutNodeList, argoToolConfig.getApplicationName());
+            processNodeDetailsForApprovalGateResponseTopic(approvalGateRequest, pipelineMetadata, argoToolDetails.getConfiguration(), argoPassword, rolloutNodeList,
+                    argoToolConfig.getApplicationName());
         } catch (Exception e) {
             LOGGER.error("argo blue green approval flow error. message: {}", Arrays.toString(e.getStackTrace()));
             pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
@@ -284,11 +264,29 @@ public class ArgoOrchestratorV2 {
         pipelineMetadata.setMessage(INVALID_SPEC_PROVIDED_IN_YAML);
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
     }
-    
-    private void publishResponseToDataTransformer(OpseraPipelineMetadata pipelineMetadata, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword) {
+
+    private Integer getRunCount(OpseraPipelineMetadata pipelineMetadata) {
+        return serviceFactory.getConfigCollector().getRunCount(pipelineMetadata.getPipelineId(), pipelineMetadata.getCustomerId());
+    }
+
+    private String getArgoToolPassword(ArgoToolDetails argoToolDetails) {
+        String argoPassword;
+        if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
+            argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
+        } else {
+            argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+        }
+        return argoPassword;
+    }
+
+    private void publishResponseToDataTransformer(OpseraPipelineMetadata pipelineMetadata) {
         LOGGER.info("Started publishing sync details to Data transformer. pipelineId: {}, stepId: {}, runCount: {}", pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),
                 pipelineMetadata.getRunCount());
         try {
+            pipelineMetadata.setRunCount(getRunCount(pipelineMetadata));
+            ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
+            ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+            String argoPassword = getArgoToolPassword(argoToolDetails);
             DataTransformerModel dtModel = new DataTransformerModel();
             dtModel.setPipelineMetadata(pipelineMetadata);
             dtModel.setToolMetadata(argoToolDetails);
