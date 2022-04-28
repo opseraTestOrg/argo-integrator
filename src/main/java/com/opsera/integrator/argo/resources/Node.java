@@ -12,5 +12,9 @@ public class Node {
     private String name;
     private String namespace;
     private List<Info> info;
+    private String group;
+    private Health health;
+    private List<String> images;
+    
 
 }

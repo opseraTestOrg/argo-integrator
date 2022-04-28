@@ -22,6 +22,7 @@ import org.springframework.web.client.RestClientException;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
+import com.opsera.integrator.argo.resources.ApprovalGateRequest;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
@@ -32,6 +33,7 @@ import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ValidationResponse;
 
 import io.swagger.annotations.Api;
@@ -443,6 +445,34 @@ public class ArgoController {
         } finally {
             stopwatch.stop();
             LOGGER.info("To deleted the cluster and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+    
+    @PostMapping(path = "v1.0/argo/namespace/create")
+    @ApiOperation("To create an argo project")
+    public ResponseEntity<Response> createNamespace(@RequestBody CreateCluster request) {
+        StopWatch stopwatch = serviceFactory.stopWatch();
+        stopwatch.start();
+        try {
+            LOGGER.info("Received createNamespace for : {}", request);
+            Response response = serviceFactory.getArgoOrchestrator().createNamespace(request);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } finally {
+            stopwatch.stop();
+            LOGGER.info("Completed createNamespace, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
+        }
+    }
+    
+    @PostMapping(path = "v1.0/argo/application/approvalgate")
+    @ApiOperation("To sync the argo application configured in Opsera pipeline")
+    public String approvalOrRejectPromotion(@RequestBody ApprovalGateRequest request) {
+        Long startTime = System.currentTimeMillis();
+        try {
+            LOGGER.info("Received approvalOrRejectPromotion for pipelineMetadata : {}", request);
+            serviceFactory.getArgoOrchestratorV2().promoteOrAbortRolloutDeployment(request);
+            return "Request Submitted";
+        } finally {
+            LOGGER.info("Completed approvalOrRejectPromotion, time taken to execute {} secs", System.currentTimeMillis() - startTime);
         }
     }
 }

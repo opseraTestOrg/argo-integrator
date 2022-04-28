@@ -24,5 +24,7 @@ public class ArgoApplicationResource {
     private String hookPhase;
 
     private String syncPhase;
+    
+    private Health health;
 
 }

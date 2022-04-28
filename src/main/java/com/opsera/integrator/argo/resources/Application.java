@@ -6,12 +6,9 @@ import lombok.Data;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
-public class ArgoSyncOperation {
+public class Application {
 
-    private String revision;
-
-    private String status;
-    
-    private ArgoApplicationSpec comparedTo;
+    private String id;
+    private ToolConfig configuration;
 
 }

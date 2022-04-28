@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.InternalServiceException;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
@@ -35,6 +36,7 @@ import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
 
@@ -441,5 +443,21 @@ public class ArgoOrchestrator {
             return argoToolDetails;
         }
         throw new InvalidRequestException("Argo connection details seems to be incorrect. Please verify argo connection details and retry..!");
+    }
+
+    public Response createNamespace(CreateCluster request) {
+        LOGGER.debug("namespace creation in the cluster {} ", request.getClusterName());
+        try {
+            if (request.getNamespace().equalsIgnoreCase("argo-rollouts")) {
+                serviceFactory.getRequestBuilder().createNamespace(request);
+                serviceFactory.getRequestBuilder().execKubectlOnPod(request);
+                return Response.builder().message("Initiated argo-rollouts installation successfully for b/g deployments").status("success").build();
+            } else {
+                serviceFactory.getRequestBuilder().createNamespace(request);
+            }
+        } catch (Exception e) {
+            throw new ArgoServiceException(e.getMessage());
+        }
+        return Response.builder().message("namespace created successfully").status("success").build();
     }
 }
