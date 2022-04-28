@@ -2,6 +2,7 @@ package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ABORT;
 import static com.opsera.integrator.argo.resources.Constants.ABORT_APPROVAL_RESPONSE;
+import static com.opsera.integrator.argo.resources.Constants.AGRO_VERSION_NOT_SUPPORTED;
 import static com.opsera.integrator.argo.resources.Constants.APPROVED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_CONSOLE_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_FAILED;
@@ -215,7 +216,7 @@ public class ArgoOrchestratorV2 {
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             List<Node> rolloutNodeList = resourceTree.getNodes().stream().filter(node -> node.getKind().equalsIgnoreCase("Rollout")).collect(Collectors.toList());
             processNodeDetailsForApprovalGateResponseTopic(approvalGateRequest, pipelineMetadata, argoToolDetails.getConfiguration(), argoPassword, rolloutNodeList,
-                    argoToolConfig.getApplicationName(), resourceTree);
+                    argoToolConfig.getApplicationName());
         } catch (Exception e) {
             LOGGER.error("argo blue green approval flow error. message: {}", Arrays.toString(e.getStackTrace()));
             pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
@@ -227,17 +228,17 @@ public class ArgoOrchestratorV2 {
     }
 
     private void processNodeDetailsForApprovalGateResponseTopic(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
-            List<Node> rolloutNodeList, String applicationName, ResourceTree resourceTree) {
+            List<Node> rolloutNodeList, String applicationName) {
         pipelineMetadata.setStepId(approvalGateRequest.getApprovalGateStepId());
         if (!CollectionUtils.isEmpty(rolloutNodeList)) {
-            handleRolloutKindNodesforApproval(approvalGateRequest, pipelineMetadata, argoToolConfig, argoPassword, rolloutNodeList, applicationName, resourceTree);
+            handleRolloutKindNodesforApproval(approvalGateRequest, pipelineMetadata, argoToolConfig, argoPassword, rolloutNodeList, applicationName);
         } else {
             approvalGateResponse(pipelineMetadata, INVALID_SPEC_PROVIDED_IN_YAML);
         }
     }
 
     private void handleRolloutKindNodesforApproval(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
-            List<Node> rolloutNodeList, String applicationName, ResourceTree resourceTree) {
+            List<Node> rolloutNodeList, String applicationName) {
         Node node = rolloutNodeList.get(0);
         String latestRevision = node.getInfo().get(0).getValue();
         RolloutActions rolloutActions = serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, null);
@@ -255,49 +256,8 @@ public class ArgoOrchestratorV2 {
         }
         if (!promoteFlagAvailable) {
             LOGGER.info("Api capabilities are not available to promote or abort in this older ArgoCD. started custom handling for application {} with revision {}", applicationName, latestRevision);
-            handlePromotionInOlderVersions(approvalGateRequest, pipelineMetadata, argoToolConfig, argoPassword, applicationName, resourceTree, latestRevision);
-        } else {
-            approvalGateResponse(pipelineMetadata, INVALID_SPEC_PROVIDED_IN_YAML);
+            approvalGateResponse(pipelineMetadata, AGRO_VERSION_NOT_SUPPORTED);
         }
-    }
-
-    private void handlePromotionInOlderVersions(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
-            String applicationName, ResourceTree resourceTree, String latestRevision) {
-        Node latestReplicaSetNode = null;
-        List<Node> podNodeList = resourceTree.getNodes().stream().filter(podNode -> podNode.getKind().equalsIgnoreCase("pod")).collect(Collectors.toList());
-        Set<String> uniqueReplicaSetNames = new HashSet<>();
-        for (Node podNode : podNodeList) {
-            List<Node> replicaSetNodeList = podNode.getParentRefs().stream().filter(replicaSetNode -> replicaSetNode.getKind().equalsIgnoreCase("ReplicaSet")).collect(Collectors.toList());
-            uniqueReplicaSetNames.add(replicaSetNodeList.get(0).getName());
-        }
-        List<Node> replicaSetNodeList = resourceTree.getNodes().stream()
-                .filter(replicaSetNode -> replicaSetNode.getKind().equalsIgnoreCase("ReplicaSet") && uniqueReplicaSetNames.contains(replicaSetNode.getName())).collect(Collectors.toList());
-        if (replicaSetNodeList.size() > 1) {
-            for (Node replicaSetNode : replicaSetNodeList) {
-                if (latestRevision.equalsIgnoreCase(replicaSetNode.getInfo().get(0).getValue())) {
-                    latestReplicaSetNode = replicaSetNode;
-                }
-            }
-            if (approvalGateRequest.getStatus().equalsIgnoreCase(REJECTED)) {
-                serviceFactory.getArgoHelper().deleteReplicaSet(applicationName, latestReplicaSetNode, argoToolConfig, argoPassword);
-                approvalGateResponse(pipelineMetadata, String.format(ABORT_APPROVAL_RESPONSE, latestRevision, applicationName));
-            } else {
-                customDeploymentAbort(pipelineMetadata, argoToolConfig, argoPassword, applicationName, latestRevision, latestReplicaSetNode, replicaSetNodeList);
-            }
-            LOGGER.info("Argo custom logic to promote/abort request successfully processed for the application {} with revision {}", latestRevision, applicationName);
-        } else {
-            approvalGateResponse(pipelineMetadata, String.format(NO_NEW_REVISION_FOR_APPROVAL, applicationName));
-        }
-    }
-
-    private void customDeploymentAbort(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, String applicationName, String latestRevision,
-            Node latestReplicaSetNode, List<Node> replicaSetNodeList) {
-        for (Node replicaSetNode : replicaSetNodeList) {
-            if (!replicaSetNode.getName().equalsIgnoreCase(latestReplicaSetNode.getName())) {
-                serviceFactory.getArgoHelper().deleteReplicaSet(applicationName, replicaSetNode, argoToolConfig, argoPassword);
-            }
-        }
-        approvalGateResponse(pipelineMetadata, String.format(PROMOTE_APPROVAL_REPONSE, latestRevision, applicationName));
     }
 
     private boolean handlePromotionInUpgardedVersions(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, Node node, Actions action, String applicationName,
