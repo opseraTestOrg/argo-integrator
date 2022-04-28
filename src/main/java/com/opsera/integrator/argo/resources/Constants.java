@@ -97,5 +97,6 @@ public class Constants {
     public static final String ERROR = "Error";
     public static final String OUT_OF_SYNC_AND_STATUS_SUCCEEDED = "successfully synced (all tasks run) but the current status in argo tool is OutOfSync for more than 5 mins and it might take some more time to reflect in the tool";
     public static final String INVALID_SPEC_PROVIDED_IN_YAML = "Invalid spec provided in yaml for Argo blue green deployment";
+    public static final String AGRO_VERSION_NOT_SUPPORTED = "ArgoCD version doesn't support promote/abort new revision API capabilites. Please enable 'autoPromotionEnabled: true' in the deployment yaml to continue blue green deployment with the current version.";
 
 }

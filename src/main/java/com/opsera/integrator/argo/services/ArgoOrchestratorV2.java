@@ -1,6 +1,7 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ABORT;
+import static com.opsera.integrator.argo.resources.Constants.AGRO_VERSION_NOT_SUPPORTED;
 import static com.opsera.integrator.argo.resources.Constants.APPROVED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_CONSOLE_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_FAILED;
@@ -238,10 +239,10 @@ public class ArgoOrchestratorV2 {
                 }
             }
             if (!validRequest) {
-                argoApprovalGateInvalidYaml(pipelineMetadata);
+                argoApprovalGateInvalidYaml(pipelineMetadata, AGRO_VERSION_NOT_SUPPORTED);
             }
         } else {
-            argoApprovalGateInvalidYaml(pipelineMetadata);
+            argoApprovalGateInvalidYaml(pipelineMetadata, INVALID_SPEC_PROVIDED_IN_YAML);
         }
     }
 
@@ -266,9 +267,9 @@ public class ArgoOrchestratorV2 {
         return validRequest;
     }
 
-    private void argoApprovalGateInvalidYaml(OpseraPipelineMetadata pipelineMetadata) {
+    private void argoApprovalGateInvalidYaml(OpseraPipelineMetadata pipelineMetadata, String message) {
         pipelineMetadata.setStatus(SUCCESS);
-        pipelineMetadata.setMessage(INVALID_SPEC_PROVIDED_IN_YAML);
+        pipelineMetadata.setMessage(message);
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
     }
 
