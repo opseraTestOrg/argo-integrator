@@ -10,6 +10,7 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RE
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_DELETE_REPLICASET_CUSTOM;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_GET_USER_INFO_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
@@ -161,6 +162,7 @@ public class ArgoHelper {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, toolConfig, argoPassword);
         String url = String.format(ARGO_SYNC_APPLICATION_OPERATION_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);
         ResponseEntity<ArgoApplicationItem> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, ArgoApplicationItem.class);
+
         return response.getBody();
     }
 
@@ -580,6 +582,15 @@ public class ArgoHelper {
             HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
             response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, RolloutActions.class);
         }
+        return response.getBody();
+    }
+    
+    public String deleteReplicaSet(String applicationName, Node node, ToolConfig toolConfig, String argoPassword) {
+        LOGGER.debug("Starting to delete replicaset {} for the application {}", node.getName(), applicationName);
+        String url = String.format(ARGO_DELETE_REPLICASET_CUSTOM, toolConfig.getToolURL(), applicationName, node.getName(), node.getNamespace(), node.getName(), node.getVersion(), node.getKind(),
+                node.getGroup());
+        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
+        ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, String.class);
         return response.getBody();
     }
 }

@@ -15,6 +15,7 @@ public class Node {
     private String group;
     private Health health;
     private List<String> images;
+    private List<Node> parentRefs;
     
 
 }

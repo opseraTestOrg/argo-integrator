@@ -20,6 +20,7 @@ public class Constants {
     public static final String ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE = "%s/api/v1/applications/%s/resource/actions?namespace=%s&resourceName=%s&version=v1alpha1&kind=Rollout&group=argoproj.io";
     public static final String ARGO_GENERATE_TOKEN_API = "%s/api/v1/account/%s/token";
     public static final String ARGO_GET_USER_INFO_TEMPLATE = "%s/api/v1/session/userinfo";
+    public static final String ARGO_DELETE_REPLICASET_CUSTOM = "%s/api/v1/applications/%s/resource?name=%s&namespace=%s&resourceName=%s&version=%s&kind=%s&group=%s&force=true";
 
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
     public static final String TOOL_REGISTRY_ENDPOINT = "/v2/registry/tool";
@@ -97,6 +98,9 @@ public class Constants {
     public static final String ERROR = "Error";
     public static final String OUT_OF_SYNC_AND_STATUS_SUCCEEDED = "successfully synced (all tasks run) but the current status in argo tool is OutOfSync for more than 5 mins and it might take some more time to reflect in the tool";
     public static final String INVALID_SPEC_PROVIDED_IN_YAML = "Invalid spec provided in yaml for Argo blue green deployment";
-    public static final String AGRO_VERSION_NOT_SUPPORTED = "ArgoCD version doesn't support promote/abort new revision API capabilites. Please enable 'autoPromotionEnabled: true' in the deployment yaml to continue blue green deployment with the current version.";
+    public static final String AGRO_VERSION_NOT_SUPPORTED = "ArgoCD version doesn't support promote/abort new revision API capabilites. Please enable 'autoPromotionEnabled: true' in the deployment yaml to continue blue green deployment with the current version";
+    public static final String ABORT_APPROVAL_RESPONSE = "The new deployment revision %s aborted successfully for the application %s";
+    public static final String PROMOTE_APPROVAL_REPONSE = "The new deployment revision %s promoted successfully for the application %s";
+    public static final String NO_NEW_REVISION_FOR_APPROVAL = "Argo blue green deployment was successful. No new revision found in the application %s to promote/abort";
 
 }

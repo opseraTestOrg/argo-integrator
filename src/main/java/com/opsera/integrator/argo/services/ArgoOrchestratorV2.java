@@ -1,7 +1,7 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ABORT;
-import static com.opsera.integrator.argo.resources.Constants.AGRO_VERSION_NOT_SUPPORTED;
+import static com.opsera.integrator.argo.resources.Constants.ABORT_APPROVAL_RESPONSE;
 import static com.opsera.integrator.argo.resources.Constants.APPROVED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_CONSOLE_FAILED;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_SYNC_FAILED;
@@ -9,8 +9,10 @@ import static com.opsera.integrator.argo.resources.Constants.COMPLETED;
 import static com.opsera.integrator.argo.resources.Constants.ERROR;
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.INVALID_SPEC_PROVIDED_IN_YAML;
+import static com.opsera.integrator.argo.resources.Constants.NO_NEW_REVISION_FOR_APPROVAL;
 import static com.opsera.integrator.argo.resources.Constants.OUT_OF_SYNC;
 import static com.opsera.integrator.argo.resources.Constants.OUT_OF_SYNC_AND_STATUS_SUCCEEDED;
+import static com.opsera.integrator.argo.resources.Constants.PROMOTE_APPROVAL_REPONSE;
 import static com.opsera.integrator.argo.resources.Constants.PROMOTE_FULL;
 import static com.opsera.integrator.argo.resources.Constants.REJECTED;
 import static com.opsera.integrator.argo.resources.Constants.RUNNING;
@@ -213,7 +215,7 @@ public class ArgoOrchestratorV2 {
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             List<Node> rolloutNodeList = resourceTree.getNodes().stream().filter(node -> node.getKind().equalsIgnoreCase("Rollout")).collect(Collectors.toList());
             processNodeDetailsForApprovalGateResponseTopic(approvalGateRequest, pipelineMetadata, argoToolDetails.getConfiguration(), argoPassword, rolloutNodeList,
-                    argoToolConfig.getApplicationName());
+                    argoToolConfig.getApplicationName(), resourceTree);
         } catch (Exception e) {
             LOGGER.error("argo blue green approval flow error. message: {}", Arrays.toString(e.getStackTrace()));
             pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
@@ -225,49 +227,103 @@ public class ArgoOrchestratorV2 {
     }
 
     private void processNodeDetailsForApprovalGateResponseTopic(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
-            List<Node> rolloutNodeList, String applicationName) {
+            List<Node> rolloutNodeList, String applicationName, ResourceTree resourceTree) {
         pipelineMetadata.setStepId(approvalGateRequest.getApprovalGateStepId());
         if (!CollectionUtils.isEmpty(rolloutNodeList)) {
-            Node node = rolloutNodeList.get(0);
-            RolloutActions rolloutActions = serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, null);
-            boolean validRequest = false;
-            List<Actions> actions = rolloutActions.getActions();
-            for (Actions action : actions) {
-                if ((action.getName().equalsIgnoreCase(PROMOTE_FULL) && approvalGateRequest.getStatus().equalsIgnoreCase(APPROVED))
-                        || (action.getName().equalsIgnoreCase(ABORT) && approvalGateRequest.getStatus().equalsIgnoreCase(REJECTED))) {
-                    validRequest = processValidRolloutRequest(pipelineMetadata, argoToolConfig, argoPassword, node, action, applicationName);
-                }
-            }
-            if (!validRequest) {
-                argoApprovalGateInvalidYaml(pipelineMetadata, AGRO_VERSION_NOT_SUPPORTED);
-            }
+            handleRolloutKindNodesforApproval(approvalGateRequest, pipelineMetadata, argoToolConfig, argoPassword, rolloutNodeList, applicationName, resourceTree);
         } else {
-            argoApprovalGateInvalidYaml(pipelineMetadata, INVALID_SPEC_PROVIDED_IN_YAML);
+            approvalGateResponse(pipelineMetadata, INVALID_SPEC_PROVIDED_IN_YAML);
         }
     }
 
-    private boolean processValidRolloutRequest(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, Node node, Actions action, String applicationName) {
+    private void handleRolloutKindNodesforApproval(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
+            List<Node> rolloutNodeList, String applicationName, ResourceTree resourceTree) {
+        Node node = rolloutNodeList.get(0);
+        String latestRevision = node.getInfo().get(0).getValue();
+        RolloutActions rolloutActions = serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, null);
+        List<Actions> actions = rolloutActions.getActions();
+        boolean promoteFlagAvailable = false;
+        for (Actions action : actions) {
+            if (action.getName().equalsIgnoreCase(PROMOTE_FULL)) {
+                promoteFlagAvailable = true;
+            }
+            if ((action.getName().equalsIgnoreCase(PROMOTE_FULL) && approvalGateRequest.getStatus().equalsIgnoreCase(APPROVED))
+                    || (action.getName().equalsIgnoreCase(ABORT) && approvalGateRequest.getStatus().equalsIgnoreCase(REJECTED))) {
+                LOGGER.info("Api capabilities are available to promote or abort in ArgoCD");
+                handlePromotionInUpgardedVersions(pipelineMetadata, argoToolConfig, argoPassword, node, action, applicationName, latestRevision);
+            }
+        }
+        if (!promoteFlagAvailable) {
+            LOGGER.info("Api capabilities are not available to promote or abort in this older ArgoCD. started custom handling for application {} with revision {}", applicationName, latestRevision);
+            handlePromotionInOlderVersions(approvalGateRequest, pipelineMetadata, argoToolConfig, argoPassword, applicationName, resourceTree, latestRevision);
+        } else {
+            approvalGateResponse(pipelineMetadata, INVALID_SPEC_PROVIDED_IN_YAML);
+        }
+    }
+
+    private void handlePromotionInOlderVersions(ApprovalGateRequest approvalGateRequest, OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword,
+            String applicationName, ResourceTree resourceTree, String latestRevision) {
+        Node latestReplicaSetNode = null;
+        List<Node> podNodeList = resourceTree.getNodes().stream().filter(podNode -> podNode.getKind().equalsIgnoreCase("pod")).collect(Collectors.toList());
+        Set<String> uniqueReplicaSetNames = new HashSet<>();
+        for (Node podNode : podNodeList) {
+            List<Node> replicaSetNodeList = podNode.getParentRefs().stream().filter(replicaSetNode -> replicaSetNode.getKind().equalsIgnoreCase("ReplicaSet")).collect(Collectors.toList());
+            uniqueReplicaSetNames.add(replicaSetNodeList.get(0).getName());
+        }
+        List<Node> replicaSetNodeList = resourceTree.getNodes().stream()
+                .filter(replicaSetNode -> replicaSetNode.getKind().equalsIgnoreCase("ReplicaSet") && uniqueReplicaSetNames.contains(replicaSetNode.getName())).collect(Collectors.toList());
+        if (replicaSetNodeList.size() > 1) {
+            for (Node replicaSetNode : replicaSetNodeList) {
+                if (latestRevision.equalsIgnoreCase(replicaSetNode.getInfo().get(0).getValue())) {
+                    latestReplicaSetNode = replicaSetNode;
+                }
+            }
+            if (approvalGateRequest.getStatus().equalsIgnoreCase(REJECTED)) {
+                serviceFactory.getArgoHelper().deleteReplicaSet(applicationName, latestReplicaSetNode, argoToolConfig, argoPassword);
+                approvalGateResponse(pipelineMetadata, String.format(ABORT_APPROVAL_RESPONSE, latestRevision, applicationName));
+            } else {
+                customDeploymentAbort(pipelineMetadata, argoToolConfig, argoPassword, applicationName, latestRevision, latestReplicaSetNode, replicaSetNodeList);
+            }
+            LOGGER.info("Argo custom logic to promote/abort request successfully processed for the application {} with revision {}", latestRevision, applicationName);
+        } else {
+            approvalGateResponse(pipelineMetadata, String.format(NO_NEW_REVISION_FOR_APPROVAL, applicationName));
+        }
+    }
+
+    private void customDeploymentAbort(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, String applicationName, String latestRevision,
+            Node latestReplicaSetNode, List<Node> replicaSetNodeList) {
+        for (Node replicaSetNode : replicaSetNodeList) {
+            if (!replicaSetNode.getName().equalsIgnoreCase(latestReplicaSetNode.getName())) {
+                serviceFactory.getArgoHelper().deleteReplicaSet(applicationName, replicaSetNode, argoToolConfig, argoPassword);
+            }
+        }
+        approvalGateResponse(pipelineMetadata, String.format(PROMOTE_APPROVAL_REPONSE, latestRevision, applicationName));
+    }
+
+    private boolean handlePromotionInUpgardedVersions(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, Node node, Actions action, String applicationName,
+            String latestRevision) {
         boolean validRequest;
         if (action.isDisabled()) {
             validRequest = true;
             pipelineMetadata.setStatus(SUCCESS);
-            pipelineMetadata.setMessage(String.format("Argo blue green deployment was successful. No new revision found in the application %s to promote/abort.", applicationName));
+            pipelineMetadata.setMessage(String.format(NO_NEW_REVISION_FOR_APPROVAL, applicationName));
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
         } else {
             validRequest = true;
             serviceFactory.getArgoHelper().getArgoApplicationResourceActions(applicationName, node, argoToolConfig, argoPassword, action.getName());
             pipelineMetadata.setStatus(SUCCESS);
             if (action.getName().equalsIgnoreCase(PROMOTE_FULL)) {
-                pipelineMetadata.setMessage(String.format("The new deployment revision for %s promoted successfully", applicationName));
+                pipelineMetadata.setMessage(String.format(PROMOTE_APPROVAL_REPONSE, latestRevision, applicationName));
             } else if (action.getName().equalsIgnoreCase(ABORT)) {
-                pipelineMetadata.setMessage(String.format("The new deployment revision for %s Aborted", applicationName));
+                pipelineMetadata.setMessage(String.format(ABORT_APPROVAL_RESPONSE, latestRevision, applicationName));
             }
             serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
         }
+        LOGGER.info("Argo promote/abort request successfully processed for the application {} with revision {}", latestRevision, applicationName);
         return validRequest;
     }
 
-    private void argoApprovalGateInvalidYaml(OpseraPipelineMetadata pipelineMetadata, String message) {
+    private void approvalGateResponse(OpseraPipelineMetadata pipelineMetadata, String message) {
         pipelineMetadata.setStatus(SUCCESS);
         pipelineMetadata.setMessage(message);
         serviceFactory.getKafkaHelper().postNotificationToKafkaService(KafkaTopics.OPSERA_PIPELINE_STATUS, serviceFactory.gson().toJson(pipelineMetadata));
