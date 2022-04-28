@@ -28,5 +28,7 @@ public class CreateCluster {
     private String roleSessionName;
 
     private String clusterType;
-
+    
+    private String namespace;
+    
 }

@@ -1,15 +1,37 @@
 package com.opsera.integrator.argo.services;
 
+import static com.opsera.integrator.argo.resources.Constants.ARM_CLIENT_ID;
+import static com.opsera.integrator.argo.resources.Constants.ARM_CLIENT_SECRET;
+import static com.opsera.integrator.argo.resources.Constants.ARM_RESOURCE_GROUP_ID;
+import static com.opsera.integrator.argo.resources.Constants.ARM_SUBSCRIPTION_ID;
+import static com.opsera.integrator.argo.resources.Constants.ARM_TENANT_ID;
 import static com.opsera.integrator.argo.resources.Constants.ASTERISK;
 import static com.opsera.integrator.argo.resources.Constants.AWS;
+import static com.opsera.integrator.argo.resources.Constants.AWS_ACCESS_KEY_ID;
+import static com.opsera.integrator.argo.resources.Constants.AWS_DEFAULT_REGION;
+import static com.opsera.integrator.argo.resources.Constants.AWS_SECRET_ACCESS_KEY;
+import static com.opsera.integrator.argo.resources.Constants.AWS_SESSION_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.AZURE;
-import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
-
-import java.util.ArrayList;
-import java.util.List;
 import static com.opsera.integrator.argo.resources.Constants.AZURE_DEVOPS_TOOL_IDENTIFIER;
+import static com.opsera.integrator.argo.resources.Constants.CLUSTER_NAME;
+import static com.opsera.integrator.argo.resources.Constants.CUSTOMER_CLUSTER_INFO_MISSING;
+import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
 import static com.opsera.integrator.argo.resources.Constants.OPSERA_USER;
+import static com.opsera.integrator.argo.resources.Constants.V1;
+import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_TOKEN;
+import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_URL;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +39,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ArgoServiceException;
+import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
@@ -28,7 +52,9 @@ import com.opsera.integrator.argo.resources.ArgoProjectMetadata;
 import com.opsera.integrator.argo.resources.ArgoProjectNamespaceResourceBlacklist;
 import com.opsera.integrator.argo.resources.ArgoProjectNamespaceResourceWhitelist;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
+import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.AwsClusterDetails;
+import com.opsera.integrator.argo.resources.AwsDetails;
 import com.opsera.integrator.argo.resources.AzureClusterDetails;
 import com.opsera.integrator.argo.resources.CreateApplicationRequest;
 import com.opsera.integrator.argo.resources.CreateCluster;
@@ -39,6 +65,17 @@ import com.opsera.integrator.argo.resources.Project;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
+import com.opsera.kubernetes.helper.KubernetesPodHandler;
+import com.opsera.kubernetes.helper.exception.KubernetesHelperException;
+import com.opsera.kubernetes.helper.listener.KubernetesLogListener;
+
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.Configuration;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1NamespaceList;
+import io.kubernetes.client.openapi.models.V1ObjectMeta;
+import io.kubernetes.client.util.Config;
 
 /**
  * The Class RequestBuilder.
@@ -167,6 +204,35 @@ public class RequestBuilder {
         }
         return createClusterRequest;
     }
+    
+    public void createNamespace(CreateCluster request) {
+        try {
+            ApiClient client = null;
+            if (AWS.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+                AwsClusterDetails awsClusterDetails = serviceFactory.getConfigCollector().getAWSEKSClusterDetails(request.getPlatformToolId(), request.getCustomerId(), request.getClusterName());
+                String eksToken = serviceFactory.getConfigCollector().getAWSEKSClusterToken(request);
+                client = Config.fromToken(awsClusterDetails.getCluster().getEndpoint(), eksToken, false);
+            } else if (AZURE.equalsIgnoreCase(request.getPlatform().toUpperCase())) {
+                AzureClusterDetails azureClusterDetails = serviceFactory.getConfigCollector().getAKSClusterDetails(request);
+                client = Config.fromToken(azureClusterDetails.getServer(), azureClusterDetails.getBearerToken(), false);
+            }
+            Configuration.setDefaultApiClient(client);
+            CoreV1Api api = new CoreV1Api();
+            V1Namespace v1Namespace = new V1Namespace();
+            v1Namespace.setApiVersion(V1);
+            v1Namespace.setKind("Namespace");
+            V1ObjectMeta nameSpacemeta = new V1ObjectMeta();
+            nameSpacemeta.setName(request.getNamespace());
+            v1Namespace.setMetadata(nameSpacemeta);
+            V1NamespaceList v1NamespaceList = api.listNamespace(null, null, null, null, null, null, null, null, null, null);
+            boolean isNamespaceExists = v1NamespaceList.getItems().stream().anyMatch(applicationMetadata -> applicationMetadata.getMetadata().getName().equals(request.getNamespace()));
+            if (!isNamespaceExists) {
+                api.createNamespace(v1Namespace, null, null, null);
+            }
+        } catch (Exception e) {
+            throw new ArgoServiceException(String.format("Exception occured while creating namespace. message: %s", e.getMessage()));
+        }
+    }
 
     /**
      * Creates the project request.
@@ -284,5 +350,141 @@ public class RequestBuilder {
             namespaceResourceWhitelist.add(namespaceResourceWhite);
         }
         return namespaceResourceWhitelist;
+    }
+    
+    public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException, KubernetesHelperException {
+        String parentId = serviceFactory.getConfigCollector().getParentId(request.getCustomerId());
+        Map<String, String> vaultData = serviceFactory.getVaultHelper().getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
+        String url = vaultData.get(VAULT_CLUSTER_URL);
+        String token = vaultData.get(VAULT_CLUSTER_TOKEN);
+        if (StringUtils.isEmpty(url) || StringUtils.isEmpty(token))
+            throw new ResourcesNotAvailable(CUSTOMER_CLUSTER_INFO_MISSING);
+        LOGGER.info("Successfully fetched the customer cluster information");
+        ArgoToolDetails config = serviceFactory.getConfigCollector().getArgoDetails(request.getPlatformToolId(), parentId);
+        Map<String, String> envVar = new HashMap<>();
+        List<String> commands = getCommands(config, request, envVar);
+        LOGGER.info("commands: \n {}", commands);
+        LOGGER.info("Starting to create kubernetes pod on the customer data plane");
+        CompletableFuture.runAsync(() -> {
+            try {
+                processKubctlPodHandler(request, url, token, envVar, commands);
+            } catch (KubernetesHelperException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void processKubctlPodHandler(CreateCluster request, String url, String token, Map<String, String> envVar, List<String> commands) throws KubernetesHelperException {
+        KubernetesPodHandler handler = new KubernetesPodHandler(url, token, request.getClusterName(), request.getArgoToolId(), 0);
+        try {
+            if (AWS.equalsIgnoreCase(request.getPlatform())) {
+                handler.createJob("ubuntu", commands, envVar);
+            } else if (AZURE.equalsIgnoreCase(request.getPlatform())) {
+                handler.createJob("mcr.microsoft.com/azure-cli:latest", commands, envVar);
+            }
+            String logs = podLogs(handler);
+            LOGGER.debug("Argo Rollouts pod logs: \n{}", logs);
+        } catch (Exception e) {
+            handler.terminatePod();
+            throw new ArgoServiceException(String.format("Exception occured while argo rollouts controller installation. message: %s", e.getMessage()));
+        }
+    }
+
+    private String podLogs(KubernetesPodHandler handler) throws KubernetesHelperException {
+        KubernetesLogListener listener = new KubernetesLogListener() {
+            @Override
+            public void processCompleted(String arg0, int arg1, String arg2) {
+            }
+
+            @Override
+            public void onLogData(String arg0) {
+            }
+        };
+        return handler.streamJobLogs(listener, 1);
+    }
+
+    private List<String> getCommands(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar) throws IOException {
+        List<String> commands = new ArrayList<>();
+        commands.add("/bin/bash");
+        commands.add("-exc");
+        if (AWS.equalsIgnoreCase(request.getPlatform())) {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("aws_rollout_script.txt");
+            String baseScript = IOUtils.toString(inputStream, Charset.defaultCharset());
+            StringBuilder command = new StringBuilder(baseScript).append(System.lineSeparator());
+            getAwsDetails(config, request, envVar, command);
+            commands.add(command.toString());
+        } else if (AZURE.equalsIgnoreCase(request.getPlatform())) {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("azure_rollout_script.txt");
+            String baseScript = IOUtils.toString(inputStream, Charset.defaultCharset());
+            StringBuilder command = new StringBuilder(baseScript).append(System.lineSeparator());
+            getAzureDetails(config, request, envVar, command);
+            commands.add(command.toString());
+        }
+        LOGGER.info("Successfully to construct the rollout commands");
+        return commands;
+    }
+
+    private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
+        ToolConfig configuration = config.getConfiguration();
+        String secretKey = configuration.getSecretKey().getVaultKey();
+        String accessKey = configuration.getAccessKey().getVaultKey();
+        List<String> vaultKey = Arrays.asList(accessKey, secretKey);
+        Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(config.getOwner(), vaultKey, null);
+        AwsDetails awsDetails = new AwsDetails();
+        if (request.isIamRoleFlag()) {
+            awsDetails.setCustomerId(config.getOwner());
+            awsDetails.setToolId(request.getPlatformToolId());
+            awsDetails.setRoleArn(request.getRoleArn());
+            awsDetails.setRoleSessionName(config.getOwner());
+            awsDetails = serviceFactory.getAwsServiceHelper().getCredentials(awsDetails);
+            awsDetails.setRegion(configuration.getRegions());
+        } else {
+            awsDetails.setAccessKeyId(secrects.get(accessKey));
+            awsDetails.setSecretAccessKey(secrects.get(secretKey));
+            awsDetails.setRegion(configuration.getRegions());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getAccessKeyId())) {
+            envVar.put(AWS_ACCESS_KEY_ID, awsDetails.getAccessKeyId());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getSecretAccessKey())) {
+            envVar.put(AWS_SECRET_ACCESS_KEY, awsDetails.getSecretAccessKey());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getRegion())) {
+            envVar.put(AWS_DEFAULT_REGION, awsDetails.getRegion());
+        }
+        if (!StringUtils.isEmpty(awsDetails.getSessionToken())) {
+            envVar.put(AWS_SESSION_TOKEN, awsDetails.getSessionToken());
+        }
+        if (!StringUtils.isEmpty(request.getClusterName())) {
+            envVar.put(CLUSTER_NAME, request.getClusterName());
+        }
+    }
+
+    private void getAzureDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
+        ToolConfig configuration = config.getConfiguration();
+        String subscriptionIdKey = configuration.getAzureSubscriptionId();
+        String tenantIdKey = configuration.getAzureTenantId();
+        String applicationName = request.getClientId();
+        String applicationPassword = request.getClientSecret();
+        List<String> vaultKey = Arrays.asList(applicationName, applicationPassword);
+        Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(request.getCustomerId(), vaultKey, null);
+        if (!StringUtils.isEmpty(request.getClientId())) {
+            envVar.put(ARM_CLIENT_ID, secrects.get(request.getClientId()));
+        }
+        if (!StringUtils.isEmpty(request.getClientSecret())) {
+            envVar.put(ARM_CLIENT_SECRET, secrects.get(request.getClientSecret()));
+        }
+        if (!StringUtils.isEmpty(subscriptionIdKey)) {
+            envVar.put(ARM_SUBSCRIPTION_ID, subscriptionIdKey);
+        }
+        if (!StringUtils.isEmpty(tenantIdKey)) {
+            envVar.put(ARM_TENANT_ID, tenantIdKey);
+        }
+        if (!StringUtils.isEmpty(request.getResourceGroup())) {
+            envVar.put(ARM_RESOURCE_GROUP_ID, request.getResourceGroup());
+        }
+        if (!StringUtils.isEmpty(request.getClusterName())) {
+            envVar.put(CLUSTER_NAME, request.getClusterName());
+        }
     }
 }

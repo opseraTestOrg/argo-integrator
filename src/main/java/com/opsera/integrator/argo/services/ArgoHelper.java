@@ -5,6 +5,7 @@ import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_REPOSITORY
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_LOG_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
@@ -49,7 +50,9 @@ import com.opsera.integrator.argo.resources.ArgoSessionToken;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.LogResult;
+import com.opsera.integrator.argo.resources.Node;
 import com.opsera.integrator.argo.resources.ResourceTree;
+import com.opsera.integrator.argo.resources.RolloutActions;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.UserInfo;
 
@@ -563,6 +566,20 @@ public class ArgoHelper {
         HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, toolConfig, argoPassword);
         String url = String.format(ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);
         ResponseEntity<ResourceTree> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, ResourceTree.class);
+        return response.getBody();
+    }
+    
+    public RolloutActions getArgoApplicationResourceActions(String applicationName, Node node, ToolConfig toolConfig, String argoPassword, String status) {
+        LOGGER.debug("Starting to get application resource actions {}", applicationName);
+        String url = String.format(ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE, toolConfig.getToolURL(), applicationName, node.getNamespace(), node.getName());
+        ResponseEntity<RolloutActions> response = null;
+        if (!StringUtils.isEmpty(status)) {
+            HttpEntity<String> requestEntity = getRequestEntityWithBody("\"" + status + "\"", toolConfig, argoPassword);
+            response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, RolloutActions.class);
+        } else {
+            HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
+            response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, RolloutActions.class);
+        }
         return response.getBody();
     }
 }

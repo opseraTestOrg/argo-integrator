@@ -16,5 +16,6 @@ public class ArgoOperationState {
     private String startedAt;
 
     private String finishedAt;
-
+    
+    private SyncResult syncResult;
 }
