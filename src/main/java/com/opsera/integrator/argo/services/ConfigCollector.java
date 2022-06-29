@@ -324,14 +324,14 @@ public class ConfigCollector {
         }
         throw new ArgoServiceException(status.getMessage(), status.getCode());
     }
-    
+
     public Integer getRunCount(String pipelineId, String customerId) {
         LOGGER.info("Getting the latest run count for pipeline Id {}, customer Id {}", pipelineId, customerId);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(RUN_COUNT_BY_PIPELINE_V2).queryParam(QUERY_PARM_PIPELINE_ID, pipelineId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
         return serviceFactory.getRestTemplate().getForObject(uriBuilder.toUriString(), Integer.class);
     }
-    
+
     public String getParentId(String customerId) {
         LOGGER.info("Getting the parent id for customer Id {}", customerId);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getPipelineConfigBaseUrl()).path(GET_PARENT_ID).queryParam(QUERY_PARM_CUSTOMERID, customerId);

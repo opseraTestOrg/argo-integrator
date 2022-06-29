@@ -122,6 +122,24 @@ public class ArgoController {
     }
 
     /**
+     * To sync the argo application configured in Opsera pipeline.
+     *
+     * @param pipelineMetadata the pipeline metadata
+     * @return the argo application operation
+     */
+    @PostMapping(path = "v2.0/argo/application/sync")
+    @ApiOperation("To sync the argo application configured in Opsera pipeline")
+    public void syncArgoApplicationV2(@RequestBody OpseraPipelineMetadata pipelineMetadata) {
+        Long startTime = System.currentTimeMillis();
+        try {
+            LOGGER.info("Received syncArgoApplication for pipelineMetadata : {}", pipelineMetadata);
+            serviceFactory.getArgoOrchestratorV2().syncApplication(pipelineMetadata);
+        } finally {
+            LOGGER.info("Completed syncArgoApplication, time taken to execute {} secs", System.currentTimeMillis() - startTime);
+        }
+    }
+
+    /**
      * To get all the argo clusters for the given argo domain.
      *
      * @param argoToolId the argo tool id
@@ -225,7 +243,7 @@ public class ArgoController {
      * @param toolId     the tool id
      * @return the response entity
      * @throws ResourcesNotAvailable the resources not available
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
     @GetMapping(path = "v1.0/generateNewToken")
     @ApiOperation("Gets argocd password ")
@@ -428,10 +446,10 @@ public class ArgoController {
      *
      * @param argoToolId the argo tool id
      * @param customerId the customer id
-     * @param server the server
+     * @param server     the server
      * @return the response entity
      * @throws UnsupportedEncodingException the unsupported encoding exception
-     * @throws InvalidRequestException the invalid request exception
+     * @throws InvalidRequestException      the invalid request exception
      */
     @DeleteMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To delete an argo cluster")
@@ -447,7 +465,7 @@ public class ArgoController {
             LOGGER.info("To deleted the cluster and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
         }
     }
-    
+
     @PostMapping(path = "v1.0/argo/namespace/create")
     @ApiOperation("To create an argo project")
     public ResponseEntity<Response> createNamespace(@RequestBody CreateCluster request) {
@@ -462,7 +480,7 @@ public class ArgoController {
             LOGGER.info("Completed createNamespace, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
         }
     }
-    
+
     @PostMapping(path = "v1.0/argo/application/approvalgate")
     @ApiOperation("To sync the argo application configured in Opsera pipeline")
     public String approvalOrRejectPromotion(@RequestBody ApprovalGateRequest request) {
