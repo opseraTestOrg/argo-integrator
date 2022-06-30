@@ -61,9 +61,13 @@ public class ToolConfig implements Serializable {
     private String azureSubscriptionId;
 
     private VaultSecretDetails gcpConfigFile;
-    
+
     private boolean blueGreenDeployment;
-    
+
     private String repositoryTag;
+
+    private boolean kustomizeFlag;
+
+    private String imageUrl;
 
 }

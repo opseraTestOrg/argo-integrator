@@ -21,7 +21,8 @@ public class Constants {
     public static final String ARGO_GENERATE_TOKEN_API = "%s/api/v1/account/%s/token";
     public static final String ARGO_GET_USER_INFO_TEMPLATE = "%s/api/v1/session/userinfo";
     public static final String ARGO_DELETE_REPLICASET_CUSTOM = "%s/api/v1/applications/%s/resource?name=%s&namespace=%s&resourceName=%s&version=%s&kind=%s&group=%s&force=true";
-
+    public static final String ARGO_APPLICATION_DETAILS = "%s/api/v1/repositories/%s/appdetails";
+    
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
     public static final String TOOL_REGISTRY_ENDPOINT = "/v2/registry/tool";
     public static final String VAULT_READ_ENDPOINT = "/read";
