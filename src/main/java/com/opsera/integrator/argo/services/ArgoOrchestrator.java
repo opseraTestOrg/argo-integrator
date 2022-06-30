@@ -24,6 +24,8 @@ import com.opsera.integrator.argo.resources.ArgoAccount;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationOperation;
+import com.opsera.integrator.argo.resources.ArgoApplicationSource;
+import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
@@ -55,7 +57,7 @@ public class ArgoOrchestrator {
     /** The service factory. */
     @Autowired
     private IServiceFactory serviceFactory;
-    
+
     /**
      * get all argo applications.
      *
@@ -186,7 +188,7 @@ public class ArgoOrchestrator {
      * @param toolId     the tool id
      * @return the string
      * @throws ResourcesNotAvailable the resources not available
-     * @throws InterruptedException 
+     * @throws InterruptedException
      */
     public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable, InterruptedException {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
@@ -436,7 +438,7 @@ public class ArgoOrchestrator {
         }
         return argoPassword;
     }
-    
+
     private ArgoToolDetails getArgoToolDetailsInline(String argoToolId, String customerId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
         if (null != argoToolDetails && null != argoToolDetails.getConfiguration() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getToolURL())) {
@@ -459,5 +461,21 @@ public class ArgoOrchestrator {
             throw new ArgoServiceException(e.getMessage());
         }
         return Response.builder().message("namespace created successfully").status("success").build();
+    }
+
+    /**
+     * get argo application details.
+     *
+     * @param argoToolId      the argo tool id
+     * @param customerId      the customer id
+     * @param applicationName the application name
+     * @return the application
+     * @throws UnsupportedEncodingException
+     */
+    public ArgoApplicationSource getAppDetails(String argoToolId, String customerId, ArgoApplicationSpec spec) throws UnsupportedEncodingException {
+        LOGGER.debug("Starting to fetch Argo Application details for toolId {} and customerId {} ", argoToolId, customerId);
+        ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
+        String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+        return serviceFactory.getArgoHelper().getAppdetails(argoToolDetails.getConfiguration(), argoPassword, spec);
     }
 }

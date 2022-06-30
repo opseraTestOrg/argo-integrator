@@ -4,6 +4,7 @@ import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_APPLICATIO
 import static com.opsera.integrator.argo.resources.Constants.ALL_ARGO_REPOSITORY_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_ALL_PROJECT_URL_TEMPLATE;
+import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_DETAILS;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_LOG_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RESOURCE_TREE_URL_TEMPLATE;
@@ -42,6 +43,8 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
+import com.opsera.integrator.argo.resources.ArgoApplicationSource;
+import com.opsera.integrator.argo.resources.ArgoApplicationSpec;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
 import com.opsera.integrator.argo.resources.ArgoClusterList;
 import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
@@ -570,7 +573,7 @@ public class ArgoHelper {
         ResponseEntity<ResourceTree> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.GET, requestEntity, ResourceTree.class);
         return response.getBody();
     }
-    
+
     public RolloutActions getArgoApplicationResourceActions(String applicationName, Node node, ToolConfig toolConfig, String argoPassword, String status) {
         LOGGER.debug("Starting to get application resource actions {}", applicationName);
         String url = String.format(ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE, toolConfig.getToolURL(), applicationName, node.getNamespace(), node.getName());
@@ -584,13 +587,31 @@ public class ArgoHelper {
         }
         return response.getBody();
     }
-    
+
     public String deleteReplicaSet(String applicationName, Node node, ToolConfig toolConfig, String argoPassword) {
         LOGGER.debug("Starting to delete replicaset {} for the application {}", node.getName(), applicationName);
         String url = String.format(ARGO_DELETE_REPLICASET_CUSTOM, toolConfig.getToolURL(), applicationName, node.getName(), node.getNamespace(), node.getName(), node.getVersion(), node.getKind(),
                 node.getGroup());
         HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
         ResponseEntity<String> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.DELETE, requestEntity, String.class);
+        return response.getBody();
+    }
+
+    /**
+     * get Argo app details
+     *
+     * @param applicationName the application name
+     * @param baseUrl         the base url
+     * @param username        the username
+     * @param password        the password
+     * @return the argo application item
+     * @throws UnsupportedEncodingException
+     */
+    public ArgoApplicationSource getAppdetails(ToolConfig toolConfig, String argoPassword, ArgoApplicationSpec spec) throws UnsupportedEncodingException {
+        LOGGER.debug("Starting to get the appdetails ");
+        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(spec), toolConfig, argoPassword);
+        String url = String.format(ARGO_APPLICATION_DETAILS, toolConfig.getToolURL(), URLEncoder.encode(spec.getSource().getRepoURL(), "UTF-8"));
+        ResponseEntity<ArgoApplicationSource> response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, ArgoApplicationSource.class);
         return response.getBody();
     }
 }
