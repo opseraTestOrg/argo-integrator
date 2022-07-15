@@ -80,13 +80,16 @@ public class ArgoOrchestratorV2 {
             if (argoToolConfig.isKustomizeFlag() && !StringUtils.isEmpty(argoToolConfig.getImageUrl())) {
                 setKustomizeDetails(pipelineMetadata, argoToolConfig, argoToolDetails, argoPassword);
             }
-            if (argoToolConfig.isDynamicVariables() && !StringUtils.isEmpty(argoToolConfig.getApplicationCluster()) || !StringUtils.isEmpty(argoToolConfig.getYamlPath())) {
+            if (argoToolConfig.isDynamicVariables() && (!StringUtils.isEmpty(argoToolConfig.getApplicationCluster()) || !StringUtils.isEmpty(argoToolConfig.getYamlPath()))) {
                 ArgoApplicationItem appItem = serviceFactory.getArgoOrchestrator().getApplication(argoToolConfig.getToolConfigId(), argoToolDetails.getOwner(), argoToolConfig.getApplicationName());
                 if (!StringUtils.isEmpty(argoToolConfig.getApplicationCluster())) {
                     appItem.getSpec().getDestination().setServer(argoToolConfig.getApplicationCluster());
                 }
                 if (!StringUtils.isEmpty(argoToolConfig.getYamlPath())) {
                     appItem.getSpec().getSource().setPath(argoToolConfig.getYamlPath());
+                }
+                if (!CollectionUtils.isEmpty(appItem.getStatus().getHistory())) {
+                    appItem.getStatus().getHistory().clear();
                 }
                 serviceFactory.getArgoHelper().updateApplication(appItem, argoToolDetails.getConfiguration(), argoPassword, argoToolConfig.getApplicationName());
             }
