@@ -69,5 +69,10 @@ public class ToolConfig implements Serializable {
     private boolean kustomizeFlag;
 
     private String imageUrl;
-
+    
+    private boolean dynamicVariables;
+    
+    private String applicationCluster;
+    
+    private String yamlPath;
 }
