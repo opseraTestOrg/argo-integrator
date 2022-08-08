@@ -7,7 +7,7 @@ RUN gradle clean build --no-daemon
 FROM openjdk:11-jre-slim
 RUN apt-get update && apt-get install -y curl dnsutils iputils-ping
 RUN mkdir -p /apps/OpsERA/components/argo-integrator
-COPY --from=build /home/gradle/src/build/libs/*.jar /apps/OpsERA/components/argo-integrator/argo-integrator.jar
+COPY --from=build /home/gradle/src/build/libs/*.jar /apps/OpsERA/components/argo-integrator/
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
