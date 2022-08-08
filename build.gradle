@@ -25,6 +25,7 @@ apply plugin: 'org.sonarqube'
 jar {
 	baseName = projectName
 	version = projectVersion
+	enabled = false
 }
 
 archivesBaseName = projectName
