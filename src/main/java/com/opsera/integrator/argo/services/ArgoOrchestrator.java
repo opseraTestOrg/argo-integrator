@@ -13,6 +13,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
@@ -144,7 +145,7 @@ public class ArgoOrchestrator {
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
         boolean isApplicationExists;
         ArgoApplicationItem argoApplication = null;
-        if (!StringUtils.isEmpty(argoPassword)) {
+        if (StringUtils.hasText(argoPassword)) {
             try {
                 argoApplication = serviceFactory.getRequestBuilder().createApplicationRequest(request);
                 ArgoApplicationMetadataList applicationMetadataList = getAllApplications(request.getToolId(), request.getCustomerId());
@@ -193,7 +194,7 @@ public class ArgoOrchestrator {
     public String generateNewToken(String customerId, String toolId) throws ResourcesNotAvailable, InterruptedException {
         LOGGER.debug("To generate the new token for user {} and toolId {}", customerId, toolId);
         ToolDetails details = serviceFactory.getConfigCollector().getToolsDetails(customerId, toolId);
-        if (!StringUtils.isEmpty(details.getLocalUsername()) && !StringUtils.isEmpty(details.getLocalPassword())) {
+        if (StringUtils.hasText(details.getLocalUsername()) && StringUtils.hasText(details.getLocalPassword())) {
             int retryCount = 0;
             ArgoSessionToken sessionToken = retryArgoSessionTokenCreation(details, retryCount);
             String argoToken = sessionToken.getToken();
@@ -431,7 +432,7 @@ public class ArgoOrchestrator {
 
     private String getArgoSecretTokenOrPassword(ArgoToolDetails argoToolDetails) {
         String argoPassword;
-        if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
+        if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !ObjectUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
             argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
         } else {
             argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
@@ -441,7 +442,7 @@ public class ArgoOrchestrator {
 
     private ArgoToolDetails getArgoToolDetailsInline(String argoToolId, String customerId) {
         ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolId, customerId);
-        if (null != argoToolDetails && null != argoToolDetails.getConfiguration() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getToolURL())) {
+        if (null != argoToolDetails && null != argoToolDetails.getConfiguration() && StringUtils.hasText(argoToolDetails.getConfiguration().getToolURL())) {
             return argoToolDetails;
         }
         throw new InvalidRequestException("Argo connection details seems to be incorrect. Please verify argo connection details and retry..!");

@@ -309,6 +309,7 @@ public class ConfigCollector {
      *
      * @param ex the ex
      */
+    @SuppressWarnings("unchecked")
     private void processException(ApiException ex) {
         Map<String, Object> map = new HashMap<>();
         V1Status status = serviceFactory.gson().fromJson(ex.getResponseBody(), V1Status.class);
