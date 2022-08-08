@@ -66,4 +66,5 @@ dependencies {
 	compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3')
 	implementation 'junit:junit:4.13.1'
 	implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
+	compile('commons-io:commons-io:2.11.0')
 }
