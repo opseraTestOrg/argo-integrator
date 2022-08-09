@@ -130,7 +130,7 @@ public class RequestBuilder {
         ArgoRepositoryItem argoRepositoryItem = new ArgoRepositoryItem();
         argoRepositoryItem.setName(request.getRepositoryName());
         argoRepositoryItem.setType(request.getRepositoryType());
-        if (!StringUtils.isEmpty(request.getProjectName())) {
+        if (StringUtils.hasText(request.getProjectName())) {
             argoRepositoryItem.setProject(request.getProjectName());
         }
         ToolConfig toolConfig = toolDetails.getConfiguration();
@@ -139,7 +139,7 @@ public class RequestBuilder {
             argoRepositoryItem.setSshPrivateKey(secret);
         } else {
             argoRepositoryItem.setRepo(request.getHttpsUrl());
-            if (AZURE_DEVOPS_TOOL_IDENTIFIER.equalsIgnoreCase(toolDetails.getToolIdentifier()) && StringUtils.isEmpty(toolConfig.getAccountUsername()))
+            if (AZURE_DEVOPS_TOOL_IDENTIFIER.equalsIgnoreCase(toolDetails.getToolIdentifier()) && !StringUtils.hasText(toolConfig.getAccountUsername()))
                 argoRepositoryItem.setUsername(OPSERA_USER);
             else
                 argoRepositoryItem.setUsername(toolConfig.getAccountUsername());
@@ -357,7 +357,7 @@ public class RequestBuilder {
         Map<String, String> vaultData = serviceFactory.getVaultHelper().getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
         String url = vaultData.get(VAULT_CLUSTER_URL);
         String token = vaultData.get(VAULT_CLUSTER_TOKEN);
-        if (StringUtils.isEmpty(url) || StringUtils.isEmpty(token))
+        if (!StringUtils.hasText(url) || !StringUtils.hasText(token))
             throw new ResourcesNotAvailable(CUSTOMER_CLUSTER_INFO_MISSING);
         LOGGER.info("Successfully fetched the customer cluster information");
         ArgoToolDetails config = serviceFactory.getConfigCollector().getArgoDetails(request.getPlatformToolId(), parentId);
@@ -443,19 +443,19 @@ public class RequestBuilder {
             awsDetails.setSecretAccessKey(secrects.get(secretKey));
             awsDetails.setRegion(configuration.getRegions());
         }
-        if (!StringUtils.isEmpty(awsDetails.getAccessKeyId())) {
+        if (StringUtils.hasText(awsDetails.getAccessKeyId())) {
             envVar.put(AWS_ACCESS_KEY_ID, awsDetails.getAccessKeyId());
         }
-        if (!StringUtils.isEmpty(awsDetails.getSecretAccessKey())) {
+        if (StringUtils.hasText(awsDetails.getSecretAccessKey())) {
             envVar.put(AWS_SECRET_ACCESS_KEY, awsDetails.getSecretAccessKey());
         }
-        if (!StringUtils.isEmpty(awsDetails.getRegion())) {
+        if (StringUtils.hasText(awsDetails.getRegion())) {
             envVar.put(AWS_DEFAULT_REGION, awsDetails.getRegion());
         }
-        if (!StringUtils.isEmpty(awsDetails.getSessionToken())) {
+        if (StringUtils.hasText(awsDetails.getSessionToken())) {
             envVar.put(AWS_SESSION_TOKEN, awsDetails.getSessionToken());
         }
-        if (!StringUtils.isEmpty(request.getClusterName())) {
+        if (StringUtils.hasText(request.getClusterName())) {
             envVar.put(CLUSTER_NAME, request.getClusterName());
         }
     }
@@ -468,22 +468,22 @@ public class RequestBuilder {
         String applicationPassword = request.getClientSecret();
         List<String> vaultKey = Arrays.asList(applicationName, applicationPassword);
         Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(request.getCustomerId(), vaultKey, null);
-        if (!StringUtils.isEmpty(request.getClientId())) {
+        if (StringUtils.hasText(request.getClientId())) {
             envVar.put(ARM_CLIENT_ID, secrects.get(request.getClientId()));
         }
-        if (!StringUtils.isEmpty(request.getClientSecret())) {
+        if (StringUtils.hasText(request.getClientSecret())) {
             envVar.put(ARM_CLIENT_SECRET, secrects.get(request.getClientSecret()));
         }
-        if (!StringUtils.isEmpty(subscriptionIdKey)) {
+        if (StringUtils.hasText(subscriptionIdKey)) {
             envVar.put(ARM_SUBSCRIPTION_ID, subscriptionIdKey);
         }
-        if (!StringUtils.isEmpty(tenantIdKey)) {
+        if (StringUtils.hasText(tenantIdKey)) {
             envVar.put(ARM_TENANT_ID, tenantIdKey);
         }
-        if (!StringUtils.isEmpty(request.getResourceGroup())) {
+        if (StringUtils.hasText(request.getResourceGroup())) {
             envVar.put(ARM_RESOURCE_GROUP_ID, request.getResourceGroup());
         }
-        if (!StringUtils.isEmpty(request.getClusterName())) {
+        if (StringUtils.hasText(request.getClusterName())) {
             envVar.put(CLUSTER_NAME, request.getClusterName());
         }
     }

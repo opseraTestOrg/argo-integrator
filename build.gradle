@@ -7,7 +7,7 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.3.0.RELEASE")
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.7.2")
 		classpath('org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.8.0.1969')
 	}
 }
@@ -25,13 +25,14 @@ apply plugin: 'org.sonarqube'
 jar {
 	baseName = projectName
 	version = projectVersion
+	enabled = false
 }
 
 archivesBaseName = projectName
 version = projectVersion
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
 
 repositories {
 	mavenCentral()
@@ -45,18 +46,30 @@ repositories {
     	}
 }
 
+ext['log4j2.version'] = '2.17.1'
+
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
-	compile('io.springfox:springfox-swagger-ui:2.9.2')
+	compile('io.springfox:springfox-swagger-ui:2.10.0')
 	compile('io.springfox:springfox-swagger2:2.9.2')
-	compile('com.google.code.gson:gson:2.8.6')
+	compile('com.google.code.gson:gson:2.9.0')
 	compileOnly 'org.projectlombok:lombok:1.18.4'
 	annotationProcessor 'org.projectlombok:lombok'
 	implementation group: 'charset', name: 'charset', version: '1.2.1'
 	testCompile('org.springframework.boot:spring-boot-starter-test')
-	compile('com.opsera:kubernetes-client:1.1.0')
-	compile('io.kubernetes:client-java:12.0.2')
-	compile('org.apache.httpcomponents:httpclient:4.5.12')
-	implementation 'org.springframework.kafka:spring-kafka:2.4.5.RELEASE'
-	compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.7.4')
+	compile('com.opsera:kubernetes-client:1.2.0'){
+		exclude group: 'org.apache.commons', module: 'commons-compress'
+		exclude group: 'com.google.protobuf'
+	}
+	compile('io.kubernetes:client-java:12.0.2'){
+		exclude group: 'org.apache.commons', module: 'commons-compress'
+		exclude group: 'com.google.protobuf'
+	}
+	compile('org.apache.httpcomponents:httpclient:4.5.13')
+	implementation 'org.springframework.kafka:spring-kafka:2.9.0'
+	compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3')
+	implementation 'junit:junit:4.13.1'
+	implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
+	implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
+	implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.21.4'
 }

@@ -11,6 +11,9 @@ spring:
     description: API for integrating with Argo Tool
   lifecycle:
     timeout-per-shutdown-phase: 2h
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
   task:
     execution:
       pool:
