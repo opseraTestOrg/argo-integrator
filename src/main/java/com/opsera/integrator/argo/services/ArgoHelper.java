@@ -27,7 +27,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +36,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -278,7 +278,7 @@ public class ArgoHelper {
             argoToken = sessionToken.getToken();
         } else {
             UserInfo userInfo = getUserInfo(toolConfig.getToolURL(), argoPassword);
-            if (!StringUtils.isEmpty(userInfo.getUsername())) {
+            if (StringUtils.hasText(userInfo.getUsername())) {
                 argoToken = argoPassword;
             } else {
                 throw new InvalidRequestException(INVALID_CONNECTION_DETAILS);
@@ -578,7 +578,7 @@ public class ArgoHelper {
         LOGGER.debug("Starting to get application resource actions {}", applicationName);
         String url = String.format(ARGO_APPLICATION_RESOURCE_ACTIONS_TEMPLATE, toolConfig.getToolURL(), applicationName, node.getNamespace(), node.getName());
         ResponseEntity<RolloutActions> response = null;
-        if (!StringUtils.isEmpty(status)) {
+        if (StringUtils.hasText(status)) {
             HttpEntity<String> requestEntity = getRequestEntityWithBody("\"" + status + "\"", toolConfig, argoPassword);
             response = serviceFactory.getRestTemplate().exchange(url, HttpMethod.POST, requestEntity, RolloutActions.class);
         } else {

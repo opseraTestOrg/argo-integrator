@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import com.opsera.integrator.argo.config.IServiceFactory;
@@ -77,15 +78,15 @@ public class ArgoOrchestratorV2 {
             ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
             ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
             String argoPassword = getArgoToolPassword(argoToolDetails);
-            if (argoToolConfig.isKustomizeFlag() && !StringUtils.isEmpty(argoToolConfig.getImageUrl())) {
+            if (argoToolConfig.isKustomizeFlag() && StringUtils.hasText(argoToolConfig.getImageUrl())) {
                 setKustomizeDetails(pipelineMetadata, argoToolConfig, argoToolDetails, argoPassword);
             }
-            if (argoToolConfig.isDynamicVariables() && (!StringUtils.isEmpty(argoToolConfig.getApplicationCluster()) || !StringUtils.isEmpty(argoToolConfig.getYamlPath()))) {
+            if (argoToolConfig.isDynamicVariables() && (StringUtils.hasText(argoToolConfig.getApplicationCluster()) || StringUtils.hasText(argoToolConfig.getYamlPath()))) {
                 ArgoApplicationItem appItem = serviceFactory.getArgoOrchestrator().getApplication(argoToolConfig.getToolConfigId(), argoToolDetails.getOwner(), argoToolConfig.getApplicationName());
-                if (!StringUtils.isEmpty(argoToolConfig.getApplicationCluster())) {
+                if (StringUtils.hasText(argoToolConfig.getApplicationCluster())) {
                     appItem.getSpec().getDestination().setServer(argoToolConfig.getApplicationCluster());
                 }
-                if (!StringUtils.isEmpty(argoToolConfig.getYamlPath())) {
+                if (StringUtils.hasText(argoToolConfig.getYamlPath())) {
                     appItem.getSpec().getSource().setPath(argoToolConfig.getYamlPath());
                 }
                 if (!CollectionUtils.isEmpty(appItem.getStatus().getHistory())) {
@@ -139,10 +140,10 @@ public class ArgoOrchestratorV2 {
             publishResponseToDataTransformer(pipelineMetadata);
             CompletableFuture.runAsync(() -> streamConsoleLogAsync(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword), taskExecutor);
         } else if (null != operationState.getPhase() && operationState.getPhase().equalsIgnoreCase(ERROR) || operationState.getPhase().equalsIgnoreCase(FAILED)) {
-            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
+            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, StringUtils.hasText(operationState.getMessage()) ? operationState.getMessage() : operationSync.getStatus()),
                     taskExecutor);
         } else {
-            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, !StringUtils.isEmpty(operationState.getMessage()) ? operationState.getMessage() : UNKNOWN_STATE_RECEIVED),
+            CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, StringUtils.hasText(operationState.getMessage()) ? operationState.getMessage() : UNKNOWN_STATE_RECEIVED),
                     taskExecutor);
         }
         return "status check completed";
@@ -175,7 +176,7 @@ public class ArgoOrchestratorV2 {
                 for (String podName : uniquePodNames) {
                     String logs = serviceFactory.getArgoHelper().getArgoApplicationLog(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword, podName,
                             pipelineMetadata.getNamespace());
-                    if (!StringUtils.isEmpty(logs)) {
+                    if (StringUtils.hasText(logs)) {
                         pipelineMetadata.setMessage(String.format("Retrieved application sync logs for the pod %s successfully", podName));
                         pipelineMetadata.setPodName(podName);
                         pipelineMetadata.setConsoleLog(logs);
@@ -314,7 +315,7 @@ public class ArgoOrchestratorV2 {
 
     private String getArgoToolPassword(ArgoToolDetails argoToolDetails) {
         String argoPassword;
-        if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !StringUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
+        if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !ObjectUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
             argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
         } else {
             argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
