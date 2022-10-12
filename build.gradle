@@ -72,4 +72,7 @@ dependencies {
 	implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
 	implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
 	implementation group: 'com.google.protobuf', name: 'protobuf-java', version: '3.21.4'
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.14.0-rc2'
+	implementation group: 'org.yaml', name: 'snakeyaml', version: '1.33'
+
 }
