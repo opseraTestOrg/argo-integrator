@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.opsera.core.helper.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ResourceTree;
 import com.opsera.integrator.argo.resources.RolloutActions;
 import com.opsera.integrator.argo.resources.ToolConfig;
+import com.opsera.core.helper.VaultHelper;
 
 @Component
 public class ArgoOrchestratorV2 {
@@ -70,6 +72,9 @@ public class ArgoOrchestratorV2 {
 
     @Autowired
     private TaskExecutor taskExecutor;
+
+    @Autowired
+    private VaultHelper vaultService;
 
     public void syncApplication(OpseraPipelineMetadata pipelineMetadata) {
         try {
@@ -316,9 +321,9 @@ public class ArgoOrchestratorV2 {
     private String getArgoToolPassword(ArgoToolDetails argoToolDetails) {
         String argoPassword;
         if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !ObjectUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
-            argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
+            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey(),argoToolDetails.getVault());
         } else {
-            argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey(),argoToolDetails.getVault());
         }
         return argoPassword;
     }

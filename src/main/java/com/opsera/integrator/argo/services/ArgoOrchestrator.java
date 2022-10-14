@@ -42,7 +42,7 @@ import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
-
+import com.opsera.core.helper.VaultHelper;
 import io.kubernetes.client.openapi.ApiException;
 
 /**
@@ -58,6 +58,9 @@ public class ArgoOrchestrator {
     /** The service factory. */
     @Autowired
     private IServiceFactory serviceFactory;
+
+    @Autowired
+    private VaultHelper vaultService;
 
     /**
      * get all argo applications.
@@ -433,9 +436,9 @@ public class ArgoOrchestrator {
     private String getArgoSecretTokenOrPassword(ArgoToolDetails argoToolDetails) {
         String argoPassword;
         if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !ObjectUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
-            argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey());
+            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey(),argoToolDetails.getVault());
         } else {
-            argoPassword = serviceFactory.getVaultHelper().getArgoPassword(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey());
+            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey(),argoToolDetails.getVault());
         }
         return argoPassword;
     }
