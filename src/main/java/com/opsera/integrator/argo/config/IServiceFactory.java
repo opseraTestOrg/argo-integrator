@@ -2,7 +2,6 @@ package com.opsera.integrator.argo.config;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -15,7 +14,6 @@ import com.opsera.integrator.argo.services.KafkaHelper;
 import com.opsera.integrator.argo.services.ObjectTranslator;
 import com.opsera.integrator.argo.services.RequestBuilder;
 import com.opsera.integrator.argo.services.ResponseParser;
-import com.opsera.integrator.argo.services.VaultHelper;
 
 @Component
 public interface IServiceFactory {
@@ -30,13 +28,9 @@ public interface IServiceFactory {
 
     public ObjectTranslator getObjectTranslator();
 
-    public VaultHelper getVaultHelper();
-
     public Gson gson();
 
     public StopWatch stopWatch();
-
-    public RestTemplate getRestTemplate();
 
     public RequestBuilder getRequestBuilder();
     

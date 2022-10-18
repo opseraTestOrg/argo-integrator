@@ -7,7 +7,7 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.7.2")
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:2.7.4")
 		classpath('org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.8.0.1969')
 	}
 }
@@ -66,6 +66,7 @@ dependencies {
 		exclude group: 'com.google.protobuf'
 	}
 	compile('org.apache.httpcomponents:httpclient:4.5.13')
+	compile('com.opsera:java-core-library:1.7')
 	implementation 'org.springframework.kafka:spring-kafka:2.9.0'
 	compile('com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3')
 	implementation 'junit:junit:4.13.1'

@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import com.opsera.core.helper.ToolConfigurationHelper;
+import com.opsera.core.helper.VaultHelper;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +92,11 @@ public class RequestBuilder {
     @Autowired
     private IServiceFactory serviceFactory;
 
+    @Autowired
+    private ToolConfigurationHelper toolConfigurationHelper;
+
+    @Autowired
+    private VaultHelper vaultHelper;
     /**
      * Creates the application request.
      *
@@ -174,7 +181,7 @@ public class RequestBuilder {
      * @param request the request
      * @return the creates the cluster request
      */
-    public CreateClusterRequest createClusterRequest(CreateCluster request) {
+    public CreateClusterRequest createClusterRequest(CreateCluster request) throws IOException {
         LOGGER.debug("Starting to create Argo cluster Request {}", request);
         AwsClusterDetails awsClusterDetails;
         AzureClusterDetails azureClusterDetails;
@@ -354,13 +361,13 @@ public class RequestBuilder {
     
     public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException, KubernetesHelperException {
         String parentId = serviceFactory.getConfigCollector().getParentId(request.getCustomerId());
-        Map<String, String> vaultData = serviceFactory.getVaultHelper().getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
+        Map<String, String> vaultData = vaultHelper.getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
         String url = vaultData.get(VAULT_CLUSTER_URL);
         String token = vaultData.get(VAULT_CLUSTER_TOKEN);
         if (!StringUtils.hasText(url) || !StringUtils.hasText(token))
             throw new ResourcesNotAvailable(CUSTOMER_CLUSTER_INFO_MISSING);
         LOGGER.info("Successfully fetched the customer cluster information");
-        ArgoToolDetails config = serviceFactory.getConfigCollector().getArgoDetails(request.getPlatformToolId(), parentId);
+        ArgoToolDetails config = toolConfigurationHelper.getToolConfig(parentId, request.getPlatformToolId(), ArgoToolDetails.class);
         Map<String, String> envVar = new HashMap<>();
         List<String> commands = getCommands(config, request, envVar);
         LOGGER.info("commands: \n {}", commands);
@@ -429,7 +436,7 @@ public class RequestBuilder {
         String secretKey = configuration.getSecretKey().getVaultKey();
         String accessKey = configuration.getAccessKey().getVaultKey();
         List<String> vaultKey = Arrays.asList(accessKey, secretKey);
-        Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(config.getOwner(), vaultKey, null);
+        Map<String, String> secrects = vaultHelper.getSecrets(config.getOwner(), vaultKey, null);
         AwsDetails awsDetails = new AwsDetails();
         if (request.isIamRoleFlag()) {
             awsDetails.setCustomerId(config.getOwner());
@@ -467,7 +474,7 @@ public class RequestBuilder {
         String applicationName = request.getClientId();
         String applicationPassword = request.getClientSecret();
         List<String> vaultKey = Arrays.asList(applicationName, applicationPassword);
-        Map<String, String> secrects = serviceFactory.getVaultHelper().getSecrets(request.getCustomerId(), vaultKey, null);
+        Map<String, String> secrects = vaultHelper.getSecrets(request.getCustomerId(), vaultKey, null);
         if (StringUtils.hasText(request.getClientId())) {
             envVar.put(ARM_CLIENT_ID, secrects.get(request.getClientId()));
         }
