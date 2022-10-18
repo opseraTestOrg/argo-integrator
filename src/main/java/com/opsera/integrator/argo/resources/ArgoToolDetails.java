@@ -32,4 +32,6 @@ public class ArgoToolDetails {
     
     private List<Application> applications;
 
+    private String vault;
+
 }

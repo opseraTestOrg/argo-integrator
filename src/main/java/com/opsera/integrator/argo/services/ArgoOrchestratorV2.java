@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import com.opsera.core.helper.ToolConfigurationHelper;
 import com.opsera.core.helper.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,12 +77,15 @@ public class ArgoOrchestratorV2 {
     @Autowired
     private VaultHelper vaultService;
 
+    @Autowired
+    private ToolConfigurationHelper toolConfigurationHelper;
+
     public void syncApplication(OpseraPipelineMetadata pipelineMetadata) {
         try {
             LOGGER.debug("Starting to Sync Argo Application for the request {}", pipelineMetadata);
             pipelineMetadata.setRunCount(getRunCount(pipelineMetadata));
-            ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
-            ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(), ToolConfig.class);
+            ArgoToolDetails argoToolDetails = toolConfigurationHelper.getToolConfig(pipelineMetadata.getCustomerId(), argoToolConfig.getToolConfigId(), ArgoToolDetails.class);
             String argoPassword = getArgoToolPassword(argoToolDetails);
             if (argoToolConfig.isKustomizeFlag() && StringUtils.hasText(argoToolConfig.getImageUrl())) {
                 setKustomizeDetails(pipelineMetadata, argoToolConfig, argoToolDetails, argoPassword);
@@ -227,15 +231,15 @@ public class ArgoOrchestratorV2 {
 
     public void promoteOrAbortRolloutDeployment(ApprovalGateRequest approvalGateRequest) {
         LOGGER.debug("Starting to promote/abort Argo application depoyment based on approval gate response {}", approvalGateRequest);
-        Integer runCount = serviceFactory.getConfigCollector().getRunCount(approvalGateRequest.getPipelineId(), approvalGateRequest.getCustomerId());
+        Integer runCount = toolConfigurationHelper.getRunCount(approvalGateRequest.getPipelineId(), approvalGateRequest.getCustomerId());
         OpseraPipelineMetadata pipelineMetadata = new OpseraPipelineMetadata();
         pipelineMetadata.setCustomerId(approvalGateRequest.getCustomerId());
         pipelineMetadata.setPipelineId(approvalGateRequest.getPipelineId());
         pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
         pipelineMetadata.setRunCount(runCount);
         try {
-            ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
-            ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+            ToolConfig argoToolConfig =toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(), ToolConfig.class);
+            ArgoToolDetails argoToolDetails = toolConfigurationHelper.getToolConfig(pipelineMetadata.getCustomerId(), argoToolConfig.getToolConfigId(), ArgoToolDetails.class);
             String argoPassword;
             argoPassword = getArgoToolPassword(argoToolDetails);
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
@@ -315,7 +319,7 @@ public class ArgoOrchestratorV2 {
     }
 
     private Integer getRunCount(OpseraPipelineMetadata pipelineMetadata) {
-        return serviceFactory.getConfigCollector().getRunCount(pipelineMetadata.getPipelineId(), pipelineMetadata.getCustomerId());
+        return toolConfigurationHelper.getRunCount(pipelineMetadata.getPipelineId(), pipelineMetadata.getCustomerId());
     }
 
     private String getArgoToolPassword(ArgoToolDetails argoToolDetails) {
@@ -333,8 +337,8 @@ public class ArgoOrchestratorV2 {
                 pipelineMetadata.getRunCount());
         try {
             pipelineMetadata.setRunCount(getRunCount(pipelineMetadata));
-            ToolConfig argoToolConfig = serviceFactory.getConfigCollector().getArgoDetails(pipelineMetadata);
-            ArgoToolDetails argoToolDetails = serviceFactory.getConfigCollector().getArgoDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId());
+            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(), ToolConfig.class);
+            ArgoToolDetails argoToolDetails = toolConfigurationHelper.getToolConfig(pipelineMetadata.getCustomerId(), argoToolConfig.getToolConfigId(), ArgoToolDetails.class);
             String argoPassword = getArgoToolPassword(argoToolDetails);
             DataTransformerModel dtModel = new DataTransformerModel();
             dtModel.setPipelineMetadata(pipelineMetadata);
