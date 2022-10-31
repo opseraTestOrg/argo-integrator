@@ -79,7 +79,7 @@ public class ArgoOrchestrator {
      * @param customerId the customer id
      * @return the all applications
      */
-    public ArgoApplicationMetadataList getAllApplications(String argoToolId, String customerId) {
+    public ArgoApplicationMetadataList getAllApplications(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Applications for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -94,7 +94,7 @@ public class ArgoOrchestrator {
      * @param customerId the customer id
      * @return the all clusters
      */
-    public ArgoClusterList getAllClusters(String argoToolId, String customerId) {
+    public ArgoClusterList getAllClusters(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Clusters for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -108,7 +108,7 @@ public class ArgoOrchestrator {
      * @param customerId the customer id
      * @return the all projects
      */
-    public ArgoApplicationMetadataList getAllProjects(String argoToolId, String customerId) {
+    public ArgoApplicationMetadataList getAllProjects(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Projects for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -124,7 +124,7 @@ public class ArgoOrchestrator {
      * @param applicationName the application name
      * @return the application
      */
-    public ArgoApplicationItem getApplication(String argoToolId, String customerId, String applicationName) {
+    public ArgoApplicationItem getApplication(String argoToolId, String customerId, String applicationName) throws IOException {
         LOGGER.debug("Starting to fetch Argo Application for toolId {} and customerId {} and applicationName {}", argoToolId, customerId, applicationName);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -152,7 +152,7 @@ public class ArgoOrchestrator {
      * @param request the request
      * @return the response entity
      */
-    public ResponseEntity<String> createApplication(CreateApplicationRequest request) {
+    public ResponseEntity<String> createApplication(CreateApplicationRequest request) throws IOException {
         LOGGER.debug("To Starting to create/update the application {} ", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -174,7 +174,7 @@ public class ArgoOrchestrator {
     }
 
     private ResponseEntity<String> createOrUpdateApplication(CreateApplicationRequest request, ArgoToolDetails argoToolDetails, String argoPassword, boolean isApplicationExists,
-            ArgoApplicationItem argoApplication) {
+            ArgoApplicationItem argoApplication) throws IOException {
         if (isApplicationExists) {
             return serviceFactory.getArgoHelper().updateApplication(argoApplication, argoToolDetails.getConfiguration(), argoPassword, request.getApplicationName());
         } else {
@@ -188,7 +188,7 @@ public class ArgoOrchestrator {
      * @param customerId the customer id
      * @param argoToolId the argo tool id
      */
-    public void validate(String customerId, String argoToolId) {
+    public void validate(String customerId, String argoToolId) throws IOException {
         LOGGER.debug("To validate the credentials for customerId {} and toolId {}", customerId, argoToolId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -262,7 +262,7 @@ public class ArgoOrchestrator {
      * @throws ResourcesNotAvailable        the resources not available
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public ResponseEntity<String> createRepository(CreateRepositoryRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
+    public ResponseEntity<String> createRepository(CreateRepositoryRequest request) throws ResourcesNotAvailable, IOException {
         LOGGER.debug("To Starting to create/update the repository {} ", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -306,7 +306,7 @@ public class ArgoOrchestrator {
      * @return the repository
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    private ArgoRepositoryItem getRepository(String toolId, String customerId, String repositoryUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws UnsupportedEncodingException {
+    private ArgoRepositoryItem getRepository(String toolId, String customerId, String repositoryUrl, ArgoToolDetails argoToolDetails, String argoPassword) throws IOException {
         LOGGER.debug("Starting to fetch Argo Repository {} ", repositoryUrl);
         return serviceFactory.getArgoHelper().getArgoRepository(repositoryUrl, argoToolDetails.getConfiguration(), argoPassword);
     }
@@ -318,7 +318,7 @@ public class ArgoOrchestrator {
      * @param customerId the customer id
      * @return the all argo repositories
      */
-    public ArgoRepositoriesList getAllArgoRepositories(String argoToolId, String customerId) {
+    public ArgoRepositoriesList getAllArgoRepositories(String argoToolId, String customerId) throws IOException {
         LOGGER.debug("Starting to fetch All Argo Repositories for toolId{} ", argoToolId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -355,7 +355,7 @@ public class ArgoOrchestrator {
      * @param request the request
      * @return the response entity
      */
-    public ResponseEntity<String> createProject(CreateProjectRequest request) {
+    public ResponseEntity<String> createProject(CreateProjectRequest request) throws IOException {
         LOGGER.debug("To Starting to create/update the project {} ", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -380,7 +380,7 @@ public class ArgoOrchestrator {
      * @param argoPassword    the argo password
      * @return the argo project
      */
-    private ArgoApplicationItem getArgoProject(ArgoToolDetails argoToolDetails, String name, String argoPassword) {
+    private ArgoApplicationItem getArgoProject(ArgoToolDetails argoToolDetails, String name, String argoPassword) throws IOException {
         LOGGER.debug("Starting to fetch Argo Projet {} ", name);
         return serviceFactory.getArgoHelper().getArgoProject(name, argoToolDetails.getConfiguration(), argoPassword);
     }
@@ -487,7 +487,7 @@ public class ArgoOrchestrator {
      * @return the application
      * @throws UnsupportedEncodingException
      */
-    public ArgoApplicationSource getAppDetails(String argoToolId, String customerId, ArgoApplicationSpec spec) throws UnsupportedEncodingException {
+    public ArgoApplicationSource getAppDetails(String argoToolId, String customerId, ArgoApplicationSpec spec) throws IOException {
         LOGGER.debug("Starting to fetch Argo Application details for toolId {} and customerId {} ", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);

@@ -360,7 +360,7 @@ public class RequestBuilder {
     }
     
     public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException, KubernetesHelperException {
-        String parentId = serviceFactory.getConfigCollector().getParentId(request.getCustomerId());
+        String parentId = toolConfigurationHelper.getParentId(request.getCustomerId());
         Map<String, String> vaultData = vaultHelper.getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
         String url = vaultData.get(VAULT_CLUSTER_URL);
         String token = vaultData.get(VAULT_CLUSTER_TOKEN);
@@ -431,7 +431,7 @@ public class RequestBuilder {
         return commands;
     }
 
-    private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
+    private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) throws IOException {
         ToolConfig configuration = config.getConfiguration();
         String secretKey = configuration.getSecretKey().getVaultKey();
         String accessKey = configuration.getAccessKey().getVaultKey();
