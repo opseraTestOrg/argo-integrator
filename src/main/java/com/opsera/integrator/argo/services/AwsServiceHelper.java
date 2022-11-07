@@ -2,13 +2,14 @@ package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.STS_SESSION_TOKEN;
 
+import java.io.IOException;
 import java.util.Optional;
 
+import com.opsera.core.rest.RestTemplateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import com.opsera.integrator.argo.config.AppConfig;
 import com.opsera.integrator.argo.config.IServiceFactory;
@@ -27,6 +28,8 @@ public class AwsServiceHelper {
     private IServiceFactory serviceFactory;
 
     @Autowired
+    private RestTemplateHelper restTemplateHelper;
+    @Autowired
     private AppConfig appConfig;
 
     /**
@@ -34,11 +37,10 @@ public class AwsServiceHelper {
      *
      * @return
      */
-    public AwsDetails getCredentials(AwsDetails awsDetails) {
+    public AwsDetails getCredentials(AwsDetails awsDetails) throws IOException {
         LOGGER.info("Enter the getting credentials secret for customer {}", awsDetails.getCustomerId());
-        RestTemplate restTemplate = serviceFactory.getRestTemplate();
         String sessionTokenUrl = appConfig.getAwsServiceBaseUrl() + STS_SESSION_TOKEN;
-        AwsDetails response = restTemplate.postForObject(sessionTokenUrl, awsDetails, AwsDetails.class);
+        AwsDetails response = restTemplateHelper.postForEntity(AwsDetails.class, sessionTokenUrl, awsDetails);
         Optional<AwsDetails> responseData = Optional.ofNullable(response);
         if (responseData.isPresent()) {
             LOGGER.info("Completed the getting  credentials secret for customer {}", awsDetails.getCustomerId());
