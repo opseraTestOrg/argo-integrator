@@ -206,11 +206,11 @@ public class ArgoHelper {
      * @param toolConfig
      * @param argoPassword
      */
-    public void deleteArgoApplication(String applicationName, ToolConfig toolConfig, String argoPassword) {
+    public void deleteArgoApplication(String applicationName, ToolConfig toolConfig, String argoPassword) throws IOException {
         LOGGER.debug("To Starting to delete the application {} and url {} ", applicationName, toolConfig.getToolURL());
-        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
+        HttpHeaders httpHeaders = getHttpHeaders(toolConfig, argoPassword);
         String url = String.format(ALL_ARGO_APPLICATION_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);
-        restTemplateHelper.delete(url, requestEntity);
+        restTemplateHelper.delete(url, httpHeaders);
         LOGGER.debug("To Completed to delete the application {} and url {} ", applicationName, toolConfig.getToolURL());
     }
 
@@ -264,6 +264,22 @@ public class ArgoHelper {
         requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         requestHeaders.setBearerAuth(argoToken);
         return new HttpEntity<>(requestHeaders);
+    }
+
+    /**
+     * Returns HTTP request headers.
+     *
+     * @param toolConfig
+     * @param argoPassword
+     * @return the request entity
+     */
+    private HttpHeaders getHttpHeaders(ToolConfig toolConfig, String argoPassword) {
+        LOGGER.debug("To Starting to get Request Entity for baseUrl {}", toolConfig.getToolURL());
+        String argoToken = getArgoBearerToken(toolConfig, argoPassword);
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.add(HTTP_HEADER_ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+        requestHeaders.setBearerAuth(argoToken);
+        return requestHeaders;
     }
 
     private String getArgoBearerToken(ToolConfig toolConfig, String argoPassword) {
@@ -386,10 +402,10 @@ public class ArgoHelper {
      * @param argoPassword
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void deleteArgoRepository(String repositoryUrl, ToolConfig toolConfig, String argoPassword) throws UnsupportedEncodingException {
+    public void deleteArgoRepository(String repositoryUrl, ToolConfig toolConfig, String argoPassword) throws IOException {
         LOGGER.debug("To Starting to delete the repository {} and url {} ", repositoryUrl, toolConfig.getToolURL());
         repositoryUrl = encodeURL(repositoryUrl);
-        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
+        HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
         String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL(), repositoryUrl);
         restTemplateHelper.delete(url, requestEntity);
         LOGGER.debug("To Completed to delete the repository {} and url {} ", repositoryUrl, toolConfig.getToolURL());
@@ -446,9 +462,9 @@ public class ArgoHelper {
      * @param toolConfig
      * @param argoPassword
      */
-    public void deleteArgoProject(String projectName, ToolConfig toolConfig, String argoPassword) {
+    public void deleteArgoProject(String projectName, ToolConfig toolConfig, String argoPassword) throws IOException {
         LOGGER.debug("To Starting to delete the project {} and url {} ", projectName, toolConfig.getToolURL());
-        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
+        HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
         String url = String.format(ARGO_PROJECT_URL_TEMPLATE, toolConfig.getToolURL(), projectName);
         restTemplateHelper.delete(url, requestEntity);
         LOGGER.debug("To Completed to delete the project {} and url {} ", projectName, toolConfig.getToolURL());
@@ -509,9 +525,9 @@ public class ArgoHelper {
      * @param argoPassword
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void deleteArgoCluster(String server, ToolConfig toolConfig, String argoPassword) throws UnsupportedEncodingException {
+    public void deleteArgoCluster(String server, ToolConfig toolConfig, String argoPassword) throws IOException {
         LOGGER.debug("To Starting to delete the cluster {} and url {} ", server, toolConfig.getToolURL());
-        HttpEntity<HttpHeaders> requestEntity = getRequestEntity(toolConfig, argoPassword);
+        HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
         String serverUrl = encodeURL(server);
         String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL(), serverUrl);
         restTemplateHelper.delete(url, requestEntity);

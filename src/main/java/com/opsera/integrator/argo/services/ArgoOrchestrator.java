@@ -246,7 +246,7 @@ public class ArgoOrchestrator {
      * @param customerId      the customer id
      * @param applicationName the application name
      */
-    public void deleteApplication(String argoToolId, String customerId, String applicationName) {
+    public void deleteApplication(String argoToolId, String customerId, String applicationName) throws IOException {
         LOGGER.debug("To Starting to delete the application {} and customerId {} and toolId {}", applicationName, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -331,7 +331,7 @@ public class ArgoOrchestrator {
      * @param request the request
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void deleteRepository(CreateRepositoryRequest request) throws UnsupportedEncodingException {
+    public void deleteRepository(CreateRepositoryRequest request) throws IOException {
         LOGGER.debug("To Starting to delete the repository request {}", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -392,7 +392,7 @@ public class ArgoOrchestrator {
      * @param customerId  the customer id
      * @param projectName the project name
      */
-    public void deleteProject(String argoToolId, String customerId, String projectName) {
+    public void deleteProject(String argoToolId, String customerId, String projectName) throws IOException {
         LOGGER.debug("To Starting to delete the projectName {} and customerId {} and toolId {}", projectName, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
@@ -437,7 +437,7 @@ public class ArgoOrchestrator {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      * @throws ApiException
      */
-    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws UnsupportedEncodingException {
+    public void deleteCluster(String argoToolId, String customerId, String serverUrl) throws IOException {
         LOGGER.debug("Starting to delete the cluster {} for customerId {} and toolId {}", serverUrl, customerId, argoToolId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);

@@ -247,7 +247,7 @@ public class ArgoController {
     @DeleteMapping(path = "v1.0/argo/application")
     @ApiOperation("To delete application")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
+    public ResponseEntity<String> deleteArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) throws IOException {
         LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
         serviceFactory.getArgoOrchestrator().deleteApplication(argoToolId, customerId, applicationName);
         return new ResponseEntity<>("", HttpStatus.OK);
@@ -296,7 +296,7 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/repository/delete")
     @ApiOperation("To delete the repository")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoRepository(@RequestBody CreateRepositoryRequest request) throws UnsupportedEncodingException {
+    public ResponseEntity<String> deleteArgoRepository(@RequestBody CreateRepositoryRequest request) throws IOException {
         LOGGER.info("Received deleteArgoRepository request {}", request);
         serviceFactory.getArgoOrchestrator().deleteRepository(request);
         return new ResponseEntity<>("", HttpStatus.OK);
@@ -329,7 +329,7 @@ public class ArgoController {
     @DeleteMapping(path = "v1.0/argo/project")
     @ApiOperation("To delete project")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) {
+    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) throws IOException {
         LOGGER.info("Received deleteArgoProject for argoId: {}, peojectName: {}", argoToolId, projectName);
         serviceFactory.getArgoOrchestrator().deleteProject(argoToolId, customerId, projectName);
         return new ResponseEntity<>("", HttpStatus.OK);
@@ -378,7 +378,7 @@ public class ArgoController {
     @DeleteMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To delete an argo cluster")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server) throws UnsupportedEncodingException {
+    public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server) throws IOException {
         LOGGER.info("Received deleteArgoCluster request for argoToolId: {}, customerId: {}, server: {}", argoToolId, customerId, server);
         serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server);
         return new ResponseEntity<>("", HttpStatus.OK);
