@@ -76,16 +76,9 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/applications")
     @ApiOperation("To get all the argo applications for the given argo domain")
     @TrackExecutionTime
-    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId, @RequestParam String customerId) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received getAllArgoApplications for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllApplications(argoToolId, customerId);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            LOGGER.info("Completed getAllArgoApplications, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException{
+        LOGGER.info("Received getAllArgoApplications for argoId: {}", argoToolId);
+        return serviceFactory.getArgoOrchestrator().getAllApplications(argoToolId, customerId);
     }
 
     /**
@@ -99,16 +92,9 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/application")
     @ApiOperation("To get detailed information about an argo application")
     @TrackExecutionTime
-    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
-            return serviceFactory.getArgoOrchestrator().getApplication(argoToolId, customerId, applicationName);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            LOGGER.info("Completed getArgoApplication, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) throws IOException {
+        LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
+        return serviceFactory.getArgoOrchestrator().getApplication(argoToolId, customerId, applicationName);
     }
 
     /**
@@ -120,16 +106,9 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/application/sync")
     @ApiOperation("To sync the argo application configured in Opsera pipeline")
     @TrackExecutionTime
-    public ArgoApplicationOperation syncArgoApplication(@RequestBody OpseraPipelineMetadata pipelineMetadata) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received syncArgoApplication for pipelineMetadata : {}", pipelineMetadata);
-            return serviceFactory.getArgoOrchestrator().syncApplication(pipelineMetadata);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            LOGGER.info("Completed syncArgoApplication, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+    public ArgoApplicationOperation syncArgoApplication(@RequestBody OpseraPipelineMetadata pipelineMetadata) throws IOException {
+        LOGGER.info("Received syncArgoApplication for pipelineMetadata : {}", pipelineMetadata);
+        return serviceFactory.getArgoOrchestrator().syncApplication(pipelineMetadata);
     }
 
     /**
@@ -161,16 +140,9 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To get all the argo applications for the given argo domain")
     @TrackExecutionTime
-    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId, @RequestParam String customerId) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received getAllArgoClusters for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllClusters(argoToolId, customerId);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            LOGGER.info("Completed getAllArgoClusters, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException {
+        LOGGER.info("Received getAllArgoClusters for argoId: {}", argoToolId);
+        return serviceFactory.getArgoOrchestrator().getAllClusters(argoToolId, customerId);
     }
 
     /**
@@ -183,16 +155,9 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/projects")
     @ApiOperation("To get all the argo projects for the given argo domain")
     @TrackExecutionTime
-    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId, @RequestParam String customerId) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received getAllArgoProjects for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllProjects(argoToolId, customerId);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            LOGGER.info("Completed getAllArgoProjects, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException {
+        LOGGER.info("Received getAllArgoProjects for argoId: {}", argoToolId);
+        return serviceFactory.getArgoOrchestrator().getAllProjects(argoToolId, customerId);
     }
 
     /**
@@ -204,16 +169,9 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/application/create")
     @ApiOperation("To create an argo application")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoApplication(@RequestBody CreateApplicationRequest request) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received createArgoApplication for : {}", request);
-            return serviceFactory.getArgoOrchestrator().createApplication(request);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            LOGGER.info("Completed createArgoApplication, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+    public ResponseEntity<String> createArgoApplication(@RequestBody CreateApplicationRequest request) throws IOException {
+        LOGGER.info("Received createArgoApplication for : {}", request);
+        return serviceFactory.getArgoOrchestrator().createApplication(request);
     }
 
     /**
@@ -226,7 +184,7 @@ public class ArgoController {
     @GetMapping("/validate")
     @ApiOperation("To Validate the user given details")
     @TrackExecutionTime
-    public ResponseEntity<ValidationResponse> validate(@RequestParam(value = "customerId") String customerId, @RequestParam(value = "toolId") String toolId) {
+    public ResponseEntity<ValidationResponse> validate(@RequestParam(value = "customerId") String customerId, @RequestParam(value = "toolId") String toolId) throws IOException{
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
@@ -252,8 +210,6 @@ public class ArgoController {
                 return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.BAD_REQUEST.toString()).message(message).build(), HttpStatus.BAD_REQUEST);
             }
             return new ResponseEntity<>(ValidationResponse.builder().status(HttpStatus.BAD_REQUEST.toString()).message(e.getCause().toString()).build(), HttpStatus.BAD_REQUEST);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         } finally {
             stopwatch.stop();
             LOGGER.info("Completed to validate the tool connection in {} secs time to execute", stopwatch.getTotalTimeSeconds());
@@ -272,22 +228,12 @@ public class ArgoController {
     @GetMapping(path = "v1.0/generateNewToken")
     @ApiOperation("Gets argocd password ")
     @TrackExecutionTime
-    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable, InterruptedException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Starting the generateNewToken a argocd");
-            LOGGER.info("Received generateNewToken a argocd request customerId {} and url {}", customerId, toolId);
-            String token = serviceFactory.getArgoOrchestrator().generateNewToken(customerId, toolId);
-            LOGGER.info("Successfully generate new token for customerId {} and toolId {}", customerId, toolId);
-            return new ResponseEntity<>(token, HttpStatus.OK);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Generate the tokens {} secs time to execute", stopwatch.getTotalTimeSeconds());
-        }
-
+    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable, InterruptedException, IOException {
+        LOGGER.info("Starting the generateNewToken a argocd");
+        LOGGER.info("Received generateNewToken a argocd request customerId {} and url {}", customerId, toolId);
+        String token = serviceFactory.getArgoOrchestrator().generateNewToken(customerId, toolId);
+        LOGGER.info("Successfully generate new token for customerId {} and toolId {}", customerId, toolId);
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
 
     /**
@@ -302,16 +248,9 @@ public class ArgoController {
     @ApiOperation("To delete application")
     @TrackExecutionTime
     public ResponseEntity<String> deleteArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
-            serviceFactory.getArgoOrchestrator().deleteApplication(argoToolId, customerId, applicationName);
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("To deleted the application and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
-        }
+        LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
+        serviceFactory.getArgoOrchestrator().deleteApplication(argoToolId, customerId, applicationName);
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     /**
@@ -325,18 +264,11 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/repository/create")
     @ApiOperation("To create an argo repository")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoRepository(@RequestBody CreateRepositoryRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received createArgoRepository for : {}", request);
-            return serviceFactory.getArgoOrchestrator().createRepository(request);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed createArgoRepository, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
-        }
+    public ResponseEntity<String> createArgoRepository(@RequestBody CreateRepositoryRequest request) throws ResourcesNotAvailable, IOException {
+
+        LOGGER.info("Received createArgoRepository for : {}", request);
+        return serviceFactory.getArgoOrchestrator().createRepository(request);
+
     }
 
     /**
@@ -349,18 +281,9 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/repositories")
     @ApiOperation("To get all the argo repositories for the given argo domain")
     @TrackExecutionTime
-    public ArgoRepositoriesList getAllArgoRepositories(@RequestParam String argoToolId, @RequestParam String customerId) {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received getAllArgoRepositories for argoId: {}", argoToolId);
-            return serviceFactory.getArgoOrchestrator().getAllArgoRepositories(argoToolId, customerId);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed getAllArgoRepositories, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
-        }
+    public ArgoRepositoriesList getAllArgoRepositories(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException {
+        LOGGER.info("Received getAllArgoRepositories for argoId: {}", argoToolId);
+        return serviceFactory.getArgoOrchestrator().getAllArgoRepositories(argoToolId, customerId);
     }
 
     /**
@@ -374,16 +297,9 @@ public class ArgoController {
     @ApiOperation("To delete the repository")
     @TrackExecutionTime
     public ResponseEntity<String> deleteArgoRepository(@RequestBody CreateRepositoryRequest request) throws UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received deleteArgoRepository request {}", request);
-            serviceFactory.getArgoOrchestrator().deleteRepository(request);
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed deleteArgoRepository took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
-        }
+        LOGGER.info("Received deleteArgoRepository request {}", request);
+        serviceFactory.getArgoOrchestrator().deleteRepository(request);
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     /**
@@ -397,18 +313,9 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/project/create")
     @ApiOperation("To create an argo project")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoProject(@RequestBody CreateProjectRequest request) throws ResourcesNotAvailable, UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received createArgoProject for : {}", request);
-            return serviceFactory.getArgoOrchestrator().createProject(request);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed createArgoProject, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
-        }
+    public ResponseEntity<String> createArgoProject(@RequestBody CreateProjectRequest request) throws IOException {
+        LOGGER.info("Received createArgoProject for : {}", request);
+        return serviceFactory.getArgoOrchestrator().createProject(request);
     }
 
     /**
@@ -418,22 +325,14 @@ public class ArgoController {
      * @param customerId  the customer id
      * @param projectName the project name
      * @return the response entity
-     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @DeleteMapping(path = "v1.0/argo/project")
     @ApiOperation("To delete project")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) throws UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received deleteArgoProject for argoId: {}, peojectName: {}", argoToolId, projectName);
-            serviceFactory.getArgoOrchestrator().deleteProject(argoToolId, customerId, projectName);
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("To deleted the project and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
-        }
+    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) {
+        LOGGER.info("Received deleteArgoProject for argoId: {}, peojectName: {}", argoToolId, projectName);
+        serviceFactory.getArgoOrchestrator().deleteProject(argoToolId, customerId, projectName);
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     /**
@@ -441,24 +340,14 @@ public class ArgoController {
      *
      * @param request the request
      * @return the response entity
-     * @throws ResourcesNotAvailable        the resources not available
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @PostMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To create an argo cluster")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoCluster(@RequestBody CreateCluster request) throws ResourcesNotAvailable, UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received createArgoCluster request {}", request);
-            return serviceFactory.getArgoOrchestrator().createCluster(request);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed createArgoCluster time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
-        }
+    public ResponseEntity<String> createArgoCluster(@RequestBody CreateCluster request) throws IOException {
+        LOGGER.info("Received createArgoCluster request {}", request);
+        return serviceFactory.getArgoOrchestrator().createCluster(request);
     }
 
     /**
@@ -466,24 +355,14 @@ public class ArgoController {
      *
      * @param request the request
      * @return the response entity
-     * @throws ResourcesNotAvailable        the resources not available
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @PutMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To update an argo cluster")
     @TrackExecutionTime
-    public ResponseEntity<String> updateArgoCluster(@RequestBody CreateCluster request) throws ResourcesNotAvailable, UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received updateArgoCluster request {}", request);
-            return serviceFactory.getArgoOrchestrator().updateCluster(request);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed updateArgoCluster time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
-        }
+    public ResponseEntity<String> updateArgoCluster(@RequestBody CreateCluster request) throws IOException {
+        LOGGER.info("Received updateArgoCluster request {}", request);
+        return serviceFactory.getArgoOrchestrator().updateCluster(request);
     }
 
     /**
@@ -500,45 +379,26 @@ public class ArgoController {
     @ApiOperation("To delete an argo cluster")
     @TrackExecutionTime
     public ResponseEntity<String> deleteArgoCluster(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String server) throws UnsupportedEncodingException {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received deleteArgoCluster request for argoToolId: {}, customerId: {}, server: {}", argoToolId, customerId, server);
-            serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server);
-            return new ResponseEntity<>("", HttpStatus.OK);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("To deleted the cluster and took {} millisecs to execute", stopwatch.getLastTaskTimeMillis());
-        }
+        LOGGER.info("Received deleteArgoCluster request for argoToolId: {}, customerId: {}, server: {}", argoToolId, customerId, server);
+        serviceFactory.getArgoOrchestrator().deleteCluster(argoToolId, customerId, server);
+        return new ResponseEntity<>("", HttpStatus.OK);
     }
 
     @PostMapping(path = "v1.0/argo/namespace/create")
     @ApiOperation("To create an argo project")
     @TrackExecutionTime
     public ResponseEntity<Response> createNamespace(@RequestBody CreateCluster request) {
-        StopWatch stopwatch = serviceFactory.stopWatch();
-        stopwatch.start();
-        try {
-            LOGGER.info("Received createNamespace for : {}", request);
-            Response response = serviceFactory.getArgoOrchestrator().createNamespace(request);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } finally {
-            stopwatch.stop();
-            LOGGER.info("Completed createNamespace, time taken to execute {} secs", stopwatch.getLastTaskTimeMillis());
-        }
+        LOGGER.info("Received createNamespace for : {}", request);
+        Response response = serviceFactory.getArgoOrchestrator().createNamespace(request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping(path = "v1.0/argo/application/approvalgate")
     @ApiOperation("To sync the argo application configured in Opsera pipeline")
     @TrackExecutionTime
     public String approvalOrRejectPromotion(@RequestBody ApprovalGateRequest request) {
-        Long startTime = System.currentTimeMillis();
-        try {
-            LOGGER.info("Received approvalOrRejectPromotion for pipelineMetadata : {}", request);
-            serviceFactory.getArgoOrchestratorV2().promoteOrAbortRolloutDeployment(request);
-            return "Request Submitted";
-        } finally {
-            LOGGER.info("Completed approvalOrRejectPromotion, time taken to execute {} secs", System.currentTimeMillis() - startTime);
-        }
+        LOGGER.info("Received approvalOrRejectPromotion for pipelineMetadata : {}", request);
+        serviceFactory.getArgoOrchestratorV2().promoteOrAbortRolloutDeployment(request);
+        return "Request Submitted";
     }
 }
