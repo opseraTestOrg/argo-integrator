@@ -24,7 +24,6 @@ import static com.opsera.integrator.argo.resources.Constants.SYNC_TAKING_LONG_TI
 import static com.opsera.integrator.argo.resources.Constants.UNKNOWN_STATE_RECEIVED;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -118,7 +117,7 @@ public class ArgoOrchestratorV2 {
     }
 
     private Object checkOperationStatus(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword,
-            long retryCount) throws InterruptedException, IOException {
+            long retryCount) throws InterruptedException {
         ArgoApplicationItem applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
         ArgoSyncOperation operationSync = applicationItemOperation.getStatus().getSync();
         ArgoOperationState operationState = applicationItemOperation.getStatus().getOperationState();
@@ -291,7 +290,7 @@ public class ArgoOrchestratorV2 {
     }
 
     private boolean handlePromotionInUpgardedVersions(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, String argoPassword, Node node, Actions action, String applicationName,
-            String latestRevision) throws IOException {
+            String latestRevision) {
         boolean validRequest;
         if (action.isDisabled()) {
             validRequest = true;

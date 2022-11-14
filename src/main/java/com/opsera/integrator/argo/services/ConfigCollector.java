@@ -17,7 +17,6 @@ import static com.opsera.integrator.argo.resources.Constants.SERVICE_ACCOUNT;
 import static com.opsera.integrator.argo.resources.Constants.TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.V1;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -101,7 +100,7 @@ public class ConfigCollector {
         LOGGER.debug("Starting to fetch Tool Details for toolId {} and customerId {}", toolId, customerId);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getCustomerBaseUrl()).path(String.format(GET_TOOL_DETAILS, customerId, toolId));
         try {
-            ToolDetails responseEntity = restTemplateHelper.getForEntity(ToolDetails.class, uriBuilder.toUriString(), getRequestEntity(null));
+            ToolDetails responseEntity = restTemplateHelper.getForEntity(ToolDetails.class, uriBuilder.toUriString(), getRequestHeaders());
             Optional<ToolDetails> response = Optional.ofNullable(responseEntity);
             if (response.isPresent()) {
                 return response.get();
@@ -118,13 +117,12 @@ public class ConfigCollector {
     /**
      * This method used to construct http header.
      *
-     * @param obj the obj
      * @return the request entity
      */
-    private HttpEntity<Object> getRequestEntity(Object obj) {
+    private HttpHeaders getRequestHeaders() {
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
-        return null != obj ? new HttpEntity<>(obj, requestHeaders) : new HttpEntity<>(requestHeaders);
+        return requestHeaders;
     }
 
     /**
@@ -135,7 +133,7 @@ public class ConfigCollector {
      * @param clusterName     the cluster name
      * @return the AWSEKS cluster details
      */
-    public AwsClusterDetails getAWSEKSClusterDetails(String awsToolConfigId, String customerId, String clusterName) throws IOException {
+    public AwsClusterDetails getAWSEKSClusterDetails(String awsToolConfigId, String customerId, String clusterName) {
         LOGGER.debug("Starting to get Cluster Details for toolId {} and customerId {}", awsToolConfigId, customerId);
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(appConfig.getAwsServiceBaseUrl() + AWS_EKS_CLUSTER_ENDPOINT + clusterName).queryParam(QUERY_PARM_AWS_TOOLID, awsToolConfigId)
                 .queryParam(QUERY_PARM_CUSTOMERID, customerId);
@@ -149,7 +147,7 @@ public class ConfigCollector {
      * @param request the request
      * @return the AKS cluster details
      */
-    public AzureClusterDetails getAKSClusterDetails(CreateCluster request) throws IOException {
+    public AzureClusterDetails getAKSClusterDetails(CreateCluster request) {
         LOGGER.debug("Starting to get AKS Cluster Details request {}", request);
         String toolsConfigURL = appConfig.getAzureServiceBaseUrl() + CLUSTERS;
         return restTemplateHelper.postForEntity(AzureClusterDetails.class, toolsConfigURL, request);
@@ -161,7 +159,7 @@ public class ConfigCollector {
      * @param request
      * @return the AWSEKS cluster token
      */
-    public String getAWSEKSClusterToken(CreateCluster request) throws IOException {
+    public String getAWSEKSClusterToken(CreateCluster request) {
         LOGGER.debug("Starting to get EKS Cluster Details for request {} ", request);
         String clusterConfigURL = appConfig.getAwsServiceBaseUrl() + AWS_STS_CLUSTER_TOKEN_ENDPOINT;
         return restTemplateHelper.postForEntity(String.class, clusterConfigURL, request);
