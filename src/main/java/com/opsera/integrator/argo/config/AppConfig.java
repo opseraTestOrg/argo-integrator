@@ -46,9 +46,4 @@ public class AppConfig {
         return new StopWatch();
     }
 
-    @Bean
-    public ObjectMapper getObjectMapper() {
-        return new ObjectMapper();
-    }
-
 }

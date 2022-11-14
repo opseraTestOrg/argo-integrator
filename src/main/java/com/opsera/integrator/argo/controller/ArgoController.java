@@ -76,7 +76,7 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/applications")
     @ApiOperation("To get all the argo applications for the given argo domain")
     @TrackExecutionTime
-    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException{
+    public ArgoApplicationMetadataList getAllArgoApplications(@RequestParam String argoToolId, @RequestParam String customerId) {
         LOGGER.info("Received getAllArgoApplications for argoId: {}", argoToolId);
         return serviceFactory.getArgoOrchestrator().getAllApplications(argoToolId, customerId);
     }
@@ -92,7 +92,7 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/application")
     @ApiOperation("To get detailed information about an argo application")
     @TrackExecutionTime
-    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) throws IOException {
+    public ArgoApplicationItem getArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
         LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
         return serviceFactory.getArgoOrchestrator().getApplication(argoToolId, customerId, applicationName);
     }
@@ -106,7 +106,7 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/application/sync")
     @ApiOperation("To sync the argo application configured in Opsera pipeline")
     @TrackExecutionTime
-    public ArgoApplicationOperation syncArgoApplication(@RequestBody OpseraPipelineMetadata pipelineMetadata) throws IOException {
+    public ArgoApplicationOperation syncArgoApplication(@RequestBody OpseraPipelineMetadata pipelineMetadata) {
         LOGGER.info("Received syncArgoApplication for pipelineMetadata : {}", pipelineMetadata);
         return serviceFactory.getArgoOrchestrator().syncApplication(pipelineMetadata);
     }
@@ -140,7 +140,7 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To get all the argo applications for the given argo domain")
     @TrackExecutionTime
-    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException {
+    public ArgoClusterList getAllArgoClusters(@RequestParam String argoToolId, @RequestParam String customerId) {
         LOGGER.info("Received getAllArgoClusters for argoId: {}", argoToolId);
         return serviceFactory.getArgoOrchestrator().getAllClusters(argoToolId, customerId);
     }
@@ -155,7 +155,7 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/projects")
     @ApiOperation("To get all the argo projects for the given argo domain")
     @TrackExecutionTime
-    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException {
+    public ArgoApplicationMetadataList getAllArgoProjects(@RequestParam String argoToolId, @RequestParam String customerId) {
         LOGGER.info("Received getAllArgoProjects for argoId: {}", argoToolId);
         return serviceFactory.getArgoOrchestrator().getAllProjects(argoToolId, customerId);
     }
@@ -169,7 +169,7 @@ public class ArgoController {
     @PostMapping(path = "v1.0/argo/application/create")
     @ApiOperation("To create an argo application")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoApplication(@RequestBody CreateApplicationRequest request) throws IOException {
+    public ResponseEntity<String> createArgoApplication(@RequestBody CreateApplicationRequest request) {
         LOGGER.info("Received createArgoApplication for : {}", request);
         return serviceFactory.getArgoOrchestrator().createApplication(request);
     }
@@ -184,7 +184,7 @@ public class ArgoController {
     @GetMapping("/validate")
     @ApiOperation("To Validate the user given details")
     @TrackExecutionTime
-    public ResponseEntity<ValidationResponse> validate(@RequestParam(value = "customerId") String customerId, @RequestParam(value = "toolId") String toolId) throws IOException{
+    public ResponseEntity<ValidationResponse> validate(@RequestParam(value = "customerId") String customerId, @RequestParam(value = "toolId") String toolId) {
         StopWatch stopwatch = serviceFactory.stopWatch();
         stopwatch.start();
         try {
@@ -228,7 +228,7 @@ public class ArgoController {
     @GetMapping(path = "v1.0/generateNewToken")
     @ApiOperation("Gets argocd password ")
     @TrackExecutionTime
-    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable, InterruptedException, IOException {
+    public ResponseEntity<String> generateNewToken(@RequestParam String customerId, @RequestParam String toolId) throws ResourcesNotAvailable, InterruptedException {
         LOGGER.info("Starting the generateNewToken a argocd");
         LOGGER.info("Received generateNewToken a argocd request customerId {} and url {}", customerId, toolId);
         String token = serviceFactory.getArgoOrchestrator().generateNewToken(customerId, toolId);
@@ -247,7 +247,7 @@ public class ArgoController {
     @DeleteMapping(path = "v1.0/argo/application")
     @ApiOperation("To delete application")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) throws IOException {
+    public ResponseEntity<String> deleteArgoApplication(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String applicationName) {
         LOGGER.info("Received getArgoApplication for argoId: {}, argoApplication: {}", argoToolId, applicationName);
         serviceFactory.getArgoOrchestrator().deleteApplication(argoToolId, customerId, applicationName);
         return new ResponseEntity<>("", HttpStatus.OK);
@@ -258,13 +258,11 @@ public class ArgoController {
      *
      * @param request the request
      * @return the response entity
-     * @throws ResourcesNotAvailable        the resources not available
-     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @PostMapping(path = "v1.0/argo/repository/create")
     @ApiOperation("To create an argo repository")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoRepository(@RequestBody CreateRepositoryRequest request) throws ResourcesNotAvailable, IOException {
+    public ResponseEntity<String> createArgoRepository(@RequestBody CreateRepositoryRequest request) {
 
         LOGGER.info("Received createArgoRepository for : {}", request);
         return serviceFactory.getArgoOrchestrator().createRepository(request);
@@ -281,7 +279,7 @@ public class ArgoController {
     @GetMapping(path = "v1.0/argo/repositories")
     @ApiOperation("To get all the argo repositories for the given argo domain")
     @TrackExecutionTime
-    public ArgoRepositoriesList getAllArgoRepositories(@RequestParam String argoToolId, @RequestParam String customerId) throws IOException {
+    public ArgoRepositoriesList getAllArgoRepositories(@RequestParam String argoToolId, @RequestParam String customerId) {
         LOGGER.info("Received getAllArgoRepositories for argoId: {}", argoToolId);
         return serviceFactory.getArgoOrchestrator().getAllArgoRepositories(argoToolId, customerId);
     }
@@ -307,13 +305,11 @@ public class ArgoController {
      *
      * @param request the request
      * @return the response entity
-     * @throws ResourcesNotAvailable        the resources not available
-     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @PostMapping(path = "v1.0/argo/project/create")
     @ApiOperation("To create an argo project")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoProject(@RequestBody CreateProjectRequest request) throws IOException {
+    public ResponseEntity<String> createArgoProject(@RequestBody CreateProjectRequest request) {
         LOGGER.info("Received createArgoProject for : {}", request);
         return serviceFactory.getArgoOrchestrator().createProject(request);
     }
@@ -329,7 +325,7 @@ public class ArgoController {
     @DeleteMapping(path = "v1.0/argo/project")
     @ApiOperation("To delete project")
     @TrackExecutionTime
-    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) throws IOException {
+    public ResponseEntity<String> deleteArgoProject(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String projectName) {
         LOGGER.info("Received deleteArgoProject for argoId: {}, peojectName: {}", argoToolId, projectName);
         serviceFactory.getArgoOrchestrator().deleteProject(argoToolId, customerId, projectName);
         return new ResponseEntity<>("", HttpStatus.OK);
@@ -340,12 +336,11 @@ public class ArgoController {
      *
      * @param request the request
      * @return the response entity
-     * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     @PostMapping(path = "v1.0/argo/clusters")
     @ApiOperation("To create an argo cluster")
     @TrackExecutionTime
-    public ResponseEntity<String> createArgoCluster(@RequestBody CreateCluster request) throws IOException {
+    public ResponseEntity<String> createArgoCluster(@RequestBody CreateCluster request) {
         LOGGER.info("Received createArgoCluster request {}", request);
         return serviceFactory.getArgoOrchestrator().createCluster(request);
     }
