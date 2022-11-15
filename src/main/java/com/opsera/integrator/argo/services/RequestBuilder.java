@@ -181,7 +181,7 @@ public class RequestBuilder {
      * @param request the request
      * @return the creates the cluster request
      */
-    public CreateClusterRequest createClusterRequest(CreateCluster request) throws IOException {
+    public CreateClusterRequest createClusterRequest(CreateCluster request) {
         LOGGER.debug("Starting to create Argo cluster Request {}", request);
         AwsClusterDetails awsClusterDetails;
         AzureClusterDetails azureClusterDetails;
@@ -359,7 +359,7 @@ public class RequestBuilder {
         return namespaceResourceWhitelist;
     }
     
-    public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException, KubernetesHelperException {
+    public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException {
         String parentId = toolConfigurationHelper.getParentId(request.getCustomerId());
         Map<String, String> vaultData = vaultHelper.getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
         String url = vaultData.get(VAULT_CLUSTER_URL);
@@ -431,7 +431,7 @@ public class RequestBuilder {
         return commands;
     }
 
-    private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) throws IOException {
+    private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
         ToolConfig configuration = config.getConfiguration();
         String secretKey = configuration.getSecretKey().getVaultKey();
         String accessKey = configuration.getAccessKey().getVaultKey();

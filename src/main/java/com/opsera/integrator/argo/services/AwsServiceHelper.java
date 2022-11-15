@@ -2,7 +2,6 @@ package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.STS_SESSION_TOKEN;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import com.opsera.core.rest.RestTemplateHelper;
@@ -37,7 +36,7 @@ public class AwsServiceHelper {
      *
      * @return
      */
-    public AwsDetails getCredentials(AwsDetails awsDetails) throws IOException {
+    public AwsDetails getCredentials(AwsDetails awsDetails) {
         LOGGER.info("Enter the getting credentials secret for customer {}", awsDetails.getCustomerId());
         String sessionTokenUrl = appConfig.getAwsServiceBaseUrl() + STS_SESSION_TOKEN;
         AwsDetails response = restTemplateHelper.postForEntity(AwsDetails.class, sessionTokenUrl, awsDetails);
