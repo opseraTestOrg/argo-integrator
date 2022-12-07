@@ -41,7 +41,7 @@ repositories {
     		url "https://opserarepo.jfrog.io/artifactory/opsera-platform-libs-release"
     		credentials {
             username "support@opsera.io"
-            password "eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiI0V0c0bE1FTGNVQVNRWEtaSm1ib1VSNkpBcnZUMjdwNzQyOTZqaGtMZndBIn0.eyJleHQiOiJ7XCJyZXZvY2FibGVcIjpcInRydWVcIn0iLCJzdWIiOiJqZmFjQDAxZnA2NHE4eGM3d3RoMDF2cWN5NnkwdnZoXC91c2Vyc1wvc3VwcG9ydEBvcHNlcmEuaW8iLCJzY3AiOiJhcHBsaWVkLXBlcm1pc3Npb25zXC91c2VyIiwiYXVkIjpbImpmcnRAKiIsImpmYWNAKiIsImpmZXZ0QCoiLCJqZm1kQCoiLCJqZmNvbkAqIl0sImlzcyI6ImpmZmVAMDAwIiwiZXhwIjoxNjcwMzA5MzQ0LCJpYXQiOjE2Mzg3NzMzNDQsImp0aSI6ImU2OWFhZGMwLTgxODgtNDI0MS1hYTAxLWVkZGI5YjYzMWRhMSJ9.PWQoY1NPOpyt6LSOYrbcsouHQeOlGbagYdAjU38U8saD5psG8ezLhf1Tq4ZxCxTzyw8vIofZuLzopzRzQRZifnu__NmmbpZf6xvwc9IGTCreapL6qRop3SPP1DlziNmAZGoacHoHmX_l11bSj1ty9M3zyHR6z1X5sZVxCucD9xYuFuN7TzONAyl4CK5Qg_4PRPHXfRtTKCp2hG_WoSAdLUq9XcQHUldnXztiPiq6XICrfjPq9yPr4i3BGpkJ9HEkJv623XebojcLCKCF-ee3Bwd_8cCvSh06koxj9gxZV9ycnMVrW9TkW_xHQfg0Cf4vxiU5Mr16b2RI4x_Om-psOA"
+            password "${System.env.jfrog_password}"
         }
     	}
 }
