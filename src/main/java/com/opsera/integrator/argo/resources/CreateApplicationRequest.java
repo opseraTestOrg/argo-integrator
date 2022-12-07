@@ -23,4 +23,6 @@ public class CreateApplicationRequest {
 
     private String gitPath;
 
+    private boolean autoSync;
+
 }

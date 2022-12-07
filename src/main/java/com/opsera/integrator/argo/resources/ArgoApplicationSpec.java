@@ -13,4 +13,6 @@ public class ArgoApplicationSpec {
 
     private ArgoApplicationDestination destination;
 
+    private SyncPolicy syncPolicy;
+
 }
