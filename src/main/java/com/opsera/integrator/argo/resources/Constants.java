@@ -22,7 +22,7 @@ public class Constants {
     public static final String ARGO_GET_USER_INFO_TEMPLATE = "%s/api/v1/session/userinfo";
     public static final String ARGO_DELETE_REPLICASET_CUSTOM = "%s/api/v1/applications/%s/resource?name=%s&namespace=%s&resourceName=%s&version=%s&kind=%s&group=%s&force=true";
     public static final String ARGO_APPLICATION_DETAILS = "%s/api/v1/repositories/%s/appdetails";
-    
+
     public static final String ARGO_VAULT_KEY_TEMPLATE = "%s-argo";
     public static final String TOOL_REGISTRY_ENDPOINT = "/v2/registry/tool";
     public static final String VAULT_READ_ENDPOINT = "/read";
@@ -68,25 +68,25 @@ public class Constants {
     public static final String ARGO_SYNC_FAILED = "Argo Application Sync Failed";
     public static final String ARGO_SYNC_CONSOLE_FAILED = "Argo pod logs retrieved only for successfully synced applications.";
     public static final String INVALID_CONNECTION_DETAILS = "Invalid connection details provided for authentication. Please check the connection details and retry..!";
-    
+
     public static final String GET_PARENT_ID = "/customer/parent";
     public static final String VAULT_CLUSTER_URL = "kubernetes-cluster-url";
     public static final String VAULT_CLUSTER_TOKEN = "kubernetes-cluster-service-token";
     public static final String CUSTOMER_CLUSTER_INFO_MISSING = "Failed : Customer kubernetes cluster information missing in customer vault";
     public static final String STS_SESSION_TOKEN = "/sts/sessionToken";
-    
+
     public static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
     public static final String AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
     public static final String AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION";
     public static final String AWS_SESSION_TOKEN = "AWS_SESSION_TOKEN";
-    
+
     public static final String ARM_SUBSCRIPTION_ID = "ARM_SUBSCRIPTION_ID";
     public static final String ARM_TENANT_ID = "ARM_TENANT_ID";
     public static final String ARM_CLIENT_ID = "ARM_CLIENT_ID";
     public static final String ARM_CLIENT_SECRET = "ARM_CLIENT_SECRET";
     public static final String ARM_RESOURCE_GROUP_ID = "ARM_RESOURCE_GROUP_ID";
     public static final String CLUSTER_NAME = "CLUSTER_NAME";
-    
+
     public static final String SYNC_TAKING_LONG_TIME = "Sync is taking a long time";
     public static final String SYNC_IN_PROGRESS = "Sync in Progress";
     public static final String SUCCEEDED = "Succeeded";
@@ -103,5 +103,19 @@ public class Constants {
     public static final String ABORT_APPROVAL_RESPONSE = "The new deployment revision %s aborted successfully for the application %s";
     public static final String PROMOTE_APPROVAL_REPONSE = "The new deployment revision %s promoted successfully for the application %s";
     public static final String NO_NEW_REVISION_FOR_APPROVAL = "Argo blue green deployment was successful. No new revision found in the application %s to promote/abort";
+    public static final String ARGO_CLI_IMAGE = "440953937617.dkr.ecr.us-east-2.amazonaws.com/opsera-pipeline/dockercli:focal-20220826";
+    public static final String REGIX_REPLACE_ANSI_COLOR = "\\[..;..[m]|\\[.{0,2}[m]|\\(Page \\d \\)|\u001B\\[[K]|\u001B|\u000F";
+
+    public static final String GIT_URL = "giturl";
+    public static final String GIT_BRANCH = "gitbranch";
+    public static final String GIT_PASSWORD = "gitpassword";
+    public static final String HTTPS = "https://";
+    public static final String HTTP = "http://";
+    public static final String GIT_CLONE_COMMAND = "git clone ${giturl} --depth 1 --branch ${gitbranch}";
+    public static final String INPUT_PARAM_FORMAT = "${%s}";
+    public static final String GIT_FILE_PATH = "git_file_path";
+    public static final String GIT_TOKEN = "GIT_TOKEN";
+    public static final String IMAGE_REFERENCE = "IMAGE_REFERENCE";
+    public static final String IMAGE_URL="IMAGE_URL";
 
 }

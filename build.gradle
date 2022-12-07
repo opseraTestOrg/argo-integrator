@@ -56,7 +56,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	implementation group: 'charset', name: 'charset', version: '1.2.1'
 	testCompile('org.springframework.boot:spring-boot-starter-test')
-	compile('com.opsera:kubernetes-client:1.2.0'){
+	compile('com.opsera:kubernetes-client:1.5.0'){
 		exclude group: 'org.apache.commons', module: 'commons-compress'
 		exclude group: 'com.google.protobuf'
 	}
