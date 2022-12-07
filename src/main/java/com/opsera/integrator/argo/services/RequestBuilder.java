@@ -55,6 +55,7 @@ import com.opsera.integrator.argo.resources.ArgoProjectNamespaceResourceBlacklis
 import com.opsera.integrator.argo.resources.ArgoProjectNamespaceResourceWhitelist;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
+import com.opsera.integrator.argo.resources.Automated;
 import com.opsera.integrator.argo.resources.AwsClusterDetails;
 import com.opsera.integrator.argo.resources.AwsDetails;
 import com.opsera.integrator.argo.resources.AzureClusterDetails;
@@ -64,6 +65,7 @@ import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.Project;
+import com.opsera.integrator.argo.resources.SyncPolicy;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
@@ -119,6 +121,12 @@ public class RequestBuilder {
         spec.setSource(source);
         spec.setDestination(destination);
         spec.setProject(request.getProjectName());
+        if (request.isAutoSync()) {
+            Automated automated = new Automated();
+            SyncPolicy syncPolicy = new SyncPolicy();
+            syncPolicy.setAutomated(automated);
+            spec.setSyncPolicy(syncPolicy);
+        }
         argoApplication.setMetadata(metadata);
         argoApplication.setSpec(spec);
         return argoApplication;
