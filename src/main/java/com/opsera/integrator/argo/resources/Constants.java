@@ -106,16 +106,18 @@ public class Constants {
     public static final String ARGO_CLI_IMAGE = "440953937617.dkr.ecr.us-east-2.amazonaws.com/opsera-pipeline/dockercli:focal-20220826";
     public static final String REGIX_REPLACE_ANSI_COLOR = "\\[..;..[m]|\\[.{0,2}[m]|\\(Page \\d \\)|\u001B\\[[K]|\u001B|\u000F";
 
-    public static final String GIT_URL = "giturl";
-    public static final String GIT_BRANCH = "gitbranch";
-    public static final String GIT_PASSWORD = "gitpassword";
+    public static final String GIT_URL = "GIT_URL";
+    public static final String GIT_BRANCH = "GIT_BRANCH";
+    public static final String GIT_PASSWORD = "GIT_PASSWORD";
     public static final String HTTPS = "https://";
     public static final String HTTP = "http://";
     public static final String GIT_CLONE_COMMAND = "git clone ${giturl} --depth 1 --branch ${gitbranch}";
     public static final String INPUT_PARAM_FORMAT = "${%s}";
-    public static final String GIT_FILE_PATH = "git_file_path";
+    public static final String GIT_FILE_PATH = "GIT_FILE_PATH";
+    public static final String GIT_FILE_NAME = "GIT_FILE_NAME";
     public static final String GIT_TOKEN = "GIT_TOKEN";
+    public static final String GIT_USERNAME = "GIT_USERNAME";
     public static final String IMAGE_REFERENCE = "IMAGE_REFERENCE";
-    public static final String IMAGE_URL="IMAGE_URL";
+    public static final String IMAGE_URL = "IMAGE_URL";
 
 }

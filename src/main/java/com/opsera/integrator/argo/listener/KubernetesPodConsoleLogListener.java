@@ -37,7 +37,7 @@ public class KubernetesPodConsoleLogListener implements KubernetesLogListener {
             consoleLogMetadata.setConsoleLog(constructProperMessage(message));
             consoleLogMetadata.setRunCount(pipelineMetadata.getRunCount());
             consoleLogMetadata.setStatus(RUNNING);
-            serviceFactory.getKafkaHelper().postNotificationToKafka(OPSERA_PIPELINE_STATUS.getTopicName(), serviceFactory.gson().toJson(consoleLogMetadata));
+            serviceFactory.getKafkaHelper().postNotificationToKafka(OPSERA_PIPELINE_CONSOLE_LOG.getTopicName(), serviceFactory.gson().toJson(consoleLogMetadata));
             LOGGER.info("consoleLogStream: Successfully published kafka message {}", consoleLogMetadata);
         } catch (Exception e) {
             LOGGER.error("consoleLogStream: Exception occured while sending console log streams to kafka for pipeline : {}, step : {}", pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),

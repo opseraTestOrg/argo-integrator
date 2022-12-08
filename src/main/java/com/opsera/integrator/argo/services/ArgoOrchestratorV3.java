@@ -8,16 +8,18 @@ import static com.opsera.integrator.argo.resources.Constants.CUSTOMER_CLUSTER_IN
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.GIT_BRANCH;
 import static com.opsera.integrator.argo.resources.Constants.GIT_FILE_PATH;
+import static com.opsera.integrator.argo.resources.Constants.GIT_FILE_NAME;
 import static com.opsera.integrator.argo.resources.Constants.GIT_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.GIT_URL;
+import static com.opsera.integrator.argo.resources.Constants.GIT_USERNAME;
 import static com.opsera.integrator.argo.resources.Constants.HTTP;
 import static com.opsera.integrator.argo.resources.Constants.HTTPS;
 import static com.opsera.integrator.argo.resources.Constants.IMAGE_REFERENCE;
 import static com.opsera.integrator.argo.resources.Constants.IMAGE_URL;
 import static com.opsera.integrator.argo.resources.Constants.RUNNING;
+import static com.opsera.integrator.argo.resources.Constants.SYNC_IN_PROGRESS;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_URL;
-import static com.opsera.integrator.argo.resources.Constants.SYNC_IN_PROGRESS;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +149,11 @@ public class ArgoOrchestratorV3 {
         secrets.put(GIT_URL, gitUrl);
         secrets.put(GIT_BRANCH, argoToolConfig.getDefaultBranch());
         String gitBaseFolder = getGitCheckoutFolder(gitUrl);
-        envVar.put(GIT_FILE_PATH, String.format("%s/%s", gitBaseFolder, StringUtils.hasText(argoToolConfig.getGitFilePath()) ? argoToolConfig.getGitFilePath() : ""));
+        String fileName = FilenameUtils.getName(argoToolConfig.getGitFilePath());
+        String filePath = FilenameUtils.getFullPath(argoToolConfig.getGitFilePath());
+        String gitFilePath = StringUtils.hasText(argoToolConfig.getGitFilePath()) ? filePath : "";
+        envVar.put(GIT_FILE_PATH, String.format("%s/%s", gitBaseFolder, gitFilePath));
+        envVar.put(GIT_FILE_NAME, fileName);
         envVar.put(IMAGE_REFERENCE, argoToolConfig.getImageReference());
         envVar.put(IMAGE_URL, argoToolConfig.getImageUrl());
         LOGGER.info("Successfully set commands, setting environment variables");
@@ -167,6 +174,7 @@ public class ArgoOrchestratorV3 {
                 : gitToolDetails.getConfiguration().getAccountPassword().getVaultKey();
         String secret = vaultService.getSecrets(gitToolDetails.getOwner(), credentialSecret, gitToolDetails.getVault());
         secrets.put(GIT_TOKEN, secret);
+        secrets.put(GIT_USERNAME, gitToolDetails.getConfiguration().getAccountUsername());
         String url = argoToolConfig.getGitUrl();
         if (url.contains("@"))
             url = HTTPS + url.substring(url.indexOf("@") + 1);
