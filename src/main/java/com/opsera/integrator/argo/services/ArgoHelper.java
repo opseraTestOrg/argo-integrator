@@ -11,7 +11,6 @@ import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_RE
 import static com.opsera.integrator.argo.resources.Constants.ARGO_APPLICATION_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CLUSTER_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_CREATE_APPLICATION_URL_TEMPLATE;
-import static com.opsera.integrator.argo.resources.Constants.ARGO_DELETE_REPLICASET_CUSTOM;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_GET_USER_INFO_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_PROJECT_URL_TEMPLATE;
 import static com.opsera.integrator.argo.resources.Constants.ARGO_REPOSITORY_URL_TEMPLATE;
@@ -27,21 +26,21 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import com.opsera.core.rest.RestTemplateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.opsera.core.rest.RestTemplateHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;

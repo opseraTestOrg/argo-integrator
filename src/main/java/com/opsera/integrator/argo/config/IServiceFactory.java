@@ -5,15 +5,16 @@ import org.springframework.util.StopWatch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.opsera.core.helper.KafkaHelper;
 import com.opsera.integrator.argo.services.ArgoHelper;
 import com.opsera.integrator.argo.services.ArgoOrchestrator;
 import com.opsera.integrator.argo.services.ArgoOrchestratorV2;
+import com.opsera.integrator.argo.services.ArgoOrchestratorV3;
 import com.opsera.integrator.argo.services.AwsServiceHelper;
 import com.opsera.integrator.argo.services.ConfigCollector;
 import com.opsera.integrator.argo.services.ObjectTranslator;
 import com.opsera.integrator.argo.services.RequestBuilder;
 import com.opsera.integrator.argo.services.ResponseParser;
-import com.opsera.core.helper.KafkaHelper;
 
 @Component
 public interface IServiceFactory {
@@ -33,13 +34,15 @@ public interface IServiceFactory {
     public StopWatch stopWatch();
 
     public RequestBuilder getRequestBuilder();
-    
+
     public ObjectMapper getObjectMapper();
-    
+
     public ArgoOrchestratorV2 getArgoOrchestratorV2();
-    
+
+    public ArgoOrchestratorV3 getArgoOrchestratorV3();
+
     public KafkaHelper getKafkaHelper();
-    
+
     public AwsServiceHelper getAwsServiceHelper();
 
 }

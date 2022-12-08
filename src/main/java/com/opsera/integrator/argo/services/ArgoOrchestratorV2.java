@@ -33,8 +33,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.opsera.core.helper.ToolConfigurationHelper;
-import com.opsera.core.helper.VaultHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,24 +42,23 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import com.opsera.core.helper.ToolConfigurationHelper;
+import com.opsera.core.helper.VaultHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.resources.Actions;
 import com.opsera.integrator.argo.resources.ApprovalGateRequest;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
-import com.opsera.integrator.argo.resources.ArgoApplicationSource;
 import com.opsera.integrator.argo.resources.ArgoOperationState;
 import com.opsera.integrator.argo.resources.ArgoSyncOperation;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.DataTransformerModel;
 import com.opsera.integrator.argo.resources.Info;
 import com.opsera.integrator.argo.resources.KafkaTopics;
-import com.opsera.integrator.argo.resources.Kustomize;
 import com.opsera.integrator.argo.resources.Node;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.ResourceTree;
 import com.opsera.integrator.argo.resources.RolloutActions;
 import com.opsera.integrator.argo.resources.ToolConfig;
-import com.opsera.core.helper.VaultHelper;
 
 @Component
 public class ArgoOrchestratorV2 {
@@ -84,39 +81,43 @@ public class ArgoOrchestratorV2 {
         try {
             LOGGER.debug("Starting to Sync Argo Application for the request {}", pipelineMetadata);
             pipelineMetadata.setRunCount(getRunCount(pipelineMetadata));
-            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(), ToolConfig.class);
+            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),
+                    ToolConfig.class);
             ArgoToolDetails argoToolDetails = toolConfigurationHelper.getToolConfig(pipelineMetadata.getCustomerId(), argoToolConfig.getToolConfigId(), ArgoToolDetails.class);
             String argoPassword = getArgoToolPassword(argoToolDetails);
             if (argoToolConfig.isKustomizeFlag() && StringUtils.hasText(argoToolConfig.getImageUrl())) {
-                setKustomizeDetails(pipelineMetadata, argoToolConfig, argoToolDetails, argoPassword);
+                serviceFactory.getArgoOrchestratorV3().executePipeline(pipelineMetadata, argoToolConfig);
+            } else {
+                if (argoToolConfig.isDynamicVariables() && (StringUtils.hasText(argoToolConfig.getApplicationCluster()) || StringUtils.hasText(argoToolConfig.getYamlPath()))) {
+                    ArgoApplicationItem appItem = serviceFactory.getArgoOrchestrator().getApplication(argoToolConfig.getToolConfigId(), argoToolDetails.getOwner(),
+                            argoToolConfig.getApplicationName());
+                    if (StringUtils.hasText(argoToolConfig.getApplicationCluster())) {
+                        appItem.getSpec().getDestination().setServer(argoToolConfig.getApplicationCluster());
+                    }
+                    if (StringUtils.hasText(argoToolConfig.getYamlPath())) {
+                        appItem.getSpec().getSource().setPath(argoToolConfig.getYamlPath());
+                    }
+                    if (!CollectionUtils.isEmpty(appItem.getStatus().getHistory())) {
+                        appItem.getStatus().getHistory().clear();
+                    }
+                    serviceFactory.getArgoHelper().updateApplication(appItem, argoToolDetails.getConfiguration(), argoPassword, argoToolConfig.getApplicationName());
+                }
+                ArgoApplicationItem applicationItem = serviceFactory.getArgoHelper().syncApplication(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
+                pipelineMetadata.setStatus(RUNNING);
+                pipelineMetadata.setMessage(SYNC_IN_PROGRESS);
+                serviceFactory.getKafkaHelper().postNotificationToKafka(KafkaTopics.OPSERA_PIPELINE_REPONSE.getTopicName(), serviceFactory.gson().toJson(pipelineMetadata));
+                Thread.sleep(10000);
+                checkOperationStatus(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword, 0);
             }
-            if (argoToolConfig.isDynamicVariables() && (StringUtils.hasText(argoToolConfig.getApplicationCluster()) || StringUtils.hasText(argoToolConfig.getYamlPath()))) {
-                ArgoApplicationItem appItem = serviceFactory.getArgoOrchestrator().getApplication(argoToolConfig.getToolConfigId(), argoToolDetails.getOwner(), argoToolConfig.getApplicationName());
-                if (StringUtils.hasText(argoToolConfig.getApplicationCluster())) {
-                    appItem.getSpec().getDestination().setServer(argoToolConfig.getApplicationCluster());
-                }
-                if (StringUtils.hasText(argoToolConfig.getYamlPath())) {
-                    appItem.getSpec().getSource().setPath(argoToolConfig.getYamlPath());
-                }
-                if (!CollectionUtils.isEmpty(appItem.getStatus().getHistory())) {
-                    appItem.getStatus().getHistory().clear();
-                }
-                serviceFactory.getArgoHelper().updateApplication(appItem, argoToolDetails.getConfiguration(), argoPassword, argoToolConfig.getApplicationName());
-            }
-            ArgoApplicationItem applicationItem = serviceFactory.getArgoHelper().syncApplication(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
-            pipelineMetadata.setStatus(RUNNING);
-            pipelineMetadata.setMessage(SYNC_IN_PROGRESS);
-            serviceFactory.getKafkaHelper().postNotificationToKafka(KafkaTopics.OPSERA_PIPELINE_REPONSE.getTopicName(), serviceFactory.gson().toJson(pipelineMetadata));
-            Thread.sleep(10000);
-            checkOperationStatus(pipelineMetadata, applicationItem, argoToolDetails, argoToolConfig, argoPassword, 0);
         } catch (Exception ex) {
             LOGGER.error("Exception Occurred while processing sync request: {}, exception: {}", pipelineMetadata, ex);
             CompletableFuture.runAsync(() -> sendErrorResponseToKafka(pipelineMetadata, ex.getMessage()));
             Thread.currentThread().interrupt();
         }
+
     }
 
-    private Object checkOperationStatus(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword,
+    public Object checkOperationStatus(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword,
             long retryCount) throws InterruptedException {
         ArgoApplicationItem applicationItemOperation = serviceFactory.getArgoHelper().syncApplicationOperation(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
         ArgoSyncOperation operationSync = applicationItemOperation.getStatus().getSync();
@@ -176,7 +177,7 @@ public class ArgoOrchestratorV2 {
         return null;
     }
 
-    private void streamConsoleLogAsync(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword) {
+    public void streamConsoleLogAsync(OpseraPipelineMetadata pipelineMetadata, ArgoApplicationItem applicationItem, ArgoToolDetails argoToolDetails, ToolConfig argoToolConfig, String argoPassword) {
         try {
             ResourceTree resourceTree = serviceFactory.getArgoHelper().getResourceTree(argoToolConfig.getApplicationName(), argoToolDetails.getConfiguration(), argoPassword);
             List<String> podNames = getRunningPodList(resourceTree.getNodes(), pipelineMetadata);
@@ -238,7 +239,8 @@ public class ArgoOrchestratorV2 {
         pipelineMetadata.setStepId(approvalGateRequest.getDeployStepId());
         pipelineMetadata.setRunCount(runCount);
         try {
-            ToolConfig argoToolConfig =toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(), ToolConfig.class);
+            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),
+                    ToolConfig.class);
             ArgoToolDetails argoToolDetails = toolConfigurationHelper.getToolConfig(pipelineMetadata.getCustomerId(), argoToolConfig.getToolConfigId(), ArgoToolDetails.class);
             String argoPassword;
             argoPassword = getArgoToolPassword(argoToolDetails);
@@ -325,9 +327,9 @@ public class ArgoOrchestratorV2 {
     private String getArgoToolPassword(ArgoToolDetails argoToolDetails) {
         String argoPassword;
         if (argoToolDetails.getConfiguration().isSecretAccessTokenEnabled() && !ObjectUtils.isEmpty(argoToolDetails.getConfiguration().getSecretAccessTokenKey())) {
-            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey(),argoToolDetails.getVault());
+            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getSecretAccessTokenKey().getVaultKey(), argoToolDetails.getVault());
         } else {
-            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey(),argoToolDetails.getVault());
+            argoPassword = vaultService.getSecrets(argoToolDetails.getOwner(), argoToolDetails.getConfiguration().getAccountPassword().getVaultKey(), argoToolDetails.getVault());
         }
         return argoPassword;
     }
@@ -337,7 +339,8 @@ public class ArgoOrchestratorV2 {
                 pipelineMetadata.getRunCount());
         try {
             pipelineMetadata.setRunCount(getRunCount(pipelineMetadata));
-            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(), ToolConfig.class);
+            ToolConfig argoToolConfig = toolConfigurationHelper.getPipelineStepConfig(pipelineMetadata.getCustomerId(), pipelineMetadata.getPipelineId(), pipelineMetadata.getStepId(),
+                    ToolConfig.class);
             ArgoToolDetails argoToolDetails = toolConfigurationHelper.getToolConfig(pipelineMetadata.getCustomerId(), argoToolConfig.getToolConfigId(), ArgoToolDetails.class);
             String argoPassword = getArgoToolPassword(argoToolDetails);
             DataTransformerModel dtModel = new DataTransformerModel();
@@ -352,30 +355,4 @@ public class ArgoOrchestratorV2 {
         }
     }
 
-    private void setKustomizeDetails(OpseraPipelineMetadata pipelineMetadata, ToolConfig argoToolConfig, ArgoToolDetails argoToolDetails, String argoPassword) throws IOException {
-        ArgoApplicationItem argoApplicationItem = serviceFactory.getArgoOrchestrator().getApplication(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId(),
-                argoToolConfig.getApplicationName());
-        ArgoApplicationSource source = serviceFactory.getArgoOrchestrator().getAppDetails(argoToolConfig.getToolConfigId(), pipelineMetadata.getCustomerId(), argoApplicationItem.getSpec());
-        if ("Kustomize".equalsIgnoreCase(source.getType())) {
-            List<String> images = new ArrayList<>();
-            Kustomize kustomize = null;
-            if (null != argoApplicationItem.getSpec().getSource().getKustomize()) {
-                argoApplicationItem.getSpec().getSource().getKustomize().getImages()
-                        .forEach(image -> images.add(String.format("%s=%s", image.contains("=") ? image.substring(0, image.indexOf("=")) : image, argoToolConfig.getImageUrl())));
-                kustomize = argoApplicationItem.getSpec().getSource().getKustomize();
-                argoApplicationItem.getSpec().getSource().getKustomize().getImages().clear();
-            } else {
-                source.getKustomize().getImages()
-                        .forEach(image -> images.add(String.format("%s=%s", image.contains("=") ? image.substring(0, image.indexOf("=")) : image, argoToolConfig.getImageUrl())));
-                kustomize = new Kustomize();
-            }
-            kustomize.setImages(images);
-            argoApplicationItem.getSpec().getSource().setKustomize(kustomize);
-            if (!CollectionUtils.isEmpty(argoApplicationItem.getStatus().getHistory())) {
-                argoApplicationItem.getStatus().getHistory().clear();
-            }
-            serviceFactory.getArgoHelper().updateApplication(argoApplicationItem, argoToolDetails.getConfiguration(), argoPassword, argoToolConfig.getApplicationName());
-        }
-
-    }
 }
