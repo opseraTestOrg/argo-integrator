@@ -3,9 +3,15 @@ mv kustomize /usr/local/bin
 git clone ${GIT_URL} --depth 1 --branch ${GIT_BRANCH}
 cd ${GIT_FILE_PATH}
 kustomize edit set image ${IMAGE_REFERENCE}=${IMAGE_URL}
-git status
-git config --global user.email ${GIT_USERNAME}
-git config --global user.name ${GIT_USERNAME}
-git add ${GIT_PATH_FILE_NAME}
-git commit -m "updating the kustomization yaml"
-git push origin ${GIT_BRANCH}
+cd
+cd /${GIT_REPO_PATH}
+if git diff-index --quiet HEAD; then
+   echo "There are no changes"
+else
+ git status
+ git config --global user.email ${GIT_USERNAME}
+ git config --global user.name ${GIT_USERNAME}
+ git add ${GIT_PATH_FILE_NAME}
+ git commit -m "updating the kustomization yaml"
+ git push origin ${GIT_BRANCH}
+fi
