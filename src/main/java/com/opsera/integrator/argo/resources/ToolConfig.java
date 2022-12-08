@@ -69,10 +69,23 @@ public class ToolConfig implements Serializable {
     private boolean kustomizeFlag;
 
     private String imageUrl;
-    
+
     private boolean dynamicVariables;
-    
+
     private String applicationCluster;
-    
+
     private String yamlPath;
+
+    private String gitToolId;
+
+    private String gitUrl;
+
+    private String sshUrl;
+    
+    private String defaultBranch;
+    
+    private String gitFilePath;
+
+    private String imageReference;
+    
 }
