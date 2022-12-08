@@ -8,7 +8,7 @@ import static com.opsera.integrator.argo.resources.Constants.CUSTOMER_CLUSTER_IN
 import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.GIT_BRANCH;
 import static com.opsera.integrator.argo.resources.Constants.GIT_FILE_PATH;
-import static com.opsera.integrator.argo.resources.Constants.GIT_FILE_NAME;
+import static com.opsera.integrator.argo.resources.Constants.GIT_PATH_FILE_NAME;
 import static com.opsera.integrator.argo.resources.Constants.GIT_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.GIT_URL;
 import static com.opsera.integrator.argo.resources.Constants.GIT_USERNAME;
@@ -20,6 +20,7 @@ import static com.opsera.integrator.argo.resources.Constants.RUNNING;
 import static com.opsera.integrator.argo.resources.Constants.SYNC_IN_PROGRESS;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_URL;
+import static com.opsera.integrator.argo.resources.Constants.GIT_REPO_PATH;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -149,11 +150,11 @@ public class ArgoOrchestratorV3 {
         secrets.put(GIT_URL, gitUrl);
         secrets.put(GIT_BRANCH, argoToolConfig.getDefaultBranch());
         String gitBaseFolder = getGitCheckoutFolder(gitUrl);
-        String fileName = FilenameUtils.getName(argoToolConfig.getGitFilePath());
         String filePath = FilenameUtils.getFullPath(argoToolConfig.getGitFilePath());
         String gitFilePath = StringUtils.hasText(argoToolConfig.getGitFilePath()) ? filePath : "";
-        envVar.put(GIT_FILE_PATH, String.format("%s/%s", gitBaseFolder, gitFilePath));
-        envVar.put(GIT_FILE_NAME, fileName);
+        envVar.put(GIT_REPO_PATH, gitBaseFolder);
+        envVar.put(GIT_FILE_PATH, String.format("/%s/%s", gitBaseFolder, gitFilePath));
+        envVar.put(GIT_PATH_FILE_NAME, String.format("/%s/%s", gitBaseFolder, argoToolConfig.getGitFilePath()));
         envVar.put(IMAGE_REFERENCE, argoToolConfig.getImageReference());
         envVar.put(IMAGE_URL, argoToolConfig.getImageUrl());
         LOGGER.info("Successfully set commands, setting environment variables");

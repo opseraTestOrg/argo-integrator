@@ -3,10 +3,9 @@ mv kustomize /usr/local/bin
 git clone ${GIT_URL} --depth 1 --branch ${GIT_BRANCH}
 cd ${GIT_FILE_PATH}
 kustomize edit set image ${IMAGE_REFERENCE}=${IMAGE_URL}
-cd
 git status
 git config --global user.email ${GIT_USERNAME}
 git config --global user.name ${GIT_USERNAME}
-git add ${GIT_FILE_PATH}/${GIT_FILE_NAME}
+git add ${GIT_PATH_FILE_NAME}
 git commit -m "updating the kustomization yaml"
 git push origin ${GIT_BRANCH}

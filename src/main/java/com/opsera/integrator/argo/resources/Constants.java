@@ -114,7 +114,8 @@ public class Constants {
     public static final String GIT_CLONE_COMMAND = "git clone ${giturl} --depth 1 --branch ${gitbranch}";
     public static final String INPUT_PARAM_FORMAT = "${%s}";
     public static final String GIT_FILE_PATH = "GIT_FILE_PATH";
-    public static final String GIT_FILE_NAME = "GIT_FILE_NAME";
+    public static final String GIT_REPO_PATH = "GIT_REPO_PATH";
+    public static final String GIT_PATH_FILE_NAME = "GIT_PATH_FILE_NAME";
     public static final String GIT_TOKEN = "GIT_TOKEN";
     public static final String GIT_USERNAME = "GIT_USERNAME";
     public static final String IMAGE_REFERENCE = "IMAGE_REFERENCE";
