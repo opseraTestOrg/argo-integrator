@@ -20,6 +20,7 @@ import static com.opsera.integrator.argo.resources.Constants.OPSERA_USER;
 import static com.opsera.integrator.argo.resources.Constants.V1;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_URL;
+import static com.opsera.integrator.argo.resources.Constants.CREATE_NAMESPACE_FLAG;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -99,6 +100,7 @@ public class RequestBuilder {
 
     @Autowired
     private VaultHelper vaultHelper;
+
     /**
      * Creates the application request.
      *
@@ -121,12 +123,15 @@ public class RequestBuilder {
         spec.setSource(source);
         spec.setDestination(destination);
         spec.setProject(request.getProjectName());
+        SyncPolicy syncPolicy = new SyncPolicy();
         if (request.isAutoSync()) {
             Automated automated = new Automated();
-            SyncPolicy syncPolicy = new SyncPolicy();
             syncPolicy.setAutomated(automated);
             spec.setSyncPolicy(syncPolicy);
         }
+        List<String> syncOptions = new ArrayList<>();
+        syncOptions.add(CREATE_NAMESPACE_FLAG);
+        syncPolicy.setSyncOptions(syncOptions);
         argoApplication.setMetadata(metadata);
         argoApplication.setSpec(spec);
         return argoApplication;
@@ -219,7 +224,7 @@ public class RequestBuilder {
         }
         return createClusterRequest;
     }
-    
+
     public void createNamespace(CreateCluster request) {
         try {
             ApiClient client = null;
@@ -366,7 +371,7 @@ public class RequestBuilder {
         }
         return namespaceResourceWhitelist;
     }
-    
+
     public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException {
         String parentId = toolConfigurationHelper.getParentId(request.getCustomerId());
         Map<String, String> vaultData = vaultHelper.getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);

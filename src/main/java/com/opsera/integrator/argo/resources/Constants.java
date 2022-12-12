@@ -120,5 +120,6 @@ public class Constants {
     public static final String GIT_USERNAME = "GIT_USERNAME";
     public static final String IMAGE_REFERENCE = "IMAGE_REFERENCE";
     public static final String IMAGE_URL = "IMAGE_URL";
+    public static final String CREATE_NAMESPACE_FLAG = "CreateNamespace=true";
 
 }
