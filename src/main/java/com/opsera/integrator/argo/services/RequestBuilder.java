@@ -127,11 +127,11 @@ public class RequestBuilder {
         if (request.isAutoSync()) {
             Automated automated = new Automated();
             syncPolicy.setAutomated(automated);
-            spec.setSyncPolicy(syncPolicy);
         }
         List<String> syncOptions = new ArrayList<>();
         syncOptions.add(CREATE_NAMESPACE_FLAG);
         syncPolicy.setSyncOptions(syncOptions);
+        spec.setSyncPolicy(syncPolicy);
         argoApplication.setMetadata(metadata);
         argoApplication.setSpec(spec);
         return argoApplication;
