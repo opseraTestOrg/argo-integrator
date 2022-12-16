@@ -54,6 +54,7 @@ public class ObjectTranslator {
             }
             if (!ObjectUtils.isEmpty(item.getSpec().getDestination())) {
                 appMetadata.setClusterUrl(item.getSpec().getDestination().getServer());
+                appMetadata.setNamespace(item.getSpec().getDestination().getNamespace());
             }
             if (!ObjectUtils.isEmpty(item.getSpec().getSyncPolicy()) && !ObjectUtils.isEmpty(item.getSpec().getSyncPolicy().getAutomated())) {
                 appMetadata.setAutoSync(true);
