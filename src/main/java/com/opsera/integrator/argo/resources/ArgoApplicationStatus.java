@@ -23,5 +23,7 @@ public class ArgoApplicationStatus {
     private ArgoApplicationSource source;
     
     private Summary summary;
+    
+    private String phase;
 
 }

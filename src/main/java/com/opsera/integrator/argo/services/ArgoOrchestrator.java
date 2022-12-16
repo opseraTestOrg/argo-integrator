@@ -8,18 +8,18 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Optional;
 
-import com.opsera.core.helper.ToolConfigurationHelper;
-import com.opsera.core.rest.RestTemplateHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import com.opsera.core.helper.ToolConfigurationHelper;
+import com.opsera.core.helper.VaultHelper;
+import com.opsera.core.rest.RestTemplateHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.InternalServiceException;
@@ -46,7 +46,7 @@ import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
 import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
-import com.opsera.core.helper.VaultHelper;
+
 import io.kubernetes.client.openapi.ApiException;
 
 /**
@@ -113,7 +113,7 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
         ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoProjects(argoToolDetails.getConfiguration(), argoPassword);
-        return serviceFactory.getObjectTranslator().translateToArgoApplicationMetadataList(argoApplicationsList);
+        return serviceFactory.getObjectTranslator().translateToArgoProjectMetadataList(argoApplicationsList);
     }
 
     /**
