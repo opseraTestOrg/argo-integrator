@@ -65,7 +65,7 @@ public class ObjectTranslator {
                 appMetadata.setSyncStatus(item.getStatus().getSync().getStatus());
             }
             if (!ObjectUtils.isEmpty(item.getStatus().getHealth())) {
-                appMetadata.setSyncStatus(item.getStatus().getHealth().getStatus());
+                appMetadata.setHealthStatus(item.getStatus().getHealth().getStatus());
             }
         }
         return appMetadata;
