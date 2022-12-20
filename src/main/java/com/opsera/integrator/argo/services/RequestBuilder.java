@@ -65,6 +65,7 @@ import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
+import com.opsera.integrator.argo.resources.Directory;
 import com.opsera.integrator.argo.resources.Project;
 import com.opsera.integrator.argo.resources.SyncPolicy;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
@@ -114,6 +115,9 @@ public class RequestBuilder {
         metadata.setName(request.getApplicationName());
         ArgoApplicationSpec spec = new ArgoApplicationSpec();
         ArgoApplicationSource source = new ArgoApplicationSource();
+        Directory directory = new Directory();
+        directory.setRecurse(true);
+        source.setDirectory(directory);
         source.setRepoURL(request.getGitUrl());
         source.setPath(request.getGitPath());
         source.setTargetRevision(request.getBranchName());
@@ -126,6 +130,8 @@ public class RequestBuilder {
         SyncPolicy syncPolicy = new SyncPolicy();
         if (request.isAutoSync()) {
             Automated automated = new Automated();
+            automated.setPrune(true);
+            automated.setSelfHeal(true);
             syncPolicy.setAutomated(automated);
         }
         List<String> syncOptions = new ArrayList<>();
