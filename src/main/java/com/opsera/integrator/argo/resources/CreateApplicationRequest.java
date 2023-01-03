@@ -1,5 +1,7 @@
 package com.opsera.integrator.argo.resources;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -24,5 +26,17 @@ public class CreateApplicationRequest {
     private String gitPath;
 
     private boolean autoSync;
+    
+    private String type;
+    
+    private boolean recursive;
+    
+    private List<String> valueFiles;
+    
+    private String values;
+    
+    private String namePrefix;
+    
+    private String nameSuffix;
 
 }
