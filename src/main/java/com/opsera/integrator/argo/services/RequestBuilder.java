@@ -14,13 +14,13 @@ import static com.opsera.integrator.argo.resources.Constants.AWS_SESSION_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.AZURE;
 import static com.opsera.integrator.argo.resources.Constants.AZURE_DEVOPS_TOOL_IDENTIFIER;
 import static com.opsera.integrator.argo.resources.Constants.CLUSTER_NAME;
+import static com.opsera.integrator.argo.resources.Constants.CREATE_NAMESPACE_FLAG;
 import static com.opsera.integrator.argo.resources.Constants.CUSTOMER_CLUSTER_INFO_MISSING;
 import static com.opsera.integrator.argo.resources.Constants.NAMESPACE_OPSERA;
 import static com.opsera.integrator.argo.resources.Constants.OPSERA_USER;
 import static com.opsera.integrator.argo.resources.Constants.V1;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_TOKEN;
 import static com.opsera.integrator.argo.resources.Constants.VAULT_CLUSTER_URL;
-import static com.opsera.integrator.argo.resources.Constants.CREATE_NAMESPACE_FLAG;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,15 +32,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.opsera.core.helper.ToolConfigurationHelper;
-import com.opsera.core.helper.VaultHelper;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import com.opsera.core.exception.ServiceException;
+import com.opsera.core.helper.ToolConfigurationHelper;
+import com.opsera.core.helper.VaultHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
@@ -66,6 +68,8 @@ import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.Directory;
+import com.opsera.integrator.argo.resources.Helm;
+import com.opsera.integrator.argo.resources.Kustomize;
 import com.opsera.integrator.argo.resources.Project;
 import com.opsera.integrator.argo.resources.SyncPolicy;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
@@ -115,16 +119,14 @@ public class RequestBuilder {
         metadata.setName(request.getApplicationName());
         ArgoApplicationSpec spec = new ArgoApplicationSpec();
         ArgoApplicationSource source = new ArgoApplicationSource();
-        Directory directory = new Directory();
-        directory.setRecurse(true);
-        source.setDirectory(directory);
+        setApplicationTypeAttributes(request, source);
         source.setRepoURL(request.getGitUrl());
         source.setPath(request.getGitPath());
         source.setTargetRevision(request.getBranchName());
         ArgoApplicationDestination destination = new ArgoApplicationDestination();
         destination.setNamespace(request.getNamespace());
         destination.setServer(request.getCluster());
-        spec.setSource(source);
+        spec.setSource(source);      
         spec.setDestination(destination);
         spec.setProject(request.getProjectName());
         SyncPolicy syncPolicy = new SyncPolicy();
@@ -141,6 +143,48 @@ public class RequestBuilder {
         argoApplication.setMetadata(metadata);
         argoApplication.setSpec(spec);
         return argoApplication;
+    }
+
+    private void setApplicationTypeAttributes(CreateApplicationRequest request, ArgoApplicationSource source) {
+        if (request.getType().equalsIgnoreCase("Helm")) {
+            setHelmTypeSourceAttributes(request, source);
+        } else if (request.getType().equalsIgnoreCase("Kustomize")) {
+            setKustomizeSourceAttributes(request, source);
+        } else {
+            if (request.isRecursive()) {
+                Directory directory = new Directory();
+                directory.setRecurse(true);
+                source.setDirectory(directory);
+            }
+        }
+    }
+
+    private void setKustomizeSourceAttributes(CreateApplicationRequest request, ArgoApplicationSource source) {
+        if (StringUtils.hasText(request.getNamePrefix()) || StringUtils.hasText(request.getNameSuffix())) {
+            Kustomize kustomize = new Kustomize();
+            if (StringUtils.hasText(request.getNamePrefix())) {
+                kustomize.setNamePrefix(request.getNamePrefix());  
+            }
+            if(StringUtils.hasText(request.getNameSuffix())) {
+                kustomize.setNameSuffix(request.getNameSuffix());
+            }
+            source.setKustomize(kustomize);
+        }
+    }
+
+    private void setHelmTypeSourceAttributes(CreateApplicationRequest request, ArgoApplicationSource source) {
+        if (StringUtils.hasText(request.getValues()) || !CollectionUtils.isEmpty(request.getValueFiles())) {
+            Helm helm = new Helm();
+            if (!CollectionUtils.isEmpty(request.getValueFiles())) {
+                helm.setValueFiles(request.getValueFiles());
+            }
+            if (StringUtils.hasText(request.getValues())) {
+                helm.setValues(request.getValues());
+            }
+            source.setHelm(helm);
+        } else {
+            throw new ServiceException("Values and Values Files cannot be Empty for the type Helm");
+        }
     }
 
     /**

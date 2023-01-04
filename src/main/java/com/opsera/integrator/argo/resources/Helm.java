@@ -8,12 +8,10 @@ import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Kustomize {
+public class Helm {
 
-    private List<String> images;
+    private List<String> valueFiles;
 
-    private String namePrefix;
-
-    private String nameSuffix;
+    private String values;
 
 }

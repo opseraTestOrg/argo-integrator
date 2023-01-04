@@ -19,5 +19,7 @@ public class ArgoApplicationSource {
     private Kustomize kustomize;
 
     private Directory directory;
+    
+    private Helm helm;
 
 }
