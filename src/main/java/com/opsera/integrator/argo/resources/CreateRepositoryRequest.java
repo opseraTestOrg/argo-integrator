@@ -20,5 +20,7 @@ public class CreateRepositoryRequest {
     private String gitToolId;
     
     private String projectName;
+    
+    private String repoUrl;
 
 }

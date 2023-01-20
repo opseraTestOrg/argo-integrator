@@ -333,17 +333,7 @@ public class ArgoOrchestrator {
         LOGGER.debug("To Starting to delete the repository request {}", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
-        ToolDetails credentialToolDetails = toolConfigurationHelper.getToolConfig(request.getCustomerId(), request.getGitToolId(), ToolDetails.class);
-        String repositoryUrl = "";
-        if (null != credentialToolDetails) {
-            ToolConfig toolConfig = credentialToolDetails.getConfiguration();
-            if (toolConfig.isTwoFactorAuthentication()) {
-                repositoryUrl = request.getSshUrl();
-            } else {
-                repositoryUrl = request.getHttpsUrl();
-            }
-        }
-        serviceFactory.getArgoHelper().deleteArgoRepository(repositoryUrl, argoToolDetails.getConfiguration(), argoPassword);
+        serviceFactory.getArgoHelper().deleteArgoRepository(request.getRepoUrl(), argoToolDetails.getConfiguration(), argoPassword);
         LOGGER.debug("To Completed to delete the repository request {}", request);
     }
 
