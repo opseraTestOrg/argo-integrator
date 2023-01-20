@@ -1,7 +1,6 @@
 package com.opsera.integrator.argo.services;
 
 import static com.opsera.integrator.argo.resources.Constants.ARGO_GENERATE_TOKEN_API;
-import static com.opsera.integrator.argo.resources.Constants.FAILED;
 import static com.opsera.integrator.argo.resources.Constants.INVALID_CONNECTION_DETAILS;
 
 import java.io.IOException;
@@ -262,33 +261,19 @@ public class ArgoOrchestrator {
      */
     public ResponseEntity<String> createRepository(CreateRepositoryRequest request) {
         LOGGER.debug("To Starting to create/update the repository {} ", request);
-        ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
-        String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
-        ToolDetails credentialToolDetails = toolConfigurationHelper.getToolConfig(request.getCustomerId(), request.getGitToolId(), ToolDetails.class);
-        if (null != credentialToolDetails) {
-            String repositoryUrl = "";
-            ToolConfig toolConfig = credentialToolDetails.getConfiguration();
-            String credentialSecret = null;
-            if (toolConfig.isTwoFactorAuthentication()) {
-                credentialSecret = toolConfig.getSecretPrivateKey().getVaultKey();
-                repositoryUrl = request.getSshUrl();
-            } else {
-                credentialSecret = toolConfig.getAccountPassword().getVaultKey();
-                repositoryUrl = request.getHttpsUrl();
-            }
-            String secret = vaultService.getSecrets(credentialToolDetails.getOwner(), credentialSecret, credentialToolDetails.getVault());
-            ArgoRepositoryItem argoApplication = serviceFactory.getRequestBuilder().createRepositoryRequest(request, credentialToolDetails, secret);
-            try {
-                ArgoRepositoryItem applicationItem = getRepository(request.getToolId(), request.getCustomerId(), repositoryUrl, argoToolDetails, argoPassword);
-                if (null != applicationItem && applicationItem.getConnectionState().getStatus().equalsIgnoreCase(FAILED)) {
-                    return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
-                } else {
-                    return serviceFactory.getArgoHelper().updateRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
-                }
-            } catch (Exception e) {
-                LOGGER.error("Repository doesn't exists in the Argo. message: {}", e.getMessage());
+        try {
+            ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
+            String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+            ToolDetails credentialToolDetails = toolConfigurationHelper.getToolConfig(request.getCustomerId(), request.getGitToolId(), ToolDetails.class);
+            if (null != credentialToolDetails) {
+                String credentialSecret = null;
+                String secret = vaultService.getSecrets(credentialToolDetails.getOwner(), credentialSecret, credentialToolDetails.getVault());
+                ArgoRepositoryItem argoApplication = serviceFactory.getRequestBuilder().createRepositoryRequest(request, credentialToolDetails, secret);
                 return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
             }
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while creating repository. message: {}", e.getMessage());
+            throw new ArgoServiceException(e.getMessage());
         }
         return null;
     }
