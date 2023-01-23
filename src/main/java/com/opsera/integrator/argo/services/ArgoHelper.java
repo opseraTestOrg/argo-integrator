@@ -37,11 +37,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opsera.core.rest.RestTemplateHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
@@ -54,12 +56,16 @@ import com.opsera.integrator.argo.resources.ArgoSessionRequest;
 import com.opsera.integrator.argo.resources.ArgoSessionToken;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
+import com.opsera.integrator.argo.resources.ErrorResponse;
 import com.opsera.integrator.argo.resources.LogResult;
 import com.opsera.integrator.argo.resources.Node;
+import com.opsera.integrator.argo.resources.RepoRefs;
 import com.opsera.integrator.argo.resources.ResourceTree;
 import com.opsera.integrator.argo.resources.RolloutActions;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.UserInfo;
+import com.opsera.integrator.argo.resources.ValidateApplicationPath;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathResponse;
 
 /**
  * Class handles all the interaction with argo server.
@@ -584,5 +590,34 @@ public class ArgoHelper {
         String url = String.format(ARGO_APPLICATION_DETAILS, toolConfig.getToolURL(), URLEncoder.encode(spec.getSource().getRepoURL(), "UTF-8"));
         ArgoApplicationSource response = restTemplateHelper.postForEntity(ArgoApplicationSource.class, url, requestEntity);
         return response;
+    }
+
+    public RepoRefs getRepoBranchesAndTagsList(ToolConfig toolConfig, String argoPassword, String repoUrl) throws UnsupportedEncodingException {
+        HttpHeaders requestHeaders = getHttpHeaders(toolConfig, argoPassword);
+        String url = UriComponentsBuilder.fromUriString(String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL())).path("/").path(encodeURL(repoUrl)).path("/refs").build().toUriString();
+        return restTemplateHelper.getForEntity(RepoRefs.class, url, requestHeaders);
+    }
+
+    public String validateAppPath(ToolConfig toolConfig, String argoPassword, ValidateApplicationPath request) throws UnsupportedEncodingException {
+        try {
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
+            String url = UriComponentsBuilder.fromUriString(String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL())).path("/").path(encodeURL(request.getSource().getRepoURL()))
+                    .path("/appdetails").build().toUriString();
+            ResponseEntity<ValidateApplicationPathResponse> response = new ResponseEntity<>(restTemplateHelper.postForEntity(ValidateApplicationPathResponse.class, url, requestEntity), HttpStatus.OK);
+            return response.getBody().getType();
+        } catch (Exception e) {
+            LOGGER.error("application path failed with error message: {}", e.getMessage());
+            String message = e.getMessage();
+            try {
+                int start = message.contains("\"") ? message.indexOf("\"") : 0;
+                String tempMsg = message.substring(start).replaceAll("^\"|\"$", "");
+                ErrorResponse error = serviceFactory.gson().fromJson(tempMsg, ErrorResponse.class);
+                message = error.getMessage();
+            } catch (Exception e1) {
+                LOGGER.error("error message parse error. message: {}", e1.getMessage());
+                throw new ArgoServiceException(message);
+            }
+            throw new InvalidRequestException(message);
+        }
     }
 }
