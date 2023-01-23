@@ -21,5 +21,7 @@ public class ArgoApplicationSource {
     private Directory directory;
     
     private Helm helm;
+    
+    private String appName;
 
 }

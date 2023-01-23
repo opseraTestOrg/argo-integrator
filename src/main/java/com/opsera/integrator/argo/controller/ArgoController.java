@@ -3,7 +3,6 @@ package com.opsera.integrator.argo.controller;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import com.opsera.core.aspects.TrackExecutionTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientException;
 
+import com.opsera.core.aspects.TrackExecutionTime;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
@@ -35,7 +35,9 @@ import com.opsera.integrator.argo.resources.CreateCluster;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.RepoRefs;
 import com.opsera.integrator.argo.resources.Response;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathRequest;
 import com.opsera.integrator.argo.resources.ValidationResponse;
 
 import io.swagger.annotations.Api;
@@ -395,5 +397,22 @@ public class ArgoController {
         LOGGER.info("Received approvalOrRejectPromotion for pipelineMetadata : {}", request);
         serviceFactory.getArgoOrchestratorV2().promoteOrAbortRolloutDeployment(request);
         return "Request Submitted";
+    }
+    
+    @GetMapping(path = "v1.0/argo/repositories/refs")
+    @ApiOperation("To retrieve branches and tags of repositories")
+    @TrackExecutionTime
+    public RepoRefs getRepoBranchesAndTags(@RequestParam String argoToolId, @RequestParam String customerId, @RequestParam String repoUrl) throws UnsupportedEncodingException {
+        LOGGER.info("Received getRepoBranches request for argoTool: {}", argoToolId);
+        return serviceFactory.getArgoOrchestrator().getRepoBranchesAndTagsList(argoToolId, customerId, repoUrl);
+    }
+    
+    @PostMapping(path = "v1.0/argo/application/validatepath")
+    @ApiOperation("To check application directory path correctness")
+    @TrackExecutionTime
+    public Response validateApplicationPath(@RequestBody ValidateApplicationPathRequest request) throws UnsupportedEncodingException {
+        LOGGER.info("Received validate applicaton path request : {}", request);
+        serviceFactory.getArgoOrchestrator().validateAppPath(request);
+        return Response.builder().message("Application path is valid").status("Success").build();
     }
 }

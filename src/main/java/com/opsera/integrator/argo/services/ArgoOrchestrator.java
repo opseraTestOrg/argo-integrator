@@ -42,9 +42,12 @@ import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.RepoRefs;
 import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
+import com.opsera.integrator.argo.resources.ValidateApplicationPath;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathRequest;
 
 import io.kubernetes.client.openapi.ApiException;
 
@@ -464,5 +467,18 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
         return serviceFactory.getArgoHelper().getAppdetails(argoToolDetails.getConfiguration(), argoPassword, spec);
+    }
+    
+    public RepoRefs getRepoBranchesAndTagsList(String argoToolId, String customerId, String repoUrl) throws UnsupportedEncodingException {
+        ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
+        String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+        return serviceFactory.getArgoHelper().getRepoBranchesAndTagsList(argoToolDetails.getConfiguration(), argoPassword, repoUrl);
+    }
+    
+    public String validateAppPath(ValidateApplicationPathRequest request) throws UnsupportedEncodingException {
+        ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getArgoToolId(), request.getCustomerId());
+        String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+        ValidateApplicationPath argoRequest = serviceFactory.getRequestBuilder().constructValidateAppPathRequest(request);
+        return serviceFactory.getArgoHelper().validateAppPath(argoToolDetails.getConfiguration(), argoPassword, argoRequest);
     }
 }

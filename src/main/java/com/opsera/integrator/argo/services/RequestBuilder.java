@@ -45,6 +45,7 @@ import com.opsera.core.helper.ToolConfigurationHelper;
 import com.opsera.core.helper.VaultHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ArgoServiceException;
+import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
@@ -75,6 +76,8 @@ import com.opsera.integrator.argo.resources.SyncPolicy;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
+import com.opsera.integrator.argo.resources.ValidateApplicationPath;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathRequest;
 import com.opsera.kubernetes.helper.KubernetesPodHandler;
 import com.opsera.kubernetes.helper.exception.KubernetesHelperException;
 import com.opsera.kubernetes.helper.listener.KubernetesLogListener;
@@ -555,6 +558,22 @@ public class RequestBuilder {
         }
         if (StringUtils.hasText(request.getClusterName())) {
             envVar.put(CLUSTER_NAME, request.getClusterName());
+        }
+    }
+
+    public ValidateApplicationPath constructValidateAppPathRequest(ValidateApplicationPathRequest request) {
+        if (StringUtils.hasText(request.getBranchOrTag()) && StringUtils.hasText(request.getAppName()) && StringUtils.hasText(request.getRepoUrl()) && StringUtils.hasText(request.getPath())) {
+            ValidateApplicationPath argoRequest = new ValidateApplicationPath();
+            argoRequest.setAppName(request.getAppName());
+            ArgoApplicationSource source = new ArgoApplicationSource();
+            source.setAppName(request.getAppName());
+            source.setPath(request.getPath());
+            source.setRepoURL(request.getRepoUrl());
+            source.setTargetRevision(request.getBranchOrTag());
+            argoRequest.setSource(source);
+            return argoRequest;
+        } else {
+            throw new InvalidRequestException("Invalid request provided to check the application path");
         }
     }
 }
