@@ -11,6 +11,7 @@ import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadata;
 import com.opsera.integrator.argo.resources.ArgoApplicationMetadataList;
 import com.opsera.integrator.argo.resources.ArgoApplicationsList;
+import com.opsera.integrator.argo.resources.ProjectList;
 
 /**
  * Class to translate objects to desired types
@@ -75,5 +76,15 @@ public class ObjectTranslator {
     public ArgoApplicationMetadataList translateToArgoProjectMetadataList(ArgoApplicationsList argoApplicationsList) {
         List<ArgoApplicationMetadata> metadataList = argoApplicationsList.getItems().stream().map(ArgoApplicationItem::getMetadata).collect(Collectors.toList());
         return new ArgoApplicationMetadataList(metadataList);
+    }
+    
+    public ProjectList translateToArgoProjectsBasicDtls(ProjectList allProjectsDtlsList) {
+        allProjectsDtlsList.getItems().forEach(item -> {
+            item.setName(item.getMetadata().getName());
+            item.setDescription(item.getSpec().getDescription());
+            item.setMetadata(null);
+            item.setSpec(null);
+        });
+        return allProjectsDtlsList;
     }
 }

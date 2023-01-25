@@ -59,6 +59,8 @@ import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.ErrorResponse;
 import com.opsera.integrator.argo.resources.LogResult;
 import com.opsera.integrator.argo.resources.Node;
+import com.opsera.integrator.argo.resources.Project;
+import com.opsera.integrator.argo.resources.ProjectList;
 import com.opsera.integrator.argo.resources.RepoRefs;
 import com.opsera.integrator.argo.resources.ResourceTree;
 import com.opsera.integrator.argo.resources.RolloutActions;
@@ -133,11 +135,11 @@ public class ArgoHelper {
      * @param argoPassword
      * @return the all argo projects
      */
-    public ArgoApplicationsList getAllArgoProjects(ToolConfig toolConfig, String argoPassword) {
+    public ProjectList getAllArgoProjects(ToolConfig toolConfig, String argoPassword) {
         HttpHeaders requestHttpHeaders = getHttpHeaders(toolConfig, argoPassword);
         String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, toolConfig.getToolURL());
         String response = restTemplateHelper.getForEntity(String.class, url, requestHttpHeaders);
-        return serviceFactory.getResponseParser().extractArgoApplicationsList(response);
+        return serviceFactory.getResponseParser().extractArgoProjectsList(response);
     }
 
     /**
@@ -619,5 +621,12 @@ public class ArgoHelper {
             }
             throw new InvalidRequestException(message);
         }
+    }
+    
+    public Project getArgoProjectDtls(ToolConfig toolConfig, String argoPassword, String projectName) {
+        HttpHeaders requestHttpHeaders = getHttpHeaders(toolConfig, argoPassword);
+        String url = UriComponentsBuilder.fromUriString(String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, toolConfig.getToolURL())).path("/").path(projectName).build().toUriString();
+        String response = restTemplateHelper.getForEntity(String.class, url, requestHttpHeaders);
+        return serviceFactory.getResponseParser().extractArgoProjectDtls(response);
     }
 }
