@@ -284,7 +284,6 @@ public class ArgoController {
     @ApiOperation("To create an argo repository")
     @TrackExecutionTime
     public ResponseEntity<String> createArgoRepository(@RequestBody CreateRepositoryRequest request) {
-
         LOGGER.info("Received createArgoRepository for : {}", request);
         return serviceFactory.getArgoOrchestrator().createRepository(request);
 
