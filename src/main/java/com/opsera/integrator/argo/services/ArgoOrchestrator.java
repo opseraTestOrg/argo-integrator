@@ -265,7 +265,7 @@ public class ArgoOrchestrator {
      * @return the response entity
      */
     public ResponseEntity<String> createRepository(CreateRepositoryRequest request) {
-        LOGGER.debug("To Starting to create/update the repository {} ", request);
+        LOGGER.debug("Starting to create the repository {} ", request);
         try {
             ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
             String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
