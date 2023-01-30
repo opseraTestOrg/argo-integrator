@@ -271,7 +271,13 @@ public class ArgoOrchestrator {
             String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
             ToolDetails credentialToolDetails = toolConfigurationHelper.getToolConfig(request.getCustomerId(), request.getGitToolId(), ToolDetails.class);
             if (null != credentialToolDetails) {
+                ToolConfig toolConfig = credentialToolDetails.getConfiguration();
                 String credentialSecret = null;
+                if (toolConfig.isTwoFactorAuthentication()) {
+                    credentialSecret = toolConfig.getSecretPrivateKey().getVaultKey();
+                } else {
+                    credentialSecret = toolConfig.getAccountPassword().getVaultKey();
+                }
                 String secret = vaultService.getSecrets(credentialToolDetails.getOwner(), credentialSecret, credentialToolDetails.getVault());
                 ArgoRepositoryItem argoApplication = serviceFactory.getRequestBuilder().createRepositoryRequest(request, credentialToolDetails, secret);
                 return serviceFactory.getArgoHelper().createRepository(argoApplication, argoToolDetails.getConfiguration(), argoPassword);
