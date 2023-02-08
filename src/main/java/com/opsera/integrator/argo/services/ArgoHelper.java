@@ -37,11 +37,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opsera.core.rest.RestTemplateHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
+import com.opsera.integrator.argo.exceptions.ArgoServiceException;
 import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
 import com.opsera.integrator.argo.resources.ArgoApplicationSource;
@@ -54,12 +56,18 @@ import com.opsera.integrator.argo.resources.ArgoSessionRequest;
 import com.opsera.integrator.argo.resources.ArgoSessionToken;
 import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
+import com.opsera.integrator.argo.resources.ErrorResponse;
 import com.opsera.integrator.argo.resources.LogResult;
 import com.opsera.integrator.argo.resources.Node;
+import com.opsera.integrator.argo.resources.Project;
+import com.opsera.integrator.argo.resources.ProjectList;
+import com.opsera.integrator.argo.resources.RepoRefs;
 import com.opsera.integrator.argo.resources.ResourceTree;
 import com.opsera.integrator.argo.resources.RolloutActions;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.UserInfo;
+import com.opsera.integrator.argo.resources.ValidateApplicationPath;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathResponse;
 
 /**
  * Class handles all the interaction with argo server.
@@ -127,11 +135,11 @@ public class ArgoHelper {
      * @param argoPassword
      * @return the all argo projects
      */
-    public ArgoApplicationsList getAllArgoProjects(ToolConfig toolConfig, String argoPassword) {
+    public ProjectList getAllArgoProjects(ToolConfig toolConfig, String argoPassword) {
         HttpHeaders requestHttpHeaders = getHttpHeaders(toolConfig, argoPassword);
         String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, toolConfig.getToolURL());
         String response = restTemplateHelper.getForEntity(String.class, url, requestHttpHeaders);
-        return serviceFactory.getResponseParser().extractArgoApplicationsList(response);
+        return serviceFactory.getResponseParser().extractArgoProjectsList(response);
     }
 
     /**
@@ -143,11 +151,18 @@ public class ArgoHelper {
      * @return the argo application item
      */
     public ArgoApplicationItem syncApplication(String applicationName, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("Starting to Sync Argo Application for applicationName {}", applicationName);
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, toolConfig, argoPassword);
-        String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);
-        ArgoApplicationItem response = restTemplateHelper.postForEntity(ArgoApplicationItem.class, url, requestEntity);
-        return response;
+        try {
+            LOGGER.debug("Starting to Sync Argo Application for applicationName {}", applicationName);
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(HTTP_EMPTY_BODY, toolConfig, argoPassword);
+            String url = String.format(ARGO_SYNC_APPLICATION_URL_TEMPLATE, toolConfig.getToolURL(), applicationName);
+            ArgoApplicationItem response = restTemplateHelper.postForEntity(ArgoApplicationItem.class, url, requestEntity);
+            return response;
+        } catch (Exception e) {
+            LOGGER.error("Exception occured during application sync. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -353,10 +368,17 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> createRepository(ArgoRepositoryItem argoApplication, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("To Starting to create the repository {} and url {} ", argoApplication.getRepo(), toolConfig.getToolURL());
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), toolConfig, argoPassword);
-        String url = String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL());
-        return new ResponseEntity<>(restTemplateHelper.postForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        try {
+            LOGGER.debug("To Starting to create the repository {} and url {} ", argoApplication.getRepo(), toolConfig.getToolURL());
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), toolConfig, argoPassword);
+            String url = String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL());
+            return new ResponseEntity<>(restTemplateHelper.postForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while creating repository. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -369,11 +391,18 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public ResponseEntity<String> updateRepository(ArgoRepositoryItem argoApplication, ToolConfig toolConfig, String argoPassword) throws IOException {
-        LOGGER.debug("To Starting to update the repository {} and url {} ", argoApplication.getRepo(), toolConfig.getToolURL());
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), toolConfig, argoPassword);
-        String repositoryUrl = encodeURL(argoApplication.getRepo());
-        String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL(), repositoryUrl);
-        return new ResponseEntity<>(restTemplateHelper.putForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        try {
+            LOGGER.debug("To Starting to update the repository {} and url {} ", argoApplication.getRepo(), toolConfig.getToolURL());
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(argoApplication), toolConfig, argoPassword);
+            String repositoryUrl = encodeURL(argoApplication.getRepo());
+            String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL(), repositoryUrl);
+            return new ResponseEntity<>(restTemplateHelper.putForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while updating repository. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -385,12 +414,18 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public void deleteArgoRepository(String repositoryUrl, ToolConfig toolConfig, String argoPassword) throws IOException {
-        LOGGER.debug("To Starting to delete the repository {} and url {} ", repositoryUrl, toolConfig.getToolURL());
-        repositoryUrl = encodeURL(repositoryUrl);
-        HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
-        String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL(), repositoryUrl);
-        restTemplateHelper.delete(url, requestEntity);
-        LOGGER.debug("To Completed to delete the repository {} and url {} ", repositoryUrl, toolConfig.getToolURL());
+        try {
+            LOGGER.debug("To Starting to delete the repository {} and url {} ", repositoryUrl, toolConfig.getToolURL());
+            repositoryUrl = encodeURL(repositoryUrl);
+            HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
+            String url = String.format(ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL(), repositoryUrl);
+            restTemplateHelper.delete(url, requestEntity);
+            LOGGER.debug("To Completed to delete the repository {} and url {} ", repositoryUrl, toolConfig.getToolURL());
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while deleting repository. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
     }
 
     /**
@@ -431,10 +466,17 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> createProject(CreateProjectRequest request, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("To Starting to create the project {} and url {} ", request.getProject().getMetadata().getName(), toolConfig.getToolURL());
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
-        String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, toolConfig.getToolURL());
-        return new ResponseEntity<>(restTemplateHelper.postForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        try {
+            LOGGER.debug("To Starting to create the project {} and url {} ", request.getProject().getMetadata().getName(), toolConfig.getToolURL());
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
+            String url = String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, toolConfig.getToolURL());
+            return new ResponseEntity<>(restTemplateHelper.postForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while creating project. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -445,11 +487,17 @@ public class ArgoHelper {
      * @param argoPassword
      */
     public void deleteArgoProject(String projectName, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("To Starting to delete the project {} and url {} ", projectName, toolConfig.getToolURL());
-        HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
-        String url = String.format(ARGO_PROJECT_URL_TEMPLATE, toolConfig.getToolURL(), projectName);
-        restTemplateHelper.delete(url, requestEntity);
-        LOGGER.debug("To Completed to delete the project {} and url {} ", projectName, toolConfig.getToolURL());
+        try {
+            LOGGER.debug("To Starting to delete the project {} and url {} ", projectName, toolConfig.getToolURL());
+            HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
+            String url = String.format(ARGO_PROJECT_URL_TEMPLATE, toolConfig.getToolURL(), projectName);
+            restTemplateHelper.delete(url, requestEntity);
+            LOGGER.debug("To Completed to delete the project {} and url {} ", projectName, toolConfig.getToolURL());
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while deleting project. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
     }
 
     /**
@@ -461,10 +509,17 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> updateProject(CreateProjectRequest request, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("To Starting to update the project {} and url {} ", request.getProject().getMetadata().getName(), toolConfig.getToolURL());
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
-        String url = String.format(ARGO_PROJECT_URL_TEMPLATE, toolConfig.getToolURL(), request.getProject().getMetadata().getName());
-        return new ResponseEntity<>(restTemplateHelper.putForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        try {
+            LOGGER.debug("To Starting to update the project {} and url {} ", request.getProject().getMetadata().getName(), toolConfig.getToolURL());
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
+            String url = String.format(ARGO_PROJECT_URL_TEMPLATE, toolConfig.getToolURL(), request.getProject().getMetadata().getName());
+            return new ResponseEntity<>(restTemplateHelper.putForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while updating project. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -476,10 +531,17 @@ public class ArgoHelper {
      * @return the response entity
      */
     public ResponseEntity<String> createCluster(CreateClusterRequest request, ToolConfig toolConfig, String argoPassword) {
-        LOGGER.debug("To Starting to create the cluster {} and url {} ", request.getName(), toolConfig.getToolURL());
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
-        String url = String.format(ARGO_ALL_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL());
-        return new ResponseEntity<>(restTemplateHelper.postForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        try {
+            LOGGER.debug("To Starting to create the cluster {} and url {} ", request.getName(), toolConfig.getToolURL());
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
+            String url = String.format(ARGO_ALL_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL());
+            return new ResponseEntity<>(restTemplateHelper.postForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while creating cluster. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -492,11 +554,18 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public ResponseEntity<String> updateCluster(CreateClusterRequest request, ToolConfig toolConfig, String argoPassword) throws IOException {
-        LOGGER.debug("To Starting to update the cluster {} and url {} ", request.getName(), toolConfig.getToolURL());
-        HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
-        String serverUrl = encodeURL(request.getServer());
-        String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL(), serverUrl);
-        return new ResponseEntity<>(restTemplateHelper.putForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        try {
+            LOGGER.debug("To Starting to update the cluster {} and url {} ", request.getName(), toolConfig.getToolURL());
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
+            String serverUrl = encodeURL(request.getServer());
+            String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL(), serverUrl);
+            return new ResponseEntity<>(restTemplateHelper.putForEntity(String.class, url, requestEntity), HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while updating cluster. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
     }
 
     /**
@@ -508,12 +577,18 @@ public class ArgoHelper {
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
     public void deleteArgoCluster(String server, ToolConfig toolConfig, String argoPassword) throws IOException {
-        LOGGER.debug("To Starting to delete the cluster {} and url {} ", server, toolConfig.getToolURL());
-        HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
-        String serverUrl = encodeURL(server);
-        String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL(), serverUrl);
-        restTemplateHelper.delete(url, requestEntity);
-        LOGGER.debug("To Completed to delete the cluster {} and url {} ", server, toolConfig.getToolURL());
+        try {
+            LOGGER.debug("To Starting to delete the cluster {} and url {} ", server, toolConfig.getToolURL());
+            HttpHeaders requestEntity = getHttpHeaders(toolConfig, argoPassword);
+            String serverUrl = encodeURL(server);
+            String url = String.format(ARGO_CLUSTER_URL_TEMPLATE, toolConfig.getToolURL(), serverUrl);
+            restTemplateHelper.delete(url, requestEntity);
+            LOGGER.debug("To Completed to delete the cluster {} and url {} ", server, toolConfig.getToolURL());
+        } catch (Exception e) {
+            LOGGER.error("Exception occured while deleting cluster. message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
     }
 
     /**
@@ -584,5 +659,46 @@ public class ArgoHelper {
         String url = String.format(ARGO_APPLICATION_DETAILS, toolConfig.getToolURL(), URLEncoder.encode(spec.getSource().getRepoURL(), "UTF-8"));
         ArgoApplicationSource response = restTemplateHelper.postForEntity(ArgoApplicationSource.class, url, requestEntity);
         return response;
+    }
+
+    public RepoRefs getRepoBranchesAndTagsList(ToolConfig toolConfig, String argoPassword, String repoUrl) throws UnsupportedEncodingException {
+        HttpHeaders requestHeaders = getHttpHeaders(toolConfig, argoPassword);
+        String url = UriComponentsBuilder.fromUriString(String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL())).path("/").path(encodeURL(repoUrl)).path("/refs").build().toUriString();
+        return restTemplateHelper.getForEntity(RepoRefs.class, url, requestHeaders);
+    }
+
+    public String validateAppPath(ToolConfig toolConfig, String argoPassword, ValidateApplicationPath request) throws UnsupportedEncodingException {
+        try {
+            HttpEntity<String> requestEntity = getRequestEntityWithBody(serviceFactory.gson().toJson(request), toolConfig, argoPassword);
+            String url = UriComponentsBuilder.fromUriString(String.format(ALL_ARGO_REPOSITORY_URL_TEMPLATE, toolConfig.getToolURL())).path("/").path(encodeURL(request.getSource().getRepoURL()))
+                    .path("/appdetails").build().toUriString();
+            ResponseEntity<ValidateApplicationPathResponse> response = new ResponseEntity<>(restTemplateHelper.postForEntity(ValidateApplicationPathResponse.class, url, requestEntity), HttpStatus.OK);
+            return response.getBody().getType();
+        } catch (Exception e) {
+            LOGGER.error("application path failed with error message: {}", e.getMessage());
+            String message = e.getMessage();
+            parseArgoErrorMessage(message);
+        }
+        return null;
+    }
+
+    private void parseArgoErrorMessage(String message) {
+        try {
+            int start = message.contains("\"") ? message.indexOf("\"") : 0;
+            String tempMsg = message.substring(start).replaceAll("^\"|\"$", "");
+            ErrorResponse error = serviceFactory.gson().fromJson(tempMsg, ErrorResponse.class);
+            message = error.getMessage();
+        } catch (Exception e1) {
+            LOGGER.error("error message parse error. message: {}", e1.getMessage());
+            throw new ArgoServiceException(message);
+        }
+        throw new InvalidRequestException(message);
+    }
+    
+    public Project getArgoProjectDtls(ToolConfig toolConfig, String argoPassword, String projectName) {
+        HttpHeaders requestHttpHeaders = getHttpHeaders(toolConfig, argoPassword);
+        String url = UriComponentsBuilder.fromUriString(String.format(ARGO_ALL_PROJECT_URL_TEMPLATE, toolConfig.getToolURL())).path("/").path(projectName).build().toUriString();
+        String response = restTemplateHelper.getForEntity(String.class, url, requestHttpHeaders);
+        return serviceFactory.getResponseParser().extractArgoProjectDtls(response);
     }
 }
