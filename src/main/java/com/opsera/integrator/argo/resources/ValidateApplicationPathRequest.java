@@ -14,5 +14,4 @@ public class ValidateApplicationPathRequest {
     private String name;
     private String repoUrl;
     private String branch;
-    private String tag;
 }
