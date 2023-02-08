@@ -363,15 +363,15 @@ public class RequestBuilder {
         if (!CollectionUtils.isEmpty(request.getProject().getSpec().getClusterResourceWhitelist())) {
             for (ArgoProjectClusterResourceWhiteList clusterResource : request.getProject().getSpec().getClusterResourceWhitelist()) {
                 clusterResourceWhite = new ArgoProjectClusterResourceWhiteList();
-                if (clusterResource.getGroup().isEmpty()) {
-                    clusterResourceWhite.setGroup(ASTERISK);
-                } else {
+                if (StringUtils.hasText(clusterResource.getGroup())) {
                     clusterResourceWhite.setGroup(clusterResource.getGroup());
-                }
-                if (clusterResource.getKind().isEmpty()) {
-                    clusterResourceWhite.setKind(ASTERISK);
                 } else {
+                    clusterResourceWhite.setGroup(ASTERISK);
+                }
+                if (StringUtils.hasText(clusterResource.getKind())) {
                     clusterResourceWhite.setKind(clusterResource.getKind());
+                } else {
+                    clusterResourceWhite.setKind(ASTERISK);
                 }
                 clusterResourceWhitelist.add(clusterResourceWhite);
             }
@@ -397,15 +397,15 @@ public class RequestBuilder {
         if (!CollectionUtils.isEmpty(request.getProject().getSpec().getNamespaceResourceBlacklist())) {
             for (ArgoProjectNamespaceResourceBlacklist namespaceResource : request.getProject().getSpec().getNamespaceResourceBlacklist()) {
                 namespaceResourceBlack = new ArgoProjectNamespaceResourceBlacklist();
-                if (namespaceResource.getGroup().isEmpty()) {
-                    namespaceResourceBlack.setGroup(ASTERISK);
-                } else {
+                if (StringUtils.hasText(namespaceResource.getGroup())) {
                     namespaceResourceBlack.setGroup(namespaceResource.getGroup());
-                }
-                if (namespaceResource.getKind().isEmpty()) {
-                    namespaceResourceBlack.setKind(ASTERISK);
                 } else {
+                    namespaceResourceBlack.setGroup(ASTERISK);
+                }
+                if (StringUtils.hasText(namespaceResource.getKind())) {
                     namespaceResourceBlack.setKind(namespaceResource.getKind());
+                } else {
+                    namespaceResourceBlack.setKind(ASTERISK);
                 }
                 namespaceResourceBlacklist.add(namespaceResourceBlack);
             }
@@ -426,15 +426,15 @@ public class RequestBuilder {
         if (!CollectionUtils.isEmpty(request.getProject().getSpec().getNamespaceResourceWhitelist())) {
             for (ArgoProjectNamespaceResourceWhitelist projectNamespaceResource : request.getProject().getSpec().getNamespaceResourceWhitelist()) {
                 namespaceResourceWhite = new ArgoProjectNamespaceResourceWhitelist();
-                if (projectNamespaceResource.getGroup().isEmpty()) {
-                    namespaceResourceWhite.setGroup(ASTERISK);
-                } else {
+                if (StringUtils.hasText(projectNamespaceResource.getGroup())) {
                     namespaceResourceWhite.setGroup(projectNamespaceResource.getGroup());
-                }
-                if (projectNamespaceResource.getKind().isEmpty()) {
-                    namespaceResourceWhite.setKind(ASTERISK);
                 } else {
+                    namespaceResourceWhite.setGroup(ASTERISK);
+                }
+                if (StringUtils.hasText(projectNamespaceResource.getKind())) {
                     namespaceResourceWhite.setKind(projectNamespaceResource.getKind());
+                } else {
+                    namespaceResourceWhite.setKind(ASTERISK);
                 }
                 namespaceResourceWhitelist.add(namespaceResourceWhite);
             }
@@ -460,15 +460,20 @@ public class RequestBuilder {
         if (!CollectionUtils.isEmpty(request.getProject().getSpec().getDestinations())) {
             for (ArgoApplicationDestination destination : request.getProject().getSpec().getDestinations()) {
                 argoApplicationDestination = new ArgoApplicationDestination();
-                if (destination.getServer().isEmpty()) {
-                    argoApplicationDestination.setServer(ASTERISK);
-                } else {
+                if (StringUtils.hasText(destination.getServer())) {
                     argoApplicationDestination.setServer(destination.getServer());
-                }
-                if (destination.getNamespace().isEmpty()) {
-                    argoApplicationDestination.setNamespace(ASTERISK);
                 } else {
+                    argoApplicationDestination.setServer(ASTERISK);
+                }
+                if (StringUtils.hasText(destination.getNamespace())) {
                     argoApplicationDestination.setNamespace(destination.getNamespace());
+                } else {
+                    argoApplicationDestination.setNamespace(ASTERISK);
+                }
+                if (StringUtils.hasText(destination.getName())) {
+                    argoApplicationDestination.setName(destination.getName());
+                } else {
+                    argoApplicationDestination.setName(ASTERISK);
                 }
                 argoApplicationDestinationList.add(argoApplicationDestination);
             }
@@ -476,6 +481,7 @@ public class RequestBuilder {
             argoApplicationDestination = new ArgoApplicationDestination();
             argoApplicationDestination.setNamespace(ASTERISK);
             argoApplicationDestination.setServer(ASTERISK);
+            argoApplicationDestination.setName(ASTERISK);
             argoApplicationDestinationList.add(argoApplicationDestination);
         }
         return argoApplicationDestinationList;
