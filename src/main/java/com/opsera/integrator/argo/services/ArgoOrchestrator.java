@@ -43,9 +43,14 @@ import com.opsera.integrator.argo.resources.CreateClusterRequest;
 import com.opsera.integrator.argo.resources.CreateProjectRequest;
 import com.opsera.integrator.argo.resources.CreateRepositoryRequest;
 import com.opsera.integrator.argo.resources.OpseraPipelineMetadata;
+import com.opsera.integrator.argo.resources.Project;
+import com.opsera.integrator.argo.resources.ProjectList;
+import com.opsera.integrator.argo.resources.RepoRefs;
 import com.opsera.integrator.argo.resources.Response;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
+import com.opsera.integrator.argo.resources.ValidateApplicationPath;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathRequest;
 
 import io.kubernetes.client.openapi.ApiException;
 
@@ -108,12 +113,12 @@ public class ArgoOrchestrator {
      * @param customerId the customer id
      * @return the all projects
      */
-    public ArgoApplicationMetadataList getAllProjects(String argoToolId, String customerId) {
+    public ProjectList getAllProjects(String argoToolId, String customerId) {
         LOGGER.debug("Starting to fetch All Argo Projects for toolId {} and customerId {}", argoToolId, customerId);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
-        ArgoApplicationsList argoApplicationsList = serviceFactory.getArgoHelper().getAllArgoProjects(argoToolDetails.getConfiguration(), argoPassword);
-        return serviceFactory.getObjectTranslator().translateToArgoProjectMetadataList(argoApplicationsList);
+        ProjectList allProjectsDtlsList = serviceFactory.getArgoHelper().getAllArgoProjects(argoToolDetails.getConfiguration(), argoPassword);
+        return serviceFactory.getObjectTranslator().translateToArgoProjectsBasicDtls(allProjectsDtlsList);
     }
 
     /**
@@ -333,17 +338,7 @@ public class ArgoOrchestrator {
         LOGGER.debug("To Starting to delete the repository request {}", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
-        ToolDetails credentialToolDetails = toolConfigurationHelper.getToolConfig(request.getCustomerId(), request.getGitToolId(), ToolDetails.class);
-        String repositoryUrl = "";
-        if (null != credentialToolDetails) {
-            ToolConfig toolConfig = credentialToolDetails.getConfiguration();
-            if (toolConfig.isTwoFactorAuthentication()) {
-                repositoryUrl = request.getSshUrl();
-            } else {
-                repositoryUrl = request.getHttpsUrl();
-            }
-        }
-        serviceFactory.getArgoHelper().deleteArgoRepository(repositoryUrl, argoToolDetails.getConfiguration(), argoPassword);
+        serviceFactory.getArgoHelper().deleteArgoRepository(request.getRepoUrl(), argoToolDetails.getConfiguration(), argoPassword);
         LOGGER.debug("To Completed to delete the repository request {}", request);
     }
 
@@ -357,11 +352,8 @@ public class ArgoOrchestrator {
         LOGGER.debug("To Starting to create/update the project {} ", request);
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getToolId(), request.getCustomerId());
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
-        ArgoApplicationMetadataList applicationMetadataList = getAllProjects(request.getToolId(), request.getCustomerId());
         serviceFactory.getRequestBuilder().createProjectRequest(request);
-        boolean isProjectExists = applicationMetadataList.getApplicationList().stream()
-                .anyMatch(applicationMetadata -> applicationMetadata.getName().equals(request.getProject().getMetadata().getName()));
-        if (isProjectExists) {
+        if (request.isUpsert()) {
             ArgoApplicationItem projectItem = getArgoProject(argoToolDetails, request.getProject().getMetadata().getName(), argoPassword);
             CreateProjectRequest updateProjectRequest = serviceFactory.getRequestBuilder().updateProjectRequest(projectItem, request);
             return serviceFactory.getArgoHelper().updateProject(updateProjectRequest, argoToolDetails.getConfiguration(), argoPassword);
@@ -489,5 +481,28 @@ public class ArgoOrchestrator {
         ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
         String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
         return serviceFactory.getArgoHelper().getAppdetails(argoToolDetails.getConfiguration(), argoPassword, spec);
+    }
+    
+    public RepoRefs getRepoBranchesAndTagsList(String argoToolId, String customerId, String repoUrl) throws UnsupportedEncodingException {
+        ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
+        String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+        return serviceFactory.getArgoHelper().getRepoBranchesAndTagsList(argoToolDetails.getConfiguration(), argoPassword, repoUrl);
+    }
+    
+    public String validateAppPath(ValidateApplicationPathRequest request) throws UnsupportedEncodingException {
+        ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(request.getArgoToolId(), request.getCustomerId());
+        String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+        ValidateApplicationPath argoRequest = serviceFactory.getRequestBuilder().constructValidateAppPathRequest(request);
+        return serviceFactory.getArgoHelper().validateAppPath(argoToolDetails.getConfiguration(), argoPassword, argoRequest);
+    }
+    
+    public Project getProjectDtls(String argoToolId, String customerId, String projectName) {
+        if (StringUtils.hasText(projectName) && StringUtils.hasText(argoToolId)) {
+            ArgoToolDetails argoToolDetails = getArgoToolDetailsInline(argoToolId, customerId);
+            String argoPassword = getArgoSecretTokenOrPassword(argoToolDetails);
+            return serviceFactory.getArgoHelper().getArgoProjectDtls(argoToolDetails.getConfiguration(), argoPassword, projectName);
+        } else {
+            throw new InvalidRequestException("Project name and toolId cannot be empty to retrieve project details.");
+        }
     }
 }

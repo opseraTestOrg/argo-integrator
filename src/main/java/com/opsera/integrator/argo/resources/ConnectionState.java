@@ -6,13 +6,10 @@ import lombok.Data;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Project {
-    
-    private String name;
-    
-    private String description;
+public class ConnectionState {
 
-    private ArgoProjectMetadata metadata;
+    private String status;
+    private String message;
+    private String attemptedAt;
 
-    private ArgoProjectSpec spec;
 }

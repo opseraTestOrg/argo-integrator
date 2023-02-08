@@ -15,6 +15,8 @@ import com.opsera.integrator.argo.resources.ArgoRepositoriesList;
 import com.opsera.integrator.argo.resources.ArgoRepositoryItem;
 import com.opsera.integrator.argo.resources.ArgoToolDetails;
 import com.opsera.integrator.argo.resources.AwsClusterDetails;
+import com.opsera.integrator.argo.resources.Project;
+import com.opsera.integrator.argo.resources.ProjectList;
 import com.opsera.integrator.argo.resources.ToolConfig;
 
 /**
@@ -131,6 +133,30 @@ public class ResponseParser {
      */
     public ArgoClusterItem extractArgoCluster(String response) {
         Type type = new TypeToken<ArgoClusterItem>() {
+        }.getType();
+        return serviceFactory.gson().fromJson(response, type);
+    }
+    
+    /**
+     * Extract argo projects list.
+     *
+     * @param response the response
+     * @return the project list
+     */
+    public ProjectList extractArgoProjectsList(String response) {
+        Type type = new TypeToken<ProjectList>() {
+        }.getType();
+        return serviceFactory.gson().fromJson(response, type);
+    }
+    
+    /**
+     * Extract argo project dtls.
+     *
+     * @param response the response
+     * @return the project
+     */
+    public Project extractArgoProjectDtls(String response) {
+        Type type = new TypeToken<Project>() {
         }.getType();
         return serviceFactory.gson().fromJson(response, type);
     }
