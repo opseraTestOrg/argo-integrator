@@ -562,14 +562,14 @@ public class RequestBuilder {
     }
 
     public ValidateApplicationPath constructValidateAppPathRequest(ValidateApplicationPathRequest request) {
-        if (StringUtils.hasText(request.getBranchOrTag()) && StringUtils.hasText(request.getAppName()) && StringUtils.hasText(request.getRepoUrl()) && StringUtils.hasText(request.getPath())) {
+        if (StringUtils.hasText(request.getBranch()) && StringUtils.hasText(request.getName()) && StringUtils.hasText(request.getRepoUrl()) && StringUtils.hasText(request.getPath())) {
             ValidateApplicationPath argoRequest = new ValidateApplicationPath();
-            argoRequest.setAppName(request.getAppName());
+            argoRequest.setAppName(request.getName());
             ArgoApplicationSource source = new ArgoApplicationSource();
-            source.setAppName(request.getAppName());
+            source.setAppName(request.getName());
             source.setPath(request.getPath());
             source.setRepoURL(request.getRepoUrl());
-            source.setTargetRevision(request.getBranchOrTag());
+            source.setTargetRevision(request.getBranch());
             argoRequest.setSource(source);
             return argoRequest;
         } else {

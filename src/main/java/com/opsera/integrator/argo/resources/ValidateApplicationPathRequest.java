@@ -10,8 +10,9 @@ public class ValidateApplicationPathRequest {
 
     private String customerId;
     private String argoToolId;
-    private String branchOrTag;
     private String path;
-    private String appName;
+    private String name;
     private String repoUrl;
+    private String branch;
+    private String tag;
 }
