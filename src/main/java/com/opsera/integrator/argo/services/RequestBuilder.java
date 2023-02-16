@@ -45,6 +45,7 @@ import com.opsera.core.helper.ToolConfigurationHelper;
 import com.opsera.core.helper.VaultHelper;
 import com.opsera.integrator.argo.config.IServiceFactory;
 import com.opsera.integrator.argo.exceptions.ArgoServiceException;
+import com.opsera.integrator.argo.exceptions.InvalidRequestException;
 import com.opsera.integrator.argo.exceptions.ResourcesNotAvailable;
 import com.opsera.integrator.argo.resources.ArgoApplicationDestination;
 import com.opsera.integrator.argo.resources.ArgoApplicationItem;
@@ -75,6 +76,8 @@ import com.opsera.integrator.argo.resources.SyncPolicy;
 import com.opsera.integrator.argo.resources.TLSClientConfig;
 import com.opsera.integrator.argo.resources.ToolConfig;
 import com.opsera.integrator.argo.resources.ToolDetails;
+import com.opsera.integrator.argo.resources.ValidateApplicationPath;
+import com.opsera.integrator.argo.resources.ValidateApplicationPathRequest;
 import com.opsera.kubernetes.helper.KubernetesPodHandler;
 import com.opsera.kubernetes.helper.exception.KubernetesHelperException;
 import com.opsera.kubernetes.helper.listener.KubernetesLogListener;
@@ -100,9 +103,11 @@ public class RequestBuilder {
     @Autowired
     private IServiceFactory serviceFactory;
 
+    /** The tool configuration helper. */
     @Autowired
     private ToolConfigurationHelper toolConfigurationHelper;
 
+    /** The vault helper. */
     @Autowired
     private VaultHelper vaultHelper;
 
@@ -145,6 +150,12 @@ public class RequestBuilder {
         return argoApplication;
     }
 
+    /**
+     * Sets the application type attributes.
+     *
+     * @param request the request
+     * @param source the source
+     */
     private void setApplicationTypeAttributes(CreateApplicationRequest request, ArgoApplicationSource source) {
         if (request.getType().equalsIgnoreCase("Helm")) {
             setHelmTypeSourceAttributes(request, source);
@@ -159,6 +170,12 @@ public class RequestBuilder {
         }
     }
 
+    /**
+     * Sets the kustomize source attributes.
+     *
+     * @param request the request
+     * @param source the source
+     */
     private void setKustomizeSourceAttributes(CreateApplicationRequest request, ArgoApplicationSource source) {
         if (StringUtils.hasText(request.getNamePrefix()) || StringUtils.hasText(request.getNameSuffix())) {
             Kustomize kustomize = new Kustomize();
@@ -172,6 +189,12 @@ public class RequestBuilder {
         }
     }
 
+    /**
+     * Sets the helm type source attributes.
+     *
+     * @param request the request
+     * @param source the source
+     */
     private void setHelmTypeSourceAttributes(CreateApplicationRequest request, ArgoApplicationSource source) {
         if (StringUtils.hasText(request.getValues()) || !CollectionUtils.isEmpty(request.getValueFiles())) {
             Helm helm = new Helm();
@@ -191,7 +214,7 @@ public class RequestBuilder {
      * Creates the repository request.
      *
      * @param request    the request
-     * @param toolConfig the tool config
+     * @param toolDetails the tool details
      * @param secret     the secret
      * @return the argo repository item
      */
@@ -275,6 +298,11 @@ public class RequestBuilder {
         return createClusterRequest;
     }
 
+    /**
+     * Creates the namespace.
+     *
+     * @param request the request
+     */
     public void createNamespace(CreateCluster request) {
         try {
             ApiClient client = null;
@@ -311,6 +339,8 @@ public class RequestBuilder {
      */
     public void createProjectRequest(CreateProjectRequest request) {
         LOGGER.debug("Starting to Build Request for Argo Project {}", request);
+        List<ArgoApplicationDestination> argoApplicationDestinationList = setArgoApplicationDestination(request);
+        request.getProject().getSpec().setDestinations(argoApplicationDestinationList);
         List<ArgoProjectClusterResourceWhiteList> clusterResourceWhitelist = setClusterResourceWhiteList(request);
         request.getProject().getSpec().setClusterResourceWhitelist(clusterResourceWhitelist);
         List<ArgoProjectNamespaceResourceBlacklist> namespaceResourceBlacklist = setNamespaceResourceBlacklist(request);
@@ -330,18 +360,18 @@ public class RequestBuilder {
         LOGGER.debug("Starting to set Cluster Resource WhiteList for Argo Project {}", request);
         List<ArgoProjectClusterResourceWhiteList> clusterResourceWhitelist = new ArrayList<>();
         ArgoProjectClusterResourceWhiteList clusterResourceWhite;
-        if (request.getProject().getSpec().getClusterResourceWhitelist() != null) {
+        if (!CollectionUtils.isEmpty(request.getProject().getSpec().getClusterResourceWhitelist())) {
             for (ArgoProjectClusterResourceWhiteList clusterResource : request.getProject().getSpec().getClusterResourceWhitelist()) {
                 clusterResourceWhite = new ArgoProjectClusterResourceWhiteList();
-                if (clusterResource.getGroup().isEmpty()) {
-                    clusterResourceWhite.setGroup(ASTERISK);
-                } else {
+                if (StringUtils.hasText(clusterResource.getGroup())) {
                     clusterResourceWhite.setGroup(clusterResource.getGroup());
-                }
-                if (clusterResource.getKind().isEmpty()) {
-                    clusterResourceWhite.setKind(ASTERISK);
                 } else {
+                    clusterResourceWhite.setGroup(ASTERISK);
+                }
+                if (StringUtils.hasText(clusterResource.getKind())) {
                     clusterResourceWhite.setKind(clusterResource.getKind());
+                } else {
+                    clusterResourceWhite.setKind(ASTERISK);
                 }
                 clusterResourceWhitelist.add(clusterResourceWhite);
             }
@@ -364,26 +394,21 @@ public class RequestBuilder {
         LOGGER.debug("Starting to set Namespace Resource Blacklist for Argo Project {}", request);
         List<ArgoProjectNamespaceResourceBlacklist> namespaceResourceBlacklist = new ArrayList<>();
         ArgoProjectNamespaceResourceBlacklist namespaceResourceBlack;
-        if (request.getProject().getSpec().getNamespaceResourceBlacklist() != null) {
+        if (!CollectionUtils.isEmpty(request.getProject().getSpec().getNamespaceResourceBlacklist())) {
             for (ArgoProjectNamespaceResourceBlacklist namespaceResource : request.getProject().getSpec().getNamespaceResourceBlacklist()) {
                 namespaceResourceBlack = new ArgoProjectNamespaceResourceBlacklist();
-                if (namespaceResource.getGroup().isEmpty()) {
-                    namespaceResourceBlack.setGroup(ASTERISK);
-                } else {
+                if (StringUtils.hasText(namespaceResource.getGroup())) {
                     namespaceResourceBlack.setGroup(namespaceResource.getGroup());
-                }
-                if (namespaceResource.getKind().isEmpty()) {
-                    namespaceResourceBlack.setKind(ASTERISK);
                 } else {
+                    namespaceResourceBlack.setGroup(ASTERISK);
+                }
+                if (StringUtils.hasText(namespaceResource.getKind())) {
                     namespaceResourceBlack.setKind(namespaceResource.getKind());
+                } else {
+                    namespaceResourceBlack.setKind(ASTERISK);
                 }
                 namespaceResourceBlacklist.add(namespaceResourceBlack);
             }
-        } else {
-            namespaceResourceBlack = new ArgoProjectNamespaceResourceBlacklist();
-            namespaceResourceBlack.setGroup(ASTERISK);
-            namespaceResourceBlack.setKind(ASTERISK);
-            namespaceResourceBlacklist.add(namespaceResourceBlack);
         }
         return namespaceResourceBlacklist;
     }
@@ -398,18 +423,18 @@ public class RequestBuilder {
         LOGGER.debug("Starting to set Namespace Resource Whitelist for Argo Project {}", request);
         List<ArgoProjectNamespaceResourceWhitelist> namespaceResourceWhitelist = new ArrayList<>();
         ArgoProjectNamespaceResourceWhitelist namespaceResourceWhite;
-        if (request.getProject().getSpec().getNamespaceResourceWhitelist() != null) {
+        if (!CollectionUtils.isEmpty(request.getProject().getSpec().getNamespaceResourceWhitelist())) {
             for (ArgoProjectNamespaceResourceWhitelist projectNamespaceResource : request.getProject().getSpec().getNamespaceResourceWhitelist()) {
                 namespaceResourceWhite = new ArgoProjectNamespaceResourceWhitelist();
-                if (projectNamespaceResource.getGroup().isEmpty()) {
-                    namespaceResourceWhite.setGroup(ASTERISK);
-                } else {
+                if (StringUtils.hasText(projectNamespaceResource.getGroup())) {
                     namespaceResourceWhite.setGroup(projectNamespaceResource.getGroup());
-                }
-                if (projectNamespaceResource.getKind().isEmpty()) {
-                    namespaceResourceWhite.setKind(ASTERISK);
                 } else {
+                    namespaceResourceWhite.setGroup(ASTERISK);
+                }
+                if (StringUtils.hasText(projectNamespaceResource.getKind())) {
                     namespaceResourceWhite.setKind(projectNamespaceResource.getKind());
+                } else {
+                    namespaceResourceWhite.setKind(ASTERISK);
                 }
                 namespaceResourceWhitelist.add(namespaceResourceWhite);
             }
@@ -421,7 +446,54 @@ public class RequestBuilder {
         }
         return namespaceResourceWhitelist;
     }
+    
+    /**
+     * Sets the argo application destination.
+     *
+     * @param request the request
+     * @return the list
+     */
+    private List<ArgoApplicationDestination> setArgoApplicationDestination(CreateProjectRequest request) {
+        LOGGER.debug("Starting to set Destination Cluster for Argo Project {}", request);
+        List<ArgoApplicationDestination> argoApplicationDestinationList = new ArrayList<>();
+        ArgoApplicationDestination argoApplicationDestination;
+        if (!CollectionUtils.isEmpty(request.getProject().getSpec().getDestinations())) {
+            for (ArgoApplicationDestination destination : request.getProject().getSpec().getDestinations()) {
+                argoApplicationDestination = new ArgoApplicationDestination();
+                if (StringUtils.hasText(destination.getServer())) {
+                    argoApplicationDestination.setServer(destination.getServer());
+                } else {
+                    argoApplicationDestination.setServer(ASTERISK);
+                }
+                if (StringUtils.hasText(destination.getNamespace())) {
+                    argoApplicationDestination.setNamespace(destination.getNamespace());
+                } else {
+                    argoApplicationDestination.setNamespace(ASTERISK);
+                }
+                if (StringUtils.hasText(destination.getName())) {
+                    argoApplicationDestination.setName(destination.getName());
+                } else {
+                    argoApplicationDestination.setName(ASTERISK);
+                }
+                argoApplicationDestinationList.add(argoApplicationDestination);
+            }
+        } else {
+            argoApplicationDestination = new ArgoApplicationDestination();
+            argoApplicationDestination.setNamespace(ASTERISK);
+            argoApplicationDestination.setServer(ASTERISK);
+            argoApplicationDestination.setName(ASTERISK);
+            argoApplicationDestinationList.add(argoApplicationDestination);
+        }
+        return argoApplicationDestinationList;
+    }
 
+    /**
+     * Exec kubectl on pod.
+     *
+     * @param request the request
+     * @throws ResourcesNotAvailable the resources not available
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
     public void execKubectlOnPod(CreateCluster request) throws ResourcesNotAvailable, IOException {
         String parentId = toolConfigurationHelper.getParentId(request.getCustomerId());
         Map<String, String> vaultData = vaultHelper.getSecrets(parentId, Arrays.asList(VAULT_CLUSTER_URL, VAULT_CLUSTER_TOKEN), null);
@@ -444,6 +516,16 @@ public class RequestBuilder {
         });
     }
 
+    /**
+     * Process kubctl pod handler.
+     *
+     * @param request the request
+     * @param url the url
+     * @param token the token
+     * @param envVar the env var
+     * @param commands the commands
+     * @throws KubernetesHelperException the kubernetes helper exception
+     */
     private void processKubctlPodHandler(CreateCluster request, String url, String token, Map<String, String> envVar, List<String> commands) throws KubernetesHelperException {
         KubernetesPodHandler handler = new KubernetesPodHandler(url, token, request.getClusterName(), request.getArgoToolId(), 0);
         try {
@@ -460,6 +542,13 @@ public class RequestBuilder {
         }
     }
 
+    /**
+     * Pod logs.
+     *
+     * @param handler the handler
+     * @return the string
+     * @throws KubernetesHelperException the kubernetes helper exception
+     */
     private String podLogs(KubernetesPodHandler handler) throws KubernetesHelperException {
         KubernetesLogListener listener = new KubernetesLogListener() {
             @Override
@@ -473,6 +562,15 @@ public class RequestBuilder {
         return handler.streamJobLogs(listener, 1);
     }
 
+    /**
+     * Gets the commands.
+     *
+     * @param config the config
+     * @param request the request
+     * @param envVar the env var
+     * @return the commands
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
     private List<String> getCommands(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar) throws IOException {
         List<String> commands = new ArrayList<>();
         commands.add("/bin/bash");
@@ -494,6 +592,15 @@ public class RequestBuilder {
         return commands;
     }
 
+    /**
+     * Gets the aws details.
+     *
+     * @param config the config
+     * @param request the request
+     * @param envVar the env var
+     * @param command the command
+     * @return the aws details
+     */
     private void getAwsDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
         ToolConfig configuration = config.getConfiguration();
         String secretKey = configuration.getSecretKey().getVaultKey();
@@ -530,6 +637,15 @@ public class RequestBuilder {
         }
     }
 
+    /**
+     * Gets the azure details.
+     *
+     * @param config the config
+     * @param request the request
+     * @param envVar the env var
+     * @param command the command
+     * @return the azure details
+     */
     private void getAzureDetails(ArgoToolDetails config, CreateCluster request, Map<String, String> envVar, StringBuilder command) {
         ToolConfig configuration = config.getConfiguration();
         String subscriptionIdKey = configuration.getAzureSubscriptionId();
@@ -555,6 +671,28 @@ public class RequestBuilder {
         }
         if (StringUtils.hasText(request.getClusterName())) {
             envVar.put(CLUSTER_NAME, request.getClusterName());
+        }
+    }
+
+    /**
+     * Construct validate app path request.
+     *
+     * @param request the request
+     * @return the validate application path
+     */
+    public ValidateApplicationPath constructValidateAppPathRequest(ValidateApplicationPathRequest request) {
+        if (StringUtils.hasText(request.getBranchOrTag()) && StringUtils.hasText(request.getAppName()) && StringUtils.hasText(request.getRepoUrl()) && StringUtils.hasText(request.getPath())) {
+            ValidateApplicationPath argoRequest = new ValidateApplicationPath();
+            argoRequest.setAppName(request.getAppName());
+            ArgoApplicationSource source = new ArgoApplicationSource();
+            source.setAppName(request.getAppName());
+            source.setPath(request.getPath());
+            source.setRepoURL(request.getRepoUrl());
+            source.setTargetRevision(request.getBranchOrTag());
+            argoRequest.setSource(source);
+            return argoRequest;
+        } else {
+            throw new InvalidRequestException("Invalid request provided to check the application path");
         }
     }
 }

@@ -8,5 +8,7 @@ public class ArgoApplicationDestination {
     private String namespace;
 
     private String server;
+    
+    private String name;
 
 }

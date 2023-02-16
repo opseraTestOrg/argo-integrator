@@ -8,5 +8,9 @@ public class ArgoClusterItem {
     private String server;
 
     private String name;
-
+    
+    private ConnectionState connectionState;
+    
+    private String serverVersion;
+    
 }
